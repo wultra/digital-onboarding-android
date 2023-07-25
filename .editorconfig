@@ -1,0 +1,26 @@
+root = true
+
+[*{kt,kts}]
+
+# sometimes this is good for readibility
+ktlint_standard_string-template = disabled
+
+# sometimes this is good thing when a lot of code is packed
+ktlint_standard_no-empty-first-line-in-method-block = disabled
+
+# maybe in the future
+ktlint_standard_spacing-between-declarations-with-comments = disabled
+
+# this is no JS or TS
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+
+# not sure about this, but i dont like it :)
+ktlint_standard_colon-spacing = disabled
+
+# this is nitpicking
+ktlint_standard_import-ordering = disabled
+ktlint_standard_no-wildcard-imports = disabled
+
+# sometimes this is good thing
+ktlint_standard_filename = disabled

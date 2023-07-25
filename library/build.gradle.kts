@@ -1,7 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.android.repository.Revision
-
 /*
  * Copyright 2023 Wultra s.r.o.
  *
@@ -43,6 +41,7 @@ android {
             consumerProguardFiles("consumer-proguard-rules.pro")
         }
     }
+
     compileOptions {
         sourceCompatibility = Constants.Java.sourceCompatibility
         targetCompatibility = Constants.Java.targetCompatibility
@@ -51,6 +50,17 @@ android {
             suppressWarnings = false
         }
     }
+
+    // Custom ktlint script
+    tasks.register("ktlint") {
+        logger.lifecycle("ktlint")
+        exec {
+            commandLine = listOf("./../scripts/lint.sh", "--no-error")
+        }
+    }
+
+    // Make ktlint run before build
+    tasks.getByName("preBuild").dependsOn("ktlint")
 }
 
 dependencies {
@@ -59,6 +69,7 @@ dependencies {
     implementation("androidx.annotation:annotation:1.6.0")
     implementation("com.google.code.gson:gson:2.8.9")
     implementation("com.wultra.android.powerauth:powerauth-networking:1.2.0")
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha03")
 
     // Dependencies
     compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.7.7")

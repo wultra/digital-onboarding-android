@@ -20,5 +20,5 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
           cache: 'gradle'
-      - name: Build the app
+      - name: Build the library
         run: ./gradlew clean build
