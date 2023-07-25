@@ -14,6 +14,8 @@
  * and limitations under the License.
  */
 
+@file:Suppress("unused")
+
 package com.wultra.android.digitalonboarding
 
 import android.content.Context
@@ -55,6 +57,8 @@ class VerificationService(
     var acceptLanguage: String
         set(value) { api.acceptLanguage = value }
         get() { return api.acceptLanguage }
+
+    var listener: VerificationServiceListener? = null
 
     /** PRIVATE PROPERTIES & CLASSES */
 
@@ -443,7 +447,7 @@ class VerificationService(
                 object : IActivationStatusListener {
                     override fun onActivationStatusSucceed(status: ActivationStatus?) {
                         if (status?.state != ActivationStatus.State_Active) {
-                            // self.delegate?.powerAuthActivationStatusChanged(self, status: status)
+                            listener?.powerAuthActivationStatusChanged(this@VerificationService, status)
                             markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
                         }
                     }
@@ -464,17 +468,22 @@ class VerificationService(
 
     private fun markCompleted(state: VerificationStateData, callback: (Result<Success>) -> Unit) {
         val result = Success(state)
-        // delegate?.verificationStatusChanged(self, status: state)
+        listener?.verificationStatusChanged(this, state)
         callback(Result.success(result))
     }
 
     private fun <T>markCompleted(fail: Fail, callback: (Result<T>) -> Unit) {
         if (fail.state != null) {
-            // delegate?.verificationStatusChanged(self, status: state)
+            listener?.verificationStatusChanged(this, fail.state)
         }
 
         callback(Result.failure(fail))
     }
+}
+
+interface VerificationServiceListener {
+    fun verificationStatusChanged(service: VerificationService, status: VerificationStateData)
+    fun powerAuthActivationStatusChanged(service: VerificationService, status: ActivationStatus?)
 }
 
 enum class DocumentAction {

@@ -22,12 +22,13 @@ plugins {
 }
 
 android {
+
+    namespace = "com.wultra.android.digitalonboarding"
     compileSdk = Constants.Android.compileSdkVersion
     buildToolsVersion = Constants.Android.buildToolsVersion
 
     defaultConfig {
         minSdk = Constants.Android.minSdkVersion
-        targetSdk = Constants.Android.targetSdkVersion
 
         // since Android Gradle Plugin 4.1.0
         // VERSION_CODE and VERSION_NAME are not generated for libraries
@@ -69,10 +70,10 @@ dependencies {
     implementation("androidx.annotation:annotation:1.6.0")
     implementation("com.google.code.gson:gson:2.8.9")
     implementation("com.wultra.android.powerauth:powerauth-networking:1.2.0")
-    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha03")
+    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
 
     // Dependencies
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.7.7")
+    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.7.8")
 }
 
 apply("android-release-aar.gradle")
