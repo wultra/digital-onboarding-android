@@ -139,7 +139,7 @@ class VerificationService(
                         markCompleted(VerificationStatePresenceCheckData, callback)
                     }
                     Value.STATUS_CHECK -> {
-                        markCompleted(VerificationStatePresenceCheckData, callback)
+                        markCompleted(VerificationStateProcessingData(ProcessingItem.from(nextStep.statusCheckReason ?: VerificationStatusNextStep.StatusCheckReason.UNKNOWN)), callback)
                     }
                     Value.OTP -> {
                         markCompleted(VerificationStateOtpData(null), callback)

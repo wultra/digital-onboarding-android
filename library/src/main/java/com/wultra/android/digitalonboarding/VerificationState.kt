@@ -92,7 +92,22 @@ enum class ProcessingItem {
     /** Client data provided are being verified by the system. */
     CLIENT_VERIFICATION,
     /** Client data were accepted and we're waiting for a process change */
-    CLIENT_ACCEPTED
+    CLIENT_ACCEPTED;
+
+    internal companion object {
+        fun from(reason: VerificationStatusNextStep.StatusCheckReason): ProcessingItem {
+            return when (reason) {
+                VerificationStatusNextStep.StatusCheckReason.UNKNOWN -> OTHER
+                VerificationStatusNextStep.StatusCheckReason.DOCUMENT_UPLOAD -> DOCUMENT_UPLOAD
+                VerificationStatusNextStep.StatusCheckReason.DOCUMENT_VERIFICATION -> DOCUMENT_VERIFICATION
+                VerificationStatusNextStep.StatusCheckReason.DOCUMENTS_ACCEPTED -> DOCUMENT_ACCEPTED
+                VerificationStatusNextStep.StatusCheckReason.DOCUMENT_VERIFICATION_FINAL -> DOCUMENT_CROSS_VERIFICATION
+                VerificationStatusNextStep.StatusCheckReason.CLIENT_VERIFICATION -> CLIENT_VERIFICATION
+                VerificationStatusNextStep.StatusCheckReason.CLIENT_ACCEPTED -> CLIENT_ACCEPTED
+                VerificationStatusNextStep.StatusCheckReason.VERIFYING_PRESENCE -> VERIFYING_PRESENCE
+            }
+        }
+    }
 }
 
 enum class EndstateReason {

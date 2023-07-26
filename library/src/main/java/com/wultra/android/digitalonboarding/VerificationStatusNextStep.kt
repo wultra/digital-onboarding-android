@@ -23,7 +23,7 @@ import com.wultra.android.digitalonboarding.networking.IdentityVerificationStatu
 import com.wultra.android.digitalonboarding.networking.VerificationStatusResponseData
 
 // Internal status that works as a translation layer between server API and SDK API
-class VerificationStatusNextStep(val value: Value, val statusCheckReason: StatusCheckReason? = null) {
+internal class VerificationStatusNextStep(val value: Value, val statusCheckReason: StatusCheckReason? = null) {
 
     companion object {
         fun fromStatusResponse(response: VerificationStatusResponseData): VerificationStatusNextStep {

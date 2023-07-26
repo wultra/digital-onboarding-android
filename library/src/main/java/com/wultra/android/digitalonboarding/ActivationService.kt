@@ -201,6 +201,11 @@ class ActivationService(
         )
     }
 
+    fun createPowerAuthActivationData(otp: String): ActivationData? {
+        val processId = processId ?: return null
+        return ActivationDataWithOTP(processId, otp)
+    }
+
     fun activate(
         otp: String,
         activationName: String = Build.MODEL,
