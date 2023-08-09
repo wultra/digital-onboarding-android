@@ -14,6 +14,8 @@
  * and limitations under the License.
  */
 
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package com.wultra.android.digitalonboarding
 
 import com.wultra.android.digitalonboarding.networking.DocumentFileSide
@@ -86,6 +88,7 @@ enum class DocumentType {
     /** Driving license */
     DRIVERS_LICENSE;
 
+    /** Available sides of the document */
     fun sides(): List<DocumentSide> {
         return when (this) {
             ID_CARD -> listOf(DocumentSide.FRONT, DocumentSide.BACK)
@@ -94,7 +97,7 @@ enum class DocumentType {
         }
     }
 
-    fun apiType(): DocumentSubmitFileType {
+    internal fun apiType(): DocumentSubmitFileType {
         return when (this) {
             ID_CARD -> DocumentSubmitFileType.ID_CARD
             PASSPORT -> DocumentSubmitFileType.PASSPORT
@@ -110,7 +113,7 @@ enum class DocumentSide {
     /** Back side of an document */
     BACK;
 
-    fun apiType(): DocumentFileSide {
+    internal fun apiType(): DocumentFileSide {
         return when (this) {
             FRONT -> DocumentFileSide.FRONT
             BACK -> DocumentFileSide.BACK

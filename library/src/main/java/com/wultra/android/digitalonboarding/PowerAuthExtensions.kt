@@ -9,6 +9,8 @@
  * before the Municipal Court of Prague.
  */
 
+@file:Suppress("unused", "KDocUnresolvedReference")
+
 package com.wultra.android.digitalonboarding
 
 import io.getlime.security.powerauth.core.ActivationStatus
@@ -26,6 +28,15 @@ interface ActivationData {
     fun asAttributes(): Map<String, String>
 }
 
+/**
+ * Creates powerauth activation based on the data in the [ActivationData] object.
+ *
+ * @param data Custom activation data
+ * @param activationName Name of the activation
+ * @param callback Result callback
+ *
+ * @throws PowerAuthErrorException when powerauth data cannot be constructed.
+ */
 fun PowerAuthSDK.createActivation(
     data: ActivationData,
     activationName: String,

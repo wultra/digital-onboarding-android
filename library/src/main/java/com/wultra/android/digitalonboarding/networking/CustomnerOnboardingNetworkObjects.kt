@@ -22,47 +22,42 @@ import com.google.gson.annotations.SerializedName
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 
-// TODO: make all internal
-
-class StartOnboardingRequest<T>(identification: T): ObjectRequest<StartOnboardingRequestData<T>>(
+internal class StartOnboardingRequest<T>(identification: T): ObjectRequest<StartOnboardingRequestData<T>>(
     StartOnboardingRequestData(identification)
 )
-class StartOnboardingRequestData<T>(@SerializedName("identification") val identification: T)
-class StartOnboardingResponse(responseObject: ProcessResponseData, status: Status): ObjectResponse<ProcessResponseData>(responseObject, status)
-enum class OnboardingStatus {
-    @SerializedName("ACTIVATION_IN_PROGRESS")
-    ACTIVATION_IN_PROGRESS,
-
-    @SerializedName("VERIFICATION_IN_PROGRESS")
-    VERIFICATION_IN_PROGRESS,
-
-    @SerializedName("FAILED")
-    FAILED,
-
-    @SerializedName("FINISHED")
-    FINISHED
+internal class StartOnboardingRequestData<T>(@SerializedName("identification") val identification: T)
+internal class StartOnboardingResponse(responseObject: ProcessResponseData, status: Status): ObjectResponse<ProcessResponseData>(responseObject, status)
+internal enum class OnboardingStatus {
+    @SerializedName("ACTIVATION_IN_PROGRESS") ACTIVATION_IN_PROGRESS,
+    @SerializedName("VERIFICATION_IN_PROGRESS") VERIFICATION_IN_PROGRESS,
+    @SerializedName("FAILED") FAILED,
+    @SerializedName("FINISHED") FINISHED
 }
 
-class OTPDetailRequest(data: OTPDetailRequestData): ObjectRequest<OTPDetailRequestData>(data)
-class OTPDetailRequestData(@SerializedName("processId") val processId: String, @SerializedName("otpType") val otpType: OTPDetailType)
-enum class OTPDetailType {
-    @SerializedName("ACTIVATION")
-    ACTIVATION,
-
-    @SerializedName("USER_VERIFICATION")
-    USER_VERIFICATION
+internal class OTPDetailRequest(data: OTPDetailRequestData): ObjectRequest<OTPDetailRequestData>(data)
+internal class OTPDetailRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("otpType") val otpType: OTPDetailType
+)
+internal enum class OTPDetailType {
+    @SerializedName("ACTIVATION") ACTIVATION,
+    @SerializedName("USER_VERIFICATION") USER_VERIFICATION
 }
-class OTPDetailResponse(responseObject: OTPDetailResponseData, status: Status): ObjectResponse<OTPDetailResponseData>(responseObject, status)
-class OTPDetailResponseData(@SerializedName("otpCode") val otpCode: String)
+internal class OTPDetailResponse(responseObject: OTPDetailResponseData, status: Status): ObjectResponse<OTPDetailResponseData>(responseObject, status)
+internal class OTPDetailResponseData(
+    @SerializedName("otpCode") val otpCode: String
+)
 
-class CancelOnboardingRequest(processId: String): ObjectRequest<ProcessRequestData>(
+internal class CancelOnboardingRequest(processId: String): ObjectRequest<ProcessRequestData>(
     ProcessRequestData(processId)
 )
 
-class ResendOtpRequest(processId: String): ObjectRequest<ProcessRequestData>(ProcessRequestData(processId))
+internal class ResendOtpRequest(processId: String): ObjectRequest<ProcessRequestData>(ProcessRequestData(processId))
 
-class GetStatusRequest(processId: String): ObjectRequest<ProcessRequestData>(ProcessRequestData(processId))
-class GetStatusResponse(responseObject: ProcessResponseData, status: Status): ObjectResponse<ProcessResponseData>(responseObject, status)
+internal class GetStatusRequest(processId: String): ObjectRequest<ProcessRequestData>(ProcessRequestData(processId))
+internal class GetStatusResponse(responseObject: ProcessResponseData, status: Status): ObjectResponse<ProcessResponseData>(responseObject, status)
 
-class ProcessRequestData(@SerializedName("processId") val processId: String)
-class ProcessResponseData(@SerializedName("processId") val processId: String, @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus)
+internal class ProcessRequestData(@SerializedName("processId") val processId: String)
+internal class ProcessResponseData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus)

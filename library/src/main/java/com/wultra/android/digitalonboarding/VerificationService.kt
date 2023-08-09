@@ -43,9 +43,17 @@ import io.getlime.security.powerauth.core.ActivationStatus
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
+import java.time.Duration
 
 /**
- * VerificationService
+ * Digital Onboarding Verification Service
+ *
+ * @property appContext Application context
+ * @property powerAuthSDK Configured PowerAuthSDK instance. This instance needs to be with valid activation otherwise you'll get errors.
+ * @constructor Creates the instance
+ *
+ * @param identityServerUrl Base URL for service requests. Usually ending with `enrollment-onboarding-server`.
+ * @param okHttpClient HTTP client for server communication.
  */
 class VerificationService(
     identityServerUrl: String,
@@ -54,10 +62,19 @@ class VerificationService(
     private val powerAuthSDK: PowerAuthSDK
 ) {
 
+    /**
+     * Accept language for the outgoing requests headers.
+     * Default value is "en".
+     *
+     * Standard RFC "Accept-Language" https://tools.ietf.org/html/rfc7231#section-5.3.5
+     * Response texts are based on this setting. For example when "de" is set, server
+     * will return error texts and other in german (if available).
+     */
     var acceptLanguage: String
         set(value) { api.acceptLanguage = value }
         get() { return api.acceptLanguage }
 
+    /** Listener that will be notified about PowerAuth and Activation changes */
     var listener: VerificationServiceListener? = null
 
     /** PRIVATE PROPERTIES & CLASSES */
@@ -77,8 +94,23 @@ class VerificationService(
         }
     }
 
+    /** Time in seconds that user needs to wait between OTP resend calls */
+    fun otpResendPeriodInSeconds(): Long? {
+        val period = lastStatus?.responseObject?.config?.otpResendPeriod ?: return null
+        return try {
+            Duration.parse(period).seconds
+        } catch (t: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * Status of the verification.
+     *
+     * @param callback Callback with the result.
+     */
     fun status(callback: (Result<Success>) -> Unit) {
-        api.status(object: IApiCallResponseListener<VerificationStatusResponse> {
+        api.getStatus(object: IApiCallResponseListener<VerificationStatusResponse> {
             override fun onSuccess(result: VerificationStatusResponse) {
                 when (result.responseObject.status) {
                     IdentityVerificationStatus.FAILED, IdentityVerificationStatus.REJECTED, IdentityVerificationStatus.NOT_INITIALIZED, IdentityVerificationStatus.ACCEPTED -> {
@@ -163,11 +195,16 @@ class VerificationService(
         })
     }
 
+    /**
+     * Returns consent text for user to approve.
+     *
+     * @param callback Callback with the result.
+     */
     fun consentGet(callback: (Result<Success>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
-        api.consentText(
+        api.getConsentText(
             processId,
             object : IApiCallResponseListener<ConsentResponse> {
                 override fun onSuccess(result: ConsentResponse) {
@@ -184,11 +221,16 @@ class VerificationService(
         )
     }
 
+    /**
+     * Approves the consent for this process and starts the activation.
+     *
+     * @param callback Callback with the result.
+     */
     fun consentApprove(callback: (Result<Success>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
-        api.approveConsent(
+        api.resolveConsent(
             processId,
             true,
             object : IApiCallResponseListener<ConsentApproveResponse> {
@@ -214,16 +256,22 @@ class VerificationService(
         )
     }
 
+    /**
+     * Returns a token for the document scanning SDK, when needed.
+     *
+     * @param challenge SDK generated challenge for the server
+     * @param callback Callback with the token for the SDK.
+     */
     fun documentsInitSDK(challenge: String, callback: (Result<String>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
-        api.documentSdkInit(
+        api.initScanSDK(
             processId,
             challenge,
             object : IApiCallResponseListener<SDKInitResponse> {
                 override fun onSuccess(result: SDKInitResponse) {
-                    markCompleted(challenge, callback)
+                    markCompleted(result.responseObject.attributes.responseToken, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
@@ -233,12 +281,26 @@ class VerificationService(
         )
     }
 
+    /**
+     * Set document types to scan
+     *
+     * @param types Types of documents to scan.
+     * @param callback Callback with the result.
+     */
     fun documentsSetSelectedTypes(types: List<DocumentType>, callback: (Result<Success>) -> Unit) {
+        // TODO: We should verify that we're in the expected state here
         val process = VerificationScanProcess(types)
         cachedProcess = process
         markCompleted(VerificationStateScanDocumentData(process), callback)
     }
 
+    /**
+     * Upload document files to the server.
+     *
+     * @param files Document files.
+     * @param progressCallback Upload progress callback. (Not working at the moment)
+     * @param callback Callback with the result.
+     */
     fun documentsSubmit(files: List<DocumentFile>, progressCallback: (Double) -> Unit, callback: (Result<Success>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -267,6 +329,11 @@ class VerificationService(
         }
     }
 
+    /**
+     * Starts presence check. This returns attributes that are needed to start presence check SDK.
+     *
+     * @param callback Callback with the result.
+     */
     fun presenceCheckInit(callback: (Result<Map<String, Any>>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -285,6 +352,11 @@ class VerificationService(
         )
     }
 
+    /**
+     * Marks that presence check was performed.
+     *
+     * @param callback Callback with the result.
+     */
     fun presenceCheckSubmit(callback: (Result<Success>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -306,11 +378,16 @@ class VerificationService(
         )
     }
 
+    /**
+     * Restarts verification. When sucessfully called, intro screen should be presented.
+     *
+     * @param callback Callback with the result.
+     */
     fun restartVerification(callback: (Result<Success>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
-        api.cancel(
+        api.cleanup(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
@@ -324,6 +401,11 @@ class VerificationService(
         )
     }
 
+    /**
+     * Cancels the whole activation/verification. After this it's no longer call any API endpoint and PowerAuth activation should be removed.
+     *
+     * @param callback Callback with the result.
+     */
     fun cancelWholeProcess(callback: (Result<Unit>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -342,6 +424,12 @@ class VerificationService(
         )
     }
 
+    /**
+     * Verify OTP that user entered as a last step of the verification.
+     *
+     * @param otp User entered OTP.
+     * @param callback Callback with the result.
+     */
     fun verifyOTP(otp: String, callback: (Result<Success>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -376,6 +464,11 @@ class VerificationService(
         )
     }
 
+    /**
+     * Requests OTP resend.
+     *
+     * @param callback Callback with the result.
+     */
     fun resendOTP(callback: (Result<Unit>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -394,6 +487,11 @@ class VerificationService(
         )
     }
 
+    /**
+     * Demo endpoint available only in Wultra Demo systems.
+     *
+     * @param callback Callback with the result.
+     */
     fun getOTP(callback: (Result<String>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
@@ -406,7 +504,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    markCompleted(error, callback)
+                    callback(Result.failure(Fail(error)))
                 }
             }
         )
@@ -414,8 +512,24 @@ class VerificationService(
 
     // Public Helper Classes
 
+    /**
+     * Success result with next state that should be presented
+     *
+     * @property state State of the verification for app to display
+     */
     data class Success(val state: VerificationStateData)
+
+    /**
+     * Error result with cause of the error and state that should be presented (optional).
+     *
+     * Note that state will be filled only when the error indicates state change.
+     *
+     * @constructor
+     *
+     * @param cause Cause of the error.
+     */
     class Fail(cause: ApiError): Exception(cause.toException()) {
+        /** State of the verification for app to display */
         val state: VerificationStateData? = when (cause.error) {
             ApiErrorCode.ONBOARDING_FAILED -> VerificationStateEndstateData(EndstateReason.OTHER)
             ApiErrorCode.IDENTITY_VERIFICATION_FAILED -> VerificationStateFailedData
@@ -424,8 +538,10 @@ class VerificationService(
             else -> null
         }
     }
-    object ActivationNotActiveException: Exception()
-    object ActivationMissingStatusException: Exception()
+    /** PowerAuth instance cannot start the activation. */
+    object ActivationNotActiveException: Exception("PowerAuth instance cannot start the activation.")
+    /** Verification status needs to be fetched first */
+    object ActivationMissingStatusException: Exception("Verification status needs to be fetched first.")
 
     // Private helper methods
 
@@ -481,18 +597,38 @@ class VerificationService(
     }
 }
 
+/**
+ * Listener of the Onboarding Verification Service that can listen on Verification Status and PowerAuth Status changes.
+ *
+ */
 interface VerificationServiceListener {
-    fun verificationStatusChanged(service: VerificationService, status: VerificationStateData)
+
+    /**
+     * Called when PowerAuth activation status changed.
+     *
+     * Note that this happens only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change.
+     *
+     * @param service Origin service
+     * @param status Status
+     */
     fun powerAuthActivationStatusChanged(service: VerificationService, status: ActivationStatus?)
+
+    /**
+     * Called when state of the verification has changed.
+     *
+     * @param service Origin service
+     * @param status Status
+     */
+    fun verificationStatusChanged(service: VerificationService, status: VerificationStateData)
 }
 
-enum class DocumentAction {
+internal enum class DocumentAction {
     PROCEED,
     ERROR,
     WAIT
 }
 
-fun Document.action(): DocumentAction {
+internal fun Document.action(): DocumentAction {
     return when (status) {
         DocumentStatus.ACCEPTED -> DocumentAction.PROCEED
         DocumentStatus.UPLOAD_IN_PROGRESS, DocumentStatus.IN_PROGRESS, DocumentStatus.VERIFICATION_PENDING, DocumentStatus.VERIFICATION_IN_PROGRESS -> DocumentAction.WAIT

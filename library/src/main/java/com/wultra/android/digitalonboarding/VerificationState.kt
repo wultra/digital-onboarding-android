@@ -16,6 +16,7 @@
 
 package com.wultra.android.digitalonboarding
 
+/** State which should be presented to the user */
 enum class VerificationState {
 
     /** Show verification introduction screen */

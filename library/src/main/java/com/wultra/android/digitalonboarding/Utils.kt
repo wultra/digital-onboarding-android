@@ -18,19 +18,14 @@ package com.wultra.android.digitalonboarding
 
 import com.wultra.android.powerauth.networking.error.ApiError
 import com.wultra.android.powerauth.networking.error.ApiErrorException
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
 
-val delaysCoroutineName = CoroutineName("DelaysCoroutineDispatcher")
-
-val delaysCoroutineScope = CoroutineScope(Dispatchers.Main + delaysCoroutineName)
-
+/** Creates [ApiErrorException] out of the error */
 fun ApiError.toException() = ApiErrorException(this)
 
+/** If the error means that the device is offline. */
 fun ApiError.isOffline(): Boolean {
     fun Throwable.isOffline() = this is ConnectException || this is UnknownHostException || this is SocketException
     return e.isOffline() || e.cause?.isOffline() == true

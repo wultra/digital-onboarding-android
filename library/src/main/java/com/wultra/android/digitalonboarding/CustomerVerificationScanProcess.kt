@@ -14,6 +14,8 @@
  * and limitations under the License.
  */
 
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package com.wultra.android.digitalonboarding
 
 import com.wultra.android.digitalonboarding.networking.Document
@@ -61,6 +63,11 @@ class VerificationScanProcess {
     }
 }
 
+/**
+ * Document that needs to be scanned during process
+ *
+ * @property type Type of the document
+ */
 class ScannedDocument(val type: DocumentType) {
 
     enum class UploadState {
@@ -74,6 +81,7 @@ class ScannedDocument(val type: DocumentType) {
 
     internal var serverResult: List<Document>? = null
 
+    /** Upload state of the document */
     fun uploadState(): UploadState {
         val serverResult = serverResult ?: return UploadState.NOT_UPLOADED
 

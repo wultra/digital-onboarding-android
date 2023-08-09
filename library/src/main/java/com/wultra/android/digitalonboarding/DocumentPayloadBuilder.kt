@@ -26,7 +26,7 @@ import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class DocumentPayloadBuilder {
+internal class DocumentPayloadBuilder {
 
     companion object {
 

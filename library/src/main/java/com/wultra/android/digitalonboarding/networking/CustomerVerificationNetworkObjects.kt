@@ -23,291 +23,189 @@ import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 import com.wultra.android.powerauth.networking.data.StatusResponse
 
-// TODO: make all internal
+internal object EmptyRequest: ObjectRequest<EmptyRequestData>(EmptyRequestData)
+internal object EmptyRequestData
 
-object EmptyRequest: ObjectRequest<EmptyRequestData>(EmptyRequestData)
-object EmptyRequestData
-class VerificationStatusResponse(responseObject: VerificationStatusResponseData, status: Status): ObjectResponse<VerificationStatusResponseData>(responseObject, status)
-class VerificationStatusResponseData(
-    @SerializedName("processId")
-    val processId: String,
-
-    @SerializedName("identityVerificationStatus")
-    val status: IdentityVerificationStatus,
-
-    @SerializedName("identityVerificationPhase")
-    val phase: VerificationPhase?
+internal class VerificationStatusResponse(responseObject: VerificationStatusResponseData, status: Status): ObjectResponse<VerificationStatusResponseData>(responseObject, status)
+internal class VerificationStatusResponseData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
+    @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
+    @SerializedName("config") val config: IdentityVerificationConfig
+)
+internal class IdentityVerificationConfig(
+    @SerializedName("otpResendPeriod") val otpResendPeriod: String
 )
 
-enum class IdentityVerificationStatus {
-    @SerializedName("NOT_INITIALIZED")
-    NOT_INITIALIZED,
-
-    @SerializedName("IN_PROGRESS")
-    IN_PROGRESS,
-
-    @SerializedName("VERIFICATION_PENDING")
-    VERIFICATION_PENDING,
-
-    @SerializedName("ACCEPTED")
-    ACCEPTED,
-
-    @SerializedName("FAILED")
-    FAILED,
-
-    @SerializedName("REJECTED")
-    REJECTED
+internal enum class IdentityVerificationStatus {
+    @SerializedName("NOT_INITIALIZED") NOT_INITIALIZED,
+    @SerializedName("IN_PROGRESS") IN_PROGRESS,
+    @SerializedName("VERIFICATION_PENDING") VERIFICATION_PENDING,
+    @SerializedName("ACCEPTED") ACCEPTED,
+    @SerializedName("FAILED") FAILED,
+    @SerializedName("REJECTED") REJECTED
 }
 
-enum class VerificationPhase {
-    @SerializedName("DOCUMENT_UPLOAD")
-    DOCUMENT_UPLOAD,
-
-    @SerializedName("PRESENCE_CHECK")
-    PRESENCE_CHECK,
-
-    @SerializedName("CLIENT_EVALUATION")
-    CLIENT_EVALUATION,
-
-    @SerializedName("DOCUMENT_VERIFICATION")
-    DOCUMENT_VERIFICATION,
-
-    @SerializedName("DOCUMENT_VERIFICATION_FINAL")
-    DOCUMENT_VERIFICATION_FINAL,
-
-    @SerializedName("OTP_VERIFICATION")
-    OTP_VERIFICATION,
-
-    @SerializedName("COMPLETED")
-    COMPLETED
+internal enum class VerificationPhase {
+    @SerializedName("DOCUMENT_UPLOAD") DOCUMENT_UPLOAD,
+    @SerializedName("PRESENCE_CHECK") PRESENCE_CHECK,
+    @SerializedName("CLIENT_EVALUATION") CLIENT_EVALUATION,
+    @SerializedName("DOCUMENT_VERIFICATION") DOCUMENT_VERIFICATION,
+    @SerializedName("DOCUMENT_VERIFICATION_FINAL") DOCUMENT_VERIFICATION_FINAL,
+    @SerializedName("OTP_VERIFICATION") OTP_VERIFICATION,
+    @SerializedName("COMPLETED") COMPLETED
 }
 
-class DocumentsStatusRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
+internal class DocumentsStatusRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
     VerificationProcessRequestData(processId)
 )
-class DocumentsStatusResponse(responseObject: DocumentsStatusResponseData, status: Status): ObjectResponse<DocumentsStatusResponseData>(responseObject, status)
-class DocumentsStatusResponseData(
-    @SerializedName("status")
-    val status: DocumentStatus,
-
-    @SerializedName("documents")
-    val documents: List<Document>
+internal class DocumentsStatusResponse(responseObject: DocumentsStatusResponseData, status: Status): ObjectResponse<DocumentsStatusResponseData>(responseObject, status)
+internal class DocumentsStatusResponseData(
+    @SerializedName("status") val status: DocumentStatus,
+    @SerializedName("documents") val documents: List<Document>
 )
 
-class Document(
-    @SerializedName("filename")
-    val filename: String,
-
-    @SerializedName("id")
-    val id: String,
-
-    @SerializedName("type")
-    val type: DocumentSubmitFileType,
-
-    @SerializedName("side")
-    val side: DocumentFileSide?,
-
-    @SerializedName("status")
-    val status: DocumentStatus,
-
-    @SerializedName("errors")
-    val errors: List<String>?
+internal class Document(
+    @SerializedName("filename") val filename: String,
+    @SerializedName("id") val id: String,
+    @SerializedName("type") val type: DocumentSubmitFileType,
+    @SerializedName("side") val side: DocumentFileSide?,
+    @SerializedName("status") val status: DocumentStatus,
+    @SerializedName("errors") val errors: List<String>?
 )
 
-enum class DocumentStatus {
-    @SerializedName("ACCEPTED")
-    ACCEPTED,
-
-    @SerializedName("UPLOAD_IN_PROGRESS")
-    UPLOAD_IN_PROGRESS,
-
-    @SerializedName("IN_PROGRESS")
-    IN_PROGRESS,
-
-    @SerializedName("VERIFICATION_PENDING")
-    VERIFICATION_PENDING,
-
-    @SerializedName("VERIFICATION_IN_PROGRESS")
-    VERIFICATION_IN_PROGRESS,
-
-    @SerializedName("REJECTED")
-    REJECTED,
-
-    @SerializedName("FAILED")
-    FAILED
+internal enum class DocumentStatus {
+    @SerializedName("ACCEPTED") ACCEPTED,
+    @SerializedName("UPLOAD_IN_PROGRESS") UPLOAD_IN_PROGRESS,
+    @SerializedName("IN_PROGRESS") IN_PROGRESS,
+    @SerializedName("VERIFICATION_PENDING") VERIFICATION_PENDING,
+    @SerializedName("VERIFICATION_IN_PROGRESS") VERIFICATION_IN_PROGRESS,
+    @SerializedName("REJECTED") REJECTED,
+    @SerializedName("FAILED") FAILED
 }
 
-enum class DocumentSubmitFileType {
-    @SerializedName("ID_CARD")
-    ID_CARD,
-
-    @SerializedName("PASSPORT")
-    PASSPORT,
-
-    @SerializedName("DRIVING_LICENSE")
-    DRIVING_LICENSE,
-
-    @SerializedName("SELFIE_PHOTO")
-    SELFIE_PHOTO
+internal enum class DocumentSubmitFileType {
+    @SerializedName("ID_CARD") ID_CARD,
+    @SerializedName("PASSPORT") PASSPORT,
+    @SerializedName("DRIVING_LICENSE") DRIVING_LICENSE,
+    @SerializedName("SELFIE_PHOTO") SELFIE_PHOTO
 }
 
-enum class DocumentFileSide {
-    @SerializedName("FRONT")
-    FRONT,
-
-    @SerializedName("BACK")
-    BACK
+internal enum class DocumentFileSide {
+    @SerializedName("FRONT") FRONT,
+    @SerializedName("BACK") BACK
 }
 
-class StartRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
+internal class StartRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
     VerificationProcessRequestData(processId)
 )
-class CancelRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
+internal class CancelRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
     VerificationProcessRequestData(processId)
 )
-open class VerificationProcessRequestData(
-    @SerializedName("processId")
-    val processId: String
+internal open class VerificationProcessRequestData(
+    @SerializedName("processId") val processId: String
 )
 
-class ConsentRequest(processId: String, consentType: String = "GDPR"): ObjectRequest<ConsentRequestData>(
+internal class ConsentRequest(processId: String, consentType: String = "GDPR"): ObjectRequest<ConsentRequestData>(
     ConsentRequestData(processId, consentType)
 )
-class ConsentRequestData(
-    @SerializedName("processId")
-    val processId: String,
-
-    @SerializedName("consentType")
-    val consentType: String
+internal class ConsentRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("consentType") val consentType: String
 )
-class ConsentResponse(
+internal class ConsentResponse(
     responseObject: ConsentResponseData,
     status: Status
 ): ObjectResponse<ConsentResponseData>(responseObject, status)
-class ConsentResponseData(
-    @SerializedName("consentText")
-    val consentText: String
+
+internal class ConsentResponseData(
+    @SerializedName("consentText") val consentText: String
 )
 
-class ConsentApproveRequest(
+internal class ConsentApproveRequest(
     processId: String,
     approved: Boolean,
     consentType: String = "GDPR"
 ): ObjectRequest<ConsentApproveRequestData>(ConsentApproveRequestData(processId, approved, consentType))
-class ConsentApproveRequestData(
-    @SerializedName("processId")
-    val processId: String,
 
-    @SerializedName("approved")
-    val approved: Boolean,
-
-    @SerializedName("consentType")
-    val consentType: String
+internal class ConsentApproveRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("approved") val approved: Boolean,
+    @SerializedName("consentType") val consentType: String
 )
-class ConsentApproveResponse(status: Status): StatusResponse(status)
+internal class ConsentApproveResponse(status: Status): StatusResponse(status)
 
-class SDKInitRequest(processId: String, challenge: String): ObjectRequest<SDKInitRequestData>(
+internal class SDKInitRequest(processId: String, challenge: String): ObjectRequest<SDKInitRequestData>(
     SDKInitRequestData(processId, SDKInitRequestDataAttributes(challenge))
 )
-class SDKInitRequestData(
-    @SerializedName("processId")
-    val processId: String,
-
-    @SerializedName("attributes")
-    val attributes: SDKInitRequestDataAttributes
+internal class SDKInitRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("attributes") val attributes: SDKInitRequestDataAttributes
 )
-class SDKInitRequestDataAttributes(
-    @SerializedName("sdk-init-token")
-    val challengeToken: String
+internal class SDKInitRequestDataAttributes(
+    @SerializedName("sdk-init-token") val challengeToken: String
 )
-class SDKInitResponse(
+internal class SDKInitResponse(
     responseObject: SDKInitResponseData,
     status: Status
 ): ObjectResponse<SDKInitResponseData>(responseObject, status)
-class SDKInitResponseData(
-    @SerializedName("attributes")
-    val attributes: SDKInitResponseDataAttributes
+internal class SDKInitResponseData(
+    @SerializedName("attributes") val attributes: SDKInitResponseDataAttributes
 )
 // TODO: this needs to be more generic/configurable
-class SDKInitResponseDataAttributes(
-    @SerializedName("zenid-sdk-init-response")
-    val responseToken: String
+internal class SDKInitResponseDataAttributes(
+    @SerializedName("zenid-sdk-init-response") val responseToken: String
 )
 
-class DocumentSubmitRequest(data: DocumentSubmitRequestData): ObjectRequest<DocumentSubmitRequestData>(data)
-class DocumentSubmitRequestData(
+internal class DocumentSubmitRequest(data: DocumentSubmitRequestData): ObjectRequest<DocumentSubmitRequestData>(data)
+internal class DocumentSubmitRequestData(
     processId: String,
-    @SerializedName("data")
-    val data: String,
-
-    @SerializedName("resubmit")
-    val resubmit: Boolean,
-
-    @SerializedName("documents")
-    val documents: List<DocumentSubmitFile>
+    @SerializedName("data") val data: String,
+    @SerializedName("resubmit") val resubmit: Boolean,
+    @SerializedName("documents") val documents: List<DocumentSubmitFile>
 ): VerificationProcessRequestData(processId)
 
-data class DocumentSubmitFile(
-    @SerializedName("filename")
-    val filename: String,
-
-    @SerializedName("type")
-    val type: DocumentSubmitFileType,
-
-    @SerializedName("side")
-    val side: DocumentFileSide?,
-
-    @SerializedName("originalDocumentId")
-    val originalDocumentId: String?
+internal data class DocumentSubmitFile(
+    @SerializedName("filename") val filename: String,
+    @SerializedName("type") val type: DocumentSubmitFileType,
+    @SerializedName("side") val side: DocumentFileSide?,
+    @SerializedName("originalDocumentId") val originalDocumentId: String?
 )
 
-class DocumentSubmitResponse(status: Status): StatusResponse(status)
+internal class DocumentSubmitResponse(status: Status): StatusResponse(status)
 
-class PresenceCheckRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
+internal class PresenceCheckRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
     VerificationProcessRequestData((processId))
 )
-class PresenceCheckResponse(responseObject: PresenceCheckResponseData, status: Status): ObjectResponse<PresenceCheckResponseData>(responseObject, status)
-class PresenceCheckResponseData(
-    @SerializedName("sessionAttributes")
-    val attributes: Map<String, Any>
+internal class PresenceCheckResponse(responseObject: PresenceCheckResponseData, status: Status): ObjectResponse<PresenceCheckResponseData>(responseObject, status)
+internal class PresenceCheckResponseData(
+    @SerializedName("sessionAttributes") val attributes: Map<String, Any>
 )
 
-class PresenceCheckSubmitRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
+internal class PresenceCheckSubmitRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
     VerificationProcessRequestData(processId)
 )
 
-class VerificationResendOtpRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
+internal class VerificationResendOtpRequest(processId: String): ObjectRequest<VerificationProcessRequestData>(
     VerificationProcessRequestData((processId))
 )
-class ResendOtpResponse(status: Status): StatusResponse(status)
+internal class ResendOtpResponse(status: Status): StatusResponse(status)
 
-class VerifyOtpRequest(processId: String, otp: String): ObjectRequest<VerifyOtpRequestData>(
+internal class VerifyOtpRequest(processId: String, otp: String): ObjectRequest<VerifyOtpRequestData>(
     VerifyOtpRequestData(processId, otp)
 )
-class VerifyOtpRequestData(
-    @SerializedName("processId")
-    val processId: String,
-
-    @SerializedName("otpCode")
-    val otp: String
+internal class VerifyOtpRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("otpCode") val otp: String
 )
-class VerifyOtpResponse(
+internal class VerifyOtpResponse(
     responseObject: VerifyOtpResponseData,
     status: Status
 ): ObjectResponse<VerifyOtpResponseData>(responseObject, status)
-class VerifyOtpResponseData(
-    @SerializedName("processId")
-    val processId: String,
-
-    @SerializedName("onboardingStatus")
-    val onboardingStatus: OnboardingStatus,
-
-    @SerializedName("verified")
-    val verified: Boolean,
-
-    @SerializedName("expired")
-    val expired: Boolean,
-
-    @SerializedName("remainingAttempts")
-    val remainingAttempts: Int
+internal class VerifyOtpResponseData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus,
+    @SerializedName("verified") val verified: Boolean,
+    @SerializedName("expired") val expired: Boolean,
+    @SerializedName("remainingAttempts") val remainingAttempts: Int
 )
