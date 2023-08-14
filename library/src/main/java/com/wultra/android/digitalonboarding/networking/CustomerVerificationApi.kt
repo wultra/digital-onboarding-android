@@ -147,8 +147,6 @@ internal class CustomerVerificationApi(
         )
     }
 
-
-
     /**
      * Provides necessary data to init scan SDK (like ZenID).
      *

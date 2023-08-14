@@ -24,3 +24,7 @@ ktlint_standard_no-wildcard-imports = disabled
 
 # sometimes this is good thing
 ktlint_standard_filename = disabled
+
+# we have a lot of networking object so to keep them as compressed as possible, we want them one-lined
+ktlint_standard_annotation = disabled
+ktlint_standard_spacing-between-declarations-with-annotations = disabled

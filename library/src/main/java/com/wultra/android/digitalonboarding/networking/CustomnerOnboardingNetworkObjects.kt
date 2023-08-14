@@ -60,4 +60,5 @@ internal class GetStatusResponse(responseObject: ProcessResponseData, status: St
 internal class ProcessRequestData(@SerializedName("processId") val processId: String)
 internal class ProcessResponseData(
     @SerializedName("processId") val processId: String,
-    @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus)
+    @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus
+)
