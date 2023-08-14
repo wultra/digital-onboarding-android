@@ -1,0 +1,40 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - develop
+      - releases/*
+  pull_request:
+
+jobs:
+  ktlint:
+    name: ktlint
+    runs-on: macos-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+      - name: Run lint script
+        run: ./scripts/lint.sh
+
+  androidLint:
+    name: Android Lint
+    runs-on: macos-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      - name: Android Lint
+        run: ./gradlew clean library:lint
+      - name: Upload Android Lint results artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-lint-results-debug
+          path: app/build/reports/lint-results-debug.html
+          retention-days: 3
