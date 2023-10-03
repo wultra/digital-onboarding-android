@@ -564,8 +564,8 @@ class VerificationService(
                     override fun onActivationStatusSucceed(status: ActivationStatus?) {
                         if (status?.state != ActivationStatus.State_Active) {
                             listener?.powerAuthActivationStatusChanged(this@VerificationService, status)
-                            markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
                         }
+                        markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
                     }
 
                     override fun onActivationStatusFailed(t: Throwable) {
