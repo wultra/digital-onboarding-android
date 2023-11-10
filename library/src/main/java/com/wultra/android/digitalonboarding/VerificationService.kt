@@ -539,7 +539,7 @@ class VerificationService(
         }
     }
     /** PowerAuth instance cannot start the activation. */
-    object ActivationNotActiveException: Exception("PowerAuth instance cannot start the activation.")
+    object ActivationNotActiveException: Exception("PowerAuth instance is not in the active state.")
     /** Verification status needs to be fetched first */
     object ActivationMissingStatusException: Exception("Verification status needs to be fetched first.")
 
@@ -564,8 +564,10 @@ class VerificationService(
                     override fun onActivationStatusSucceed(status: ActivationStatus?) {
                         if (status?.state != ActivationStatus.State_Active) {
                             listener?.powerAuthActivationStatusChanged(this@VerificationService, status)
+                            markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
+                        } else {
+                            markCompleted(Fail(error), callback)
                         }
-                        markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
                     }
 
                     override fun onActivationStatusFailed(t: Throwable) {

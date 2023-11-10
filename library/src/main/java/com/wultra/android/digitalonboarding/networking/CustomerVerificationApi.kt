@@ -55,7 +55,7 @@ internal class CustomerVerificationApi(
         private val presenceCheckEndpoint = EndpointSigned<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init")
         private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
-        private val resendVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify")
+        private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify")
     }
 
     /**
@@ -277,7 +277,7 @@ internal class CustomerVerificationApi(
     fun verifyOtp(processId: String, otp: String, listener: IApiCallResponseListener<VerifyOtpResponse>) {
         post(
             VerifyOtpRequest(processId, otp),
-            resendVerifyEndpoint,
+            otpVerifyEndpoint,
             null,
             powerAuthSDK.getEciesEncryptorForActivationScope(appContext),
             null,
