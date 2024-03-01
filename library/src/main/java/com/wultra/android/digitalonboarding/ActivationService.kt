@@ -67,7 +67,7 @@ class ActivationService(
         VERIFICATION_IN_PROGRESS,
         /** Activation failed */
         FAILED,
-        /** Both activation and verification was finished */
+        /** Both activation and verification were finished */
         FINISHED;
 
         internal companion object {
@@ -116,12 +116,11 @@ class ActivationService(
      *
      * Note that when the result is `true` it can be already discontinued on the server.
      * Calling `status` in such case is recommended.
-     *
      */
     fun hasActiveProcess() = processId != null
 
     /**
-     * Retrieves status of the onboarding activation.
+     * Retrieves the status of the onboarding activation.
      *
      * @param callback Callback with the result.
      */
@@ -179,7 +178,7 @@ class ActivationService(
     /**
      * Cancels the process.
      *
-     * @param forceCancel When true, the process will be canceled in the SDK even when fails on backend. `true` by default.
+     * @param forceCancel When true, the process will be canceled in the SDK even when fails on the backend. `true` by default.
      * @param callback Callback with the result.
      */
     fun cancel(forceCancel: Boolean = true, callback: (Result<Unit>) -> Unit) {
@@ -246,7 +245,7 @@ class ActivationService(
     /**
      * Activates PowerAuthSDK instance that was passed in the initializer.
      *
-     * @param otp OTP provided by user
+     * @param otp OTP provided by the user
      * @param activationName Name of the activation. Device name by default.
      * @param callback Callback with the result.
      */
