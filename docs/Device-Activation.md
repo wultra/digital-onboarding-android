@@ -16,13 +16,12 @@ To create an instance you will need a `PowerAuthSDK` instance that is __ready to
 [Documentation for `PowerAuthSDK`](https://github.com/wultra/powerauth-mobile-sdk).  
 <!-- end -->
 
-
 Example:
 
 ```kotlin
 val powerAuth = PowerAuthSDK
-            .Builder(...)
-            .build(appContext)
+    .Builder(...)
+    .build(appContext)
             
 val activationService = ActivationService(
     "https://sever.my/path/", // identityserver URL
@@ -43,7 +42,7 @@ To figure out if the activation process has already started and what is the stat
  * Note that when the result is `true` it can be already discontinued on the server.
  * Calling `status` in such case is recommended.
  */
-public fun hasActiveProcess(): Bool
+fun hasActiveProcess(): Bool
 ```
 
 If the process was started, you can verify its status by calling the `status` function. You can show an appropriate UI to the user based on this status.

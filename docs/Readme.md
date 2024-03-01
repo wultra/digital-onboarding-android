@@ -43,7 +43,7 @@ Our dedicated technical and sales representatives are available to guide you in 
 
 ## Open Source Code
 
-The code of the library is open source and you can freely browse it in our GitHub at [https://github.com/wultra/digital-onboarding-apple](https://github.com/wultra/digital-onboarding-android/tree/develop/)
+The code of the library is open source and you can freely browse it in our GitHub at [https://github.com/wultra/digital-onboarding-android](https://github.com/wultra/digital-onboarding-android/tree/develop/)
 
 <!-- begin remove -->
 ## Integration Tutorials

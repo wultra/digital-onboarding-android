@@ -172,8 +172,8 @@ Example:
 
 ```kotlin
 val powerAuth = PowerAuthSDK
-            .Builder(...)
-            .build(appContext)
+    .Builder(...)
+    .build(appContext)
             
 val verificationService = VerificationService(
     "https://sever.my/path/", // identityserver URL
