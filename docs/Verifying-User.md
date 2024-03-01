@@ -1,6 +1,6 @@
 # Verifyng user
 
-If your PowerAuthSDK instance was activated with the `VerificationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
+If your PowerAuthSDK instance was activated with the `ActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
 
 Additional verification means that the user will need to scan his face and documents like ID and/or passport.
 
