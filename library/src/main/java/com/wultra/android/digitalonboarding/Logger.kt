@@ -12,6 +12,7 @@
 package com.wultra.android.digitalonboarding
 
 import android.util.Log
+import com.wultra.android.powerauth.networking.error.ApiError
 
 class Logger {
 
@@ -62,6 +63,10 @@ class Logger {
                     Log.e(TAG, message)
                 }
             }
+        }
+
+        internal fun error(error: ApiError) {
+            error(error.toException())
         }
 
         internal fun error(throwable: Throwable) {

@@ -90,13 +90,18 @@ class VerificationService(
 
     init {
         if (!powerAuthSDK.hasValidActivation()) {
+            D.print("PowerAuth has not a valid activation - clearing cache.")
             cachedProcess = null
         }
     }
 
     /** Time in seconds that user needs to wait between OTP resend calls */
     fun otpResendPeriodInSeconds(): Long? {
-        val period = lastStatus?.responseObject?.config?.otpResendPeriod ?: return null
+        val period = lastStatus?.responseObject?.config?.otpResendPeriod
+        if (period == null) {
+            D.warning("OTP resend period can be provided only when there was at least 1 status call made")
+            return null
+        }
         return try {
             Duration.parse(period).seconds
         } catch (t: Throwable) {
@@ -114,6 +119,7 @@ class VerificationService(
             override fun onSuccess(result: VerificationStatusResponse) {
                 when (result.responseObject.status) {
                     IdentityVerificationStatus.FAILED, IdentityVerificationStatus.REJECTED, IdentityVerificationStatus.NOT_INITIALIZED, IdentityVerificationStatus.ACCEPTED -> {
+                        D.print("We reached endstate, clearing cache")
                         cachedProcess = null
                     }
                     else -> {
@@ -124,44 +130,59 @@ class VerificationService(
                 lastStatus = result
 
                 val nextStep = VerificationStatusNextStep.fromStatusResponse(result.responseObject)
+
+                D.print("Response status: ${result.responseObject.status.name}:${result.responseObject.phase?.name}. NextStep: ${nextStep.value.name}")
+
                 when (nextStep.value) {
                     Value.INTRO -> {
                         markCompleted(VerificationStateIntroData, callback)
                     }
                     Value.DOCUMENT_SCAN -> {
+                        D.print("Asking for a document status.")
                         api.documentsStatus(
                             result.responseObject.processId,
                             object : IApiCallResponseListener<DocumentsStatusResponse> {
                                 override fun onSuccess(result: DocumentsStatusResponse) {
-                                    val documents = result.responseObject.documents
 
+                                    D.print("Document status success.")
+
+                                    val documents = result.responseObject.documents
                                     val cachedProcess = this@VerificationService.cachedProcess
 
                                     if (cachedProcess != null) {
+                                        D.print("Cached process obtained, processing retrieved documents")
                                         cachedProcess.feed(documents)
                                         if (documents.any { it.action() == DocumentAction.ERROR } || documents.any { !it.errors.isNullOrEmpty() }) {
+                                            D.print("There is an document error - returning.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else if (documents.all { it.action() == DocumentAction.PROCEED }) {
+                                            D.print("Document is waiting - continue scanning.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else if (documents.any { it.action() == DocumentAction.WAIT }) {
                                             // TODO: really verification?
+                                            D.print("Document is processing - wait..")
                                             markCompleted(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION), callback)
                                         } else if (documents.isEmpty()) {
+                                            D.print("There are no document - scan first.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else {
                                             // TODO: is this ok?
+                                            D.warning("Unexpected document state - configuration error.")
                                             markCompleted(VerificationStateFailedData, callback)
                                         }
                                     } else {
                                         if (documents.isEmpty()) {
+                                            D.print("No documents scanned - start scanning")
                                             markCompleted(VerificationStateDocumentsToScanSelectData, callback)
                                         } else {
+                                            D.warning("Unexpected document state - configuration/cache error.")
                                             markCompleted(VerificationStateFailedData, callback)
                                         }
                                     }
                                 }
 
                                 override fun onFailure(error: ApiError) {
+                                    D.error("Document status failed : ${error.toException()}")
                                     markCompleted(error, callback)
                                 }
                             }
@@ -189,6 +210,7 @@ class VerificationService(
             }
 
             override fun onFailure(error: ApiError) {
+                D.error("Status failed : ${error.toException()}")
                 lastStatus = null
                 markCompleted(error, callback)
             }
@@ -208,6 +230,7 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<ConsentResponse> {
                 override fun onSuccess(result: ConsentResponse) {
+                    D.print("consentGet success")
                     markCompleted(
                         VerificationStateConsentData(result.responseObject.consentText),
                         callback,
@@ -215,6 +238,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("consentGet failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             },
@@ -235,14 +259,17 @@ class VerificationService(
             true,
             object : IApiCallResponseListener<ConsentApproveResponse> {
                 override fun onSuccess(result: ConsentApproveResponse) {
+                    D.print("consentApprove success - starting the process")
                     api.start(
                         processId,
                         object : IApiCallResponseListener<StatusResponse> {
                             override fun onSuccess(result: StatusResponse) {
+                                D.print("start success")
                                 markCompleted(VerificationStateDocumentsToScanSelectData, callback)
                             }
 
                             override fun onFailure(error: ApiError) {
+                                D.error("start failed : ${error.toException()}")
                                 markCompleted(error, callback)
                             }
                         },
@@ -250,6 +277,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("consentApprove failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             },
@@ -271,10 +299,12 @@ class VerificationService(
             challenge,
             object : IApiCallResponseListener<SDKInitResponse> {
                 override fun onSuccess(result: SDKInitResponse) {
+                    D.print("documentsInitSDK success with token: ${result.responseObject.attributes.responseToken}")
                     markCompleted(result.responseObject.attributes.responseToken, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("consentApprove failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             },
@@ -291,6 +321,7 @@ class VerificationService(
         // TODO: We should verify that we're in the expected state here
         val process = VerificationScanProcess(types)
         cachedProcess = process
+        D.print("Settings documents to scan: ${types.joinToString(",") { it.name }}")
         markCompleted(VerificationStateScanDocumentData(process), callback)
     }
 
@@ -313,6 +344,7 @@ class VerificationService(
                 requestData,
                 object : IApiCallResponseListener<DocumentSubmitResponse> {
                     override fun onSuccess(result: DocumentSubmitResponse) {
+                        D.print("document submitted")
                         markCompleted(
                             VerificationStateProcessingData(ProcessingItem.DOCUMENT_UPLOAD),
                             callback
@@ -320,11 +352,13 @@ class VerificationService(
                     }
 
                     override fun onFailure(error: ApiError) {
+                        D.error("documentsSubmit failed : ${error.toException()}")
                         markCompleted(error, callback)
                     }
                 }
             )
         } catch (e: Throwable) {
+            D.error("Failed to create payload data : $e")
             markCompleted(ApiError(e), callback)
         }
     }
@@ -342,10 +376,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<PresenceCheckResponse> {
                 override fun onSuccess(result: PresenceCheckResponse) {
+                    D.print("presenceCheckInit success with: ${result.responseObject.attributes}")
                     markCompleted(result.responseObject.attributes, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("presenceCheckInit failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             }
@@ -365,6 +401,7 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
+                    D.print("presenceCheckSubmit success")
                     markCompleted(
                         VerificationStateProcessingData(ProcessingItem.VERIFYING_PRESENCE),
                         callback
@@ -372,6 +409,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("presenceCheckSubmit failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             }
@@ -391,10 +429,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
+                    D.print("restartVerification success")
                     markCompleted(VerificationStateIntroData, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("restartVerification failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             }
@@ -414,10 +454,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
+                    D.print("cancelWholeProcess success")
                     callback(Result.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("cancelWholeProcess failed : ${error.toException()}")
                     callback(Result.failure(error.toException()))
                 }
             }
@@ -440,11 +482,13 @@ class VerificationService(
             object : IApiCallResponseListener<VerifyOtpResponse> {
                 override fun onSuccess(result: VerifyOtpResponse) {
                     if (result.responseObject.verified) {
+                        D.print("verifyOTP success")
                         markCompleted(
                             VerificationStateProcessingData(ProcessingItem.OTHER),
                             callback,
                         )
                     } else {
+                        D.error("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}")
                         if (result.responseObject.remainingAttempts > 0 && !result.responseObject.expired) {
                             markCompleted(
                                 VerificationStateOtpData(result.responseObject.remainingAttempts),
@@ -458,6 +502,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("verifyOTP failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             },
@@ -477,10 +522,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<ResendOtpResponse> {
                 override fun onSuccess(result: ResendOtpResponse) {
+                    D.print("resendOTP success")
                     callback(Result.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("verifyOTP failed : ${error.toException()}")
                     markCompleted(error, callback)
                 }
             },
@@ -500,10 +547,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<OTPDetailResponse> {
                 override fun onSuccess(result: OTPDetailResponse) {
+                    D.print("getOTP success")
                     callback(Result.success(result.responseObject.otpCode))
                 }
 
                 override fun onFailure(error: ApiError) {
+                    D.error("verifyOTP failed : ${error.toException()}")
                     callback(Result.failure(Fail(error)))
                 }
             }
@@ -549,6 +598,7 @@ class VerificationService(
 
         val processId = lastStatus?.responseObject?.processId
         if (processId == null) {
+            D.error("ProcessId is required for the requested method but not available. This mean that the process was not started or status was not fetched yet.")
             markCompleted(Fail(ApiError(ActivationMissingStatusException)), callback)
             return null
         }
@@ -557,12 +607,13 @@ class VerificationService(
 
     private fun <T>markCompleted(error: ApiError, callback: (Result<T>) -> Unit) {
         if (!error.isOffline() || error.error == ApiErrorCode.POWERAUTH_AUTH_FAIL) {
-
+            D.error("Fetching activation status to determine if activation was not removed on the server")
             powerAuthSDK.fetchActivationStatusWithCallback(
                 appContext,
                 object : IActivationStatusListener {
                     override fun onActivationStatusSucceed(status: ActivationStatus?) {
                         if (status?.state != ActivationStatus.State_Active) {
+                            D.error("PowerAuth status not active.")
                             listener?.powerAuthActivationStatusChanged(this@VerificationService, status)
                             markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
                         } else {
@@ -571,6 +622,7 @@ class VerificationService(
                     }
 
                     override fun onActivationStatusFailed(t: Throwable) {
+                        D.error("Failed to retrieve PowerAuth status")
                         markCompleted(Fail(ApiError(t)), callback)
                     }
                 }
