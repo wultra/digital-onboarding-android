@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 (Mar 4, 2023)
+
+- Using PowerAuth SDK `1.8.x`
+
+## 1.0.3 (Mar 4, 2023)
+
+- Documentation improvements
+- Logs improvements
+
 ## 1.0.2 (Nov 10, 2023)
 
 - Fixed error handling in verifying OTP endpoint
