@@ -34,6 +34,12 @@ function USAGE
     echo "    -s version | --snapshot version"
     echo "                      Set version to version-SNAPSHOT and exit"
     echo ""
+    echo "    -c | --commit"
+    echo "                      Commit version changes to the git + tag"
+    echo ""
+    echo "    -p | --push"
+    echo "                      Push changes and tags to the git"
+    echo ""
     echo "    -ns | --no-sign"
     echo "                      Don't sign artifacts when publishing"
     echo "                      to local Maven cache"
@@ -102,10 +108,20 @@ function LOAD_CURRENT_VERSION
     else
         LOG " - Clean build : YES"
     fi
+    if [ x$DO_COMMIT == x ]; then
+        LOG " - Commit version : NO"
+    else
+        LOG " - Commit version : YES"
+    fi
+    if [ x$DO_PUSH == x ]; then
+        LOG " - Push to git : NO"
+    else
+        LOG " - Push to git : YES"
+    fi
         
     LOG_LINE
     
-    unset VERSION_NAME
+    # unset VERSION_NAME
     unset GROUP_ID
     unset ARTIFACT_ID
 }
@@ -117,6 +133,8 @@ DO_CLEAN='clean'
 DO_PUBLISH=''
 DO_REPO=''
 DO_SIGN=1
+DO_COMMIT=0
+DO_PUSH=0
 GRADLE_PARAMS=''
 
 while [[ $# -gt 0 ]]
@@ -131,6 +149,10 @@ do
             DO_CLEAN='' ;;
         -ns | --no-sign)
             DO_SIGN=0 ;;
+        -c | --commit)
+            DO_COMMIT=1 ;;
+        -p | --push)
+            DO_PUSH=1 ;;
         central | local)
             DO_REPO=$opt ;;
         -v*)
@@ -199,5 +221,14 @@ DEBUG_LOG "Gradle command line >> ./gradlew $GRADLE_CMD_LINE"
 ./gradlew $GRADLE_CMD_LINE
 ####
 POP_DIR
+
+if [ x$DO_COMMIT == x1 ]; then
+    git commit -m "Bumped version to ${VERSION}"
+    git tag "${VERSION}"
+fi
+
+if [ x$DO_PUSH == x1 ]; then
+    git push --tags
+fi
 
 EXIT_SUCCESS
