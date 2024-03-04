@@ -223,6 +223,7 @@ DEBUG_LOG "Gradle command line >> ./gradlew $GRADLE_CMD_LINE"
 POP_DIR
 
 if [ x$DO_COMMIT == x1 ]; then
+    git add library/gradle.properties
     git commit -m "Bumped version to ${VERSION}"
     git tag "${VERSION}"
 fi
