@@ -18,10 +18,16 @@
 
 package com.wultra.android.digitalonboarding.networking
 
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonParseException
 import com.google.gson.annotations.SerializedName
+import com.wultra.android.digitalonboarding.D
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 import com.wultra.android.powerauth.networking.data.StatusResponse
+import java.lang.reflect.Type
 
 internal object EmptyRequest: ObjectRequest<EmptyRequestData>(EmptyRequestData)
 internal object EmptyRequestData
@@ -152,9 +158,8 @@ internal class SDKInitResponse(
 internal class SDKInitResponseData(
     @SerializedName("attributes") val attributes: SDKInitResponseDataAttributes
 )
-// TODO: this needs to be more generic/configurable
 internal class SDKInitResponseDataAttributes(
-    @SerializedName("zenid-sdk-init-response") val responseToken: String
+    val responseToken: String
 )
 
 internal class DocumentSubmitRequest(data: DocumentSubmitRequestData): ObjectRequest<DocumentSubmitRequestData>(data)
@@ -209,3 +214,12 @@ internal class VerifyOtpResponseData(
     @SerializedName("expired") val expired: Boolean,
     @SerializedName("remainingAttempts") val remainingAttempts: Int
 )
+
+internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKInitResponseDataAttributes> {
+
+    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): SDKInitResponseDataAttributes {
+        val firstEntry = json.asJsonObject.asMap().entries.firstOrNull() ?: throw JsonParseException("No attribute in the response SDKInitResponseDataAttributes")
+        D.print("Using first SDKInitResponseDataAttributes attribute named ${firstEntry.key}")
+        return SDKInitResponseDataAttributes(firstEntry.value.asString)
+    }
+}

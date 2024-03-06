@@ -18,6 +18,7 @@ package com.wultra.android.digitalonboarding.networking
 
 import android.content.Context
 import com.google.gson.GsonBuilder
+import com.wultra.android.digitalonboarding.Utils
 import com.wultra.android.powerauth.networking.*
 import com.wultra.android.powerauth.networking.data.StatusResponse
 import io.getlime.security.powerauth.sdk.PowerAuthAuthentication
@@ -41,7 +42,7 @@ internal class CustomerVerificationApi(
     private val powerAuthSDK: PowerAuthSDK,
     private val appContext: Context
 )
-: Api(identityServerUrl, okHttpClient, powerAuthSDK, GsonBuilder(), appContext) {
+: Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
         private val statusEndpoint = EndpointSignedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
