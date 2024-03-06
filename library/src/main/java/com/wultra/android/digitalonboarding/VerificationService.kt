@@ -488,15 +488,16 @@ class VerificationService(
                             callback,
                         )
                     } else {
-                        D.error("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}")
+                        D.error("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}, expired: ${result.responseObject.expired}")
                         if (result.responseObject.remainingAttempts > 0 && !result.responseObject.expired) {
+                            D.print("There remaining OTP attempts, returning the OTP Status")
                             markCompleted(
                                 VerificationStateOtpData(result.responseObject.remainingAttempts),
                                 callback,
                             )
                         } else {
-                            // TODO: move closer to iOS implementation: self.markCompleted(.failure(.init(.init(reason: .wdo_verification_otpFailed))), completion)
-                            markCompleted(ApiError(Exception("OTP_FAILED")), callback)
+                            D.print("OTP cannot be tried again - returning an OTPFailedException.")
+                            markCompleted(ApiError(OTPFailedException), callback)
                         }
                     }
                 }
@@ -649,6 +650,9 @@ class VerificationService(
 
         callback(Result.failure(fail))
     }
+
+    /** OTP failed to verify. Refresh status to retrieve current status */
+    object OTPFailedException: Exception("OTP failed to verify.")
 }
 
 /**
