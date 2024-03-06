@@ -423,6 +423,7 @@ verification.verifyOTP(userOTP) { result ->
         // React to a new state returned in the result
     }.onFailure {
         // handle error
+        // in case that the OTP cannot be filled again (too mant attempts or other), the `it.reason` will be type of `OTPFailedException`
     }
 }
 ```
@@ -440,6 +441,18 @@ When the process fails, a `FAILED` state is returned. This means that the curren
 ## Endstate state
 
 When the activation is no longer able to be verified (for example did several failed attempts or took too long to finish), the `ENDSTATE` state is returned. In this state there's nothing the user can do to continue. `cancelWholeProcess` shall be called and `removeActivationLocal` should be called on the PowerAuthSDK object. After that, the user should be put into the "fresh install state".
+
+## Errors
+
+All functions that can return an exception are of type `ActivationService.Fail` that contains `cause: ApiError` - more about these `ApiError` errors can be found in [the networking library documentation](https://github.com/wultra/networking-android).
+
+There are 3 custom exceptions that this service is adding:
+
+| Custom `Exception` in the `reason` | Description                                                      |  
+|------------------------------------|------------------------------------------------------------------|
+| `ActivationNotActiveException`     | PowerAuth instance cannot start the activation.                  | 
+| `ActivationMissingStatusException` | Verification status needs to be fetched first.                   | 
+| `OTPFailedException`               | OTP failed to verify. Refresh status to retrieve current status. | 
 
 ## Read next
 
