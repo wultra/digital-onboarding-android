@@ -578,7 +578,7 @@ class VerificationService(
      *
      * @param reason Cause of the error.
      */
-    class Fail(val reason: ApiError): Exception(reason.toException()) {
+    class Fail(val reason: ApiError): Exception() {
         /** State of the verification for app to display */
         val state: VerificationStateData? = when (reason.error) {
             ApiErrorCode.ONBOARDING_FAILED -> VerificationStateEndstateData(EndstateReason.OTHER)
