@@ -576,11 +576,11 @@ class VerificationService(
      *
      * @constructor
      *
-     * @param cause Cause of the error.
+     * @param reason Cause of the error.
      */
-    class Fail(cause: ApiError): Exception(cause.toException()) {
+    class Fail(val reason: ApiError): Exception(reason.toException()) {
         /** State of the verification for app to display */
-        val state: VerificationStateData? = when (cause.error) {
+        val state: VerificationStateData? = when (reason.error) {
             ApiErrorCode.ONBOARDING_FAILED -> VerificationStateEndstateData(EndstateReason.OTHER)
             ApiErrorCode.IDENTITY_VERIFICATION_FAILED -> VerificationStateFailedData
             ApiErrorCode.ONBOARDING_PROCESS_LIMIT_REACHED -> VerificationStateEndstateData(EndstateReason.LIMIT_REACHED)

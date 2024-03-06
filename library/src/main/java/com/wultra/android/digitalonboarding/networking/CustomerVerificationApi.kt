@@ -65,7 +65,6 @@ internal class CustomerVerificationApi(
      * @param listener Result listener
      */
     fun getStatus(listener: IApiCallResponseListener<VerificationStatusResponse>) {
-        // TODO: apiCoroutineScope.launch ?
         post(
             EmptyRequest,
             statusEndpoint,
