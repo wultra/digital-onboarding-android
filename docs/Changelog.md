@@ -4,6 +4,7 @@
 
 - Minor fixes
 - Improved error handling
+- Introduced `WDOResult` that provides strong concrete error types
 
 ## 1.1.0 (Mar 4, 2024)
 
