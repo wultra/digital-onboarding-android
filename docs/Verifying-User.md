@@ -59,8 +59,8 @@ The service can return the state via the `status()` method or various other call
 ### Intro
 
 | `VerificationState` value | `VerificationStateData` class |  
-|--------------|---------------------|
-| `INTRO`  |  `VerificationStateIntroData` | 
+|---------------------------|-------------------------------|
+| `INTRO`                   | `VerificationStateIntroData`  | 
 
 Show the verification introduction screen where the user can start the activation.
 
@@ -68,9 +68,9 @@ The next step should be calling the `getConsentText()`.
 
 ### Consent
 
-| `VerificationState` value | `VerificationStateData` class |  
-|--------------|---------------------|
-| `CONSENT`  |  `VerificationStateConsentData` with `val consentHtml: String` property | 
+| `VerificationState` value | `VerificationStateData` class                                          |  
+|---------------------------|------------------------------------------------------------------------|
+| `CONSENT`                 | `VerificationStateConsentData` with `val consentHtml: String` property | 
 
 Show approve/cancel user consent.
 
@@ -80,18 +80,18 @@ The next step should be calling the `consentApprove()`
 
 ### Select documents to scan
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `DOCUMENTS_TO_SCAN_SELECT`  |  `VerificationStateDocumentsToScanSelectData` | 
+| `VerificationState`        | `VerificationStateData` class                |  
+|----------------------------|----------------------------------------------|
+| `DOCUMENTS_TO_SCAN_SELECT` | `VerificationStateDocumentsToScanSelectData` | 
 
 Show document selection to the user. Which documents are available and how many can the user select is up to your backend configuration.  
 The next step should be calling the `documentsSetSelectedTypes`.
 
 ### Scan document
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `SCAN_DOCUMENT`  |  `VerificationStateScanDocumentData` with `val scanDocumentProcess: VerificationScanProcess` property | 
+| `VerificationState` | `VerificationStateData` class                                                                        |  
+|---------------------|------------------------------------------------------------------------------------------------------|
+| `SCAN_DOCUMENT`     | `VerificationStateScanDocumentData` with `val scanDocumentProcess: VerificationScanProcess` property | 
 
 User should scan documents - display UI for the user to scan all necessary documents.
 
@@ -101,9 +101,9 @@ The next step should be calling the `documentsSubmit`.
 
 ### Processing
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `PROCESSING`  |  `VerificationStateProcessingData` with `val processingItem: ProcessingItem` property | 
+| `VerificationState` | `VerificationStateData` class                                                        |  
+|---------------------|--------------------------------------------------------------------------------------|
+| `PROCESSING`        | `VerificationStateProcessingData` with `val processingItem: ProcessingItem` property | 
 
 The system is processing data - show loading with text hint from provided `ProcessingItem`.
 
@@ -111,9 +111,9 @@ The next step should be calling the `status`.
 
 ### Presence check
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `PRESENCE_CHECK`  |  `VerificationStatePresenceCheckData` | 
+| `VerificationState` | `VerificationStateData` class        |  
+|---------------------|--------------------------------------|
+| `PRESENCE_CHECK`    | `VerificationStatePresenceCheckData` | 
 
 The user should be presented with a presence check.  
 
@@ -123,9 +123,9 @@ The next step should be calling the `presenceCheckInit` to start the check and `
 
 ### OTP
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `OTP`  |  `VerificationStateOtpData` with `val remainingAttempts: Int?` property | 
+| `VerificationState` | `VerificationStateData` class                                          |  
+|---------------------|------------------------------------------------------------------------|
+| `OTP`               | `VerificationStateOtpData` with `val remainingAttempts: Int?` property | 
 
 Show enter OTP screen with the resend button. `remainingAttempts` property contains a number of OTP attempts a user can try.
 
@@ -134,8 +134,8 @@ The next step should be calling the `verifyOTP` with the user-entered OTP. The O
 ### Failed
 
 | `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `FAILED`  |  `VerificationStateFailedData` | 
+|---------------------|-------------------------------|
+| `FAILED`            | `VerificationStateFailedData` | 
 
 Verification failed and can be restarted
 
@@ -143,9 +143,9 @@ The next step should be calling the `restartVerification` or `cancelWholeProcess
 
 ### Endstate
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `ENDSTATE`  |  `VerificationStateEndstateData` with `val endstateReason: EndstateReason` property | 
+| `VerificationState` | `VerificationStateData` class                                                      |  
+|---------------------|------------------------------------------------------------------------------------|
+| `ENDSTATE`          | `VerificationStateEndstateData` with `val endstateReason: EndstateReason` property | 
 
 Verification is canceled and the user needs to start again with a new PowerAuth activation. To explain why that happened, you can show additional information to the user based on the `endstateReason` property.
 
@@ -153,9 +153,9 @@ The next step should be calling the `PowerAuthSDK.removeActivationLocal()` and s
 
 ### Success
 
-| `VerificationState` | `VerificationStateData` class |  
-|--------------|---------------------|
-| `SUCCESS`  |  `VerificationStateSuccessData` | 
+| `VerificationState` | `VerificationStateData` class  |  
+|---------------------|--------------------------------|
+| `SUCCESS`           | `VerificationStateSuccessData` | 
 
 Verification was successfully ended. Continue into your app's regular "log-in" scenario.
 
@@ -199,15 +199,10 @@ verification.status { result ->
     result.onSuccess { stateData ->
         // handle `VerificationService.Success` state and navigate to the expected screen
     }.onFailure { 
-        if (it is VerificationService.Fail) {
-            if (it.state != null) {
-                // show expected screen based on the state
-            } else {
-                // navigate to error screen and show the error in
-                // it.cause
-            }
+        if (it.state != null) {
+            // show expected screen based on the state
         } else {
-            // generic exception handling
+            // navigate to error screen and show the error in `it.reason`
         }
     }
 }
@@ -225,15 +220,10 @@ verification.consentGet { result ->
             // handle consent state
         }
     }.onFailure {
-        if (it is VerificationService.Fail) {
-            if (it.state != null) {
-                // show expected screen based on the state
-            } else {
-                // navigate to error screen and show the error in
-                // it.cause
-            }
+        if (it.state != null) {
+            // show expected screen based on the state
         } else {
-            // generic exception handling
+            // navigate to error screen and show the error in `it.reason`
         }
     }
 }
@@ -255,15 +245,10 @@ verification.consentApprove { result ->
             // handle consent state
         }
     }.onFailure {
-        if (it is VerificationService.Fail) {
-            if (it.state != null) {
-                // show expected screen based on the state
-            } else {
-                // navigate to error screen and show the error in
-                // it.cause
-            }
+        if (it.state != null) {
+            // show expected screen based on the state
         } else {
-            // generic exception handling
+            // navigate to error screen and show the error in `it.reason`
         }
     }
 }
@@ -284,15 +269,10 @@ verification.documentsSetSelectedTypes(list) { result ->
             // handle consent state
         }
     }.onFailure {
-        if (it is VerificationService.Fail) {
-            if (it.state != null) {
-                // show expected screen based on the state
-            } else {
-                // navigate to the error screen and show the error in
-                // it.cause
-            }
+        if (it.state != null) {
+            // show expected screen based on the state
         } else {
-            // generic exception handling
+            // navigate to error screen and show the error in `it.reason`
         }
     }
 }

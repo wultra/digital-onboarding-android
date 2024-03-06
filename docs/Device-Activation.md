@@ -53,7 +53,7 @@ If the process was started, you can verify its status by calling the `status` fu
  *
  * @param callback Callback with the result.
  */
-fun status(callback: (Result<Status>) -> Unit)
+fun status(callback: (ActivationResult<Status>) -> Unit)
 ```
 
 `Status` possible values.
@@ -127,7 +127,7 @@ To start the activation, use the `start` function.
  * @param credentials Object with credentials. Which credentials are needed should be provided by a system/backend provider.
  * @param callback Callback with the result.
  */
-fun <T> start(credentials: T, callback: (Result<Unit>) -> Unit)
+fun <T> start(credentials: T, callback: (ActivationResult<Unit>) -> Unit)
 ```
 
 ### Example
@@ -173,7 +173,7 @@ Use the `activate` function to create the activation.
 fun activate(
     otp: String,
     activationName: String = Build.MODEL,
-    callback: (Result<CreateActivationResult>) -> Unit
+    callback: (ActivationResult<CreateActivationResult>) -> Unit
 )
 ```
 
@@ -215,7 +215,7 @@ To cancel the process, just call the `cancel` function.
  * @param forceCancel When true, the process will be canceled in the SDK even when fails on the backend. `true` by default.
  * @param callback Callback with the result.
  */
-fun cancel(forceCancel: Boolean = true, callback: (Result<Unit>) -> Unit) 
+fun cancel(forceCancel: Boolean = true, callback: (ActivationResult<Unit>) -> Unit) 
 ```
 
 ## OTP resend
@@ -232,20 +232,20 @@ In some cases, you need to resent the OTP:
  *
  * @param callback Callback with the result.
  */
-fun resendOtp(callback: (Result<Unit>) -> Unit)
+fun resendOtp(callback: (ActivationResult<Unit>) -> Unit)
  ```
  
 ## Errors
 
-All functions that can return an exception. The networking exceptions are by the type of `ApiErrorException` - more about these errors can be found in [the networking library documentation](https://github.com/wultra/networking-android).
+All functions that can return an exception are of type `ActivationService.Fail` that contains `cause: ApiError` - more about these `ApiError` errors can be found in [the networking library documentation](https://github.com/wultra/networking-android).
 
 There are 3 custom exceptions that this service is adding:
 
-| Custom `WPNErrorReason` |      Description          |  
-|--------------|---------------------|
-| `ActivationInProgressException`  |  Activation is already in progress.         | 
-| `ActivationNotRunningException`  |  Activation was not started. | 
-| `CannotActivateException`  |  PowerAuth instance cannot start the activation (probably already activated). | 
+| Custom `Exception` in the `cause` | Description                                                                  |  
+|-----------------------------------|------------------------------------------------------------------------------|
+| `ActivationInProgressException`   | Activation is already in progress.                                           | 
+| `ActivationNotRunningException`   | Activation was not started.                                                  | 
+| `CannotActivateException`         | PowerAuth instance cannot start the activation (probably already activated). | 
 
 ## Read next
 - [Verifying User With Document Scan And Genuine Presence Check](Verifying-User.md)

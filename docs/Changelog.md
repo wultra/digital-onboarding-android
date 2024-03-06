@@ -1,10 +1,15 @@
 # Changelog
 
-## 1.1.0 (Mar 4, 2023)
+## 1.1.1 (Mar 6, 2024)
+
+- Minor fixes
+- Improved error handling
+
+## 1.1.0 (Mar 4, 2024)
 
 - Using PowerAuth SDK `1.8.x`
 
-## 1.0.3 (Mar 4, 2023)
+## 1.0.3 (Mar 4, 2024)
 
 - Documentation improvements
 - Logs improvements
