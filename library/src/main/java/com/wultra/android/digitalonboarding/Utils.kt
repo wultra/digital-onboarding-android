@@ -20,14 +20,9 @@ import com.google.gson.GsonBuilder
 import com.wultra.android.digitalonboarding.networking.SDKInitResponseDataAttributes
 import com.wultra.android.digitalonboarding.networking.SDKInitResponseDataAttributesDeserializer
 import com.wultra.android.powerauth.networking.error.ApiError
-import com.wultra.android.powerauth.networking.error.ApiErrorException
-import org.threeten.bp.ZonedDateTime
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
-
-/** Creates [ApiErrorException] out of the error */
-internal fun ApiError.toException() = ApiErrorException(this)
 
 /** If the error means that the device is offline. */
 internal fun ApiError.isOffline(): Boolean {

@@ -218,6 +218,9 @@ internal class VerifyOtpResponseData(
 internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKInitResponseDataAttributes> {
 
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): SDKInitResponseDataAttributes {
+        // This is pretty big oversimplification, but in general, we expect 1 string property with an unknown key (property name).
+        // If this wont fit the customer needs, we gonna need to provide this API as generic or make it provider-based for
+        // different SDK providers.
         val firstEntry = json.asJsonObject.asMap().entries.firstOrNull() ?: throw JsonParseException("No attribute in the response SDKInitResponseDataAttributes")
         D.print("Using first SDKInitResponseDataAttributes attribute named ${firstEntry.key}")
         return SDKInitResponseDataAttributes(firstEntry.value.asString)

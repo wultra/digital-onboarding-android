@@ -17,7 +17,6 @@
 package com.wultra.android.digitalonboarding.networking
 
 import android.content.Context
-import com.google.gson.GsonBuilder
 import com.wultra.android.digitalonboarding.Utils
 import com.wultra.android.powerauth.networking.Api
 import com.wultra.android.powerauth.networking.EndpointBasic
