@@ -32,7 +32,8 @@ import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
-import java.lang.Exception
+
+typealias ActivationResult<T> = WDOResult<T, ActivationService.Fail>
 
 /**
  * Digital Onboarding Activation Service.
@@ -82,6 +83,8 @@ class ActivationService(
         }
     }
 
+    data class Fail(val cause: ApiError)
+
     /**
      * Accept language for the outgoing requests headers.
      * Default value is "en".
@@ -125,7 +128,7 @@ class ActivationService(
      *
      * @param callback Callback with the result.
      */
-    fun status(callback: (Result<Status>) -> Unit) {
+    fun status(callback: (ActivationResult<Status>) -> Unit) {
 
         D.print("Retrieving the status")
 
@@ -139,14 +142,12 @@ class ActivationService(
                 override fun onSuccess(result: GetStatusResponse) {
                     val success = Status.fromResponse(result)
                     D.print("Status call success: ${success.name}")
-                    callback(Result.success(success))
+                    callback(ActivationResult.success(success))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    error.toException().also {
-                        D.error(it)
-                        callback(Result.failure(it))
-                    }
+                    D.error(error)
+                    callback(ActivationResult.failure(Fail(error)))
                 }
             }
         )
@@ -159,11 +160,11 @@ class ActivationService(
      * @param credentials Object with credentials. Which credentials are needed should be provided by a system/backend provider.
      * @param callback Callback with the result.
      */
-    fun <T> start(credentials: T, callback: (Result<Unit>) -> Unit) {
+    fun <T> start(credentials: T, callback: (ActivationResult<Unit>) -> Unit) {
 
         if (processId != null) {
             D.error("Activation can be started only when another activation is not in progress.")
-            callback(Result.failure(ActivationInProgressException))
+            callback(ActivationResult.failure(Fail(ApiError(ActivationInProgressException))))
             return
         }
 
@@ -175,14 +176,12 @@ class ActivationService(
                 override fun onSuccess(result: StartOnboardingResponse) {
                     processId = result.responseObject.processId
                     D.print("Start successful")
-                    callback(Result.success(Unit))
+                    callback(ActivationResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    error.toException().also {
-                        D.error(it)
-                        callback(Result.failure(it))
-                    }
+                    D.error(error)
+                    callback(ActivationResult.failure(Fail(error)))
                 }
             }
         )
@@ -194,7 +193,7 @@ class ActivationService(
      * @param forceCancel When true, the process will be canceled in the SDK even when fails on the backend. `true` by default.
      * @param callback Callback with the result.
      */
-    fun cancel(forceCancel: Boolean = true, callback: (Result<Unit>) -> Unit) {
+    fun cancel(forceCancel: Boolean = true, callback: (ActivationResult<Unit>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -206,19 +205,17 @@ class ActivationService(
                 override fun onSuccess(result: StatusResponse) {
                     this@ActivationService.processId = null
                     D.print("Cancel successful")
-                    callback(Result.success(Unit))
+                    callback(ActivationResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
                     if (forceCancel) {
                         this@ActivationService.processId = null
                         D.warning("Cancel failed, but forceCancel was used - returning success anyway.")
-                        callback(Result.success(Unit))
+                        callback(ActivationResult.success(Unit))
                     } else {
-                        error.toException().also {
-                            D.error(it)
-                            callback(Result.failure(it))
-                        }
+                        D.error(error)
+                        callback(ActivationResult.failure(Fail(error)))
                     }
                 }
             }
@@ -236,7 +233,7 @@ class ActivationService(
      *
      * @param callback Callback with the result.
      */
-    fun resendOtp(callback: (Result<Unit>) -> Unit) {
+    fun resendOtp(callback: (ActivationResult<Unit>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -247,14 +244,12 @@ class ActivationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     D.print("Clear successful")
-                    callback(Result.success(Unit))
+                    callback(ActivationResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    error.toException().also {
-                        D.error(it)
-                        callback(Result.failure(it))
-                    }
+                    D.error(error)
+                    callback(ActivationResult.failure(Fail(error)))
                 }
             }
         )
@@ -279,7 +274,7 @@ class ActivationService(
     fun activate(
         otp: String,
         activationName: String = Build.MODEL,
-        callback: (Result<CreateActivationResult>) -> Unit
+        callback: (ActivationResult<CreateActivationResult>) -> Unit
     ) {
         val processId = guardProcessId(callback) ?: return
 
@@ -291,7 +286,7 @@ class ActivationService(
             result.onSuccess {
                 this.processId = null
                 D.print("PowerAuth activation created")
-                callback(Result.success(it))
+                callback(ActivationResult.success(it))
             }.onFailure {
                 // when no longer possible to retry activation
                 // reset the processID, because we cannot recover
@@ -299,28 +294,28 @@ class ActivationService(
                     this.processId = null
                 }
                 D.print("PowerAuth activation failed - $it")
-                callback(Result.failure(it))
+                callback(ActivationResult.failure(Fail(ApiError(it))))
             }
         }
     }
 
-    private fun <T>guardProcessId(callback: (Result<T>) -> Unit): String? {
+    private fun <S>guardProcessId(callback: (ActivationResult<S>) -> Unit): String? {
 
         val processId = this.processId
         if (processId == null) {
             D.error("ProcessId is required for the requested method but not available. This mean that the process was not started.")
-            callback(Result.failure(ActivationNotRunningException))
+            callback(WDOResult.failure(Fail(ApiError(ActivationNotRunningException))))
             return null
         }
         return processId
     }
 
-    private fun <T>verifyCanStartProcess(callback: (Result<T>) -> Unit): Boolean {
+    private fun <T>verifyCanStartProcess(callback: (ActivationResult<T>) -> Unit): Boolean {
 
         if (!powerAuthSDK.canStartActivation()) {
             D.error("Cannot start the activation: PowerAuthSDK.canStartActivation() == false")
             processId = null
-            callback(Result.failure(CannotActivateException))
+            callback(ActivationResult.failure(Fail(ApiError(CannotActivateException))))
             return false
         }
         return true
@@ -331,7 +326,7 @@ class ActivationService(
      *
      * @param callback Result callback.
      */
-    fun getOtp(callback: (Result<String>) -> Unit) {
+    fun getOtp(callback: (ActivationResult<String>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -340,14 +335,12 @@ class ActivationService(
             object : IApiCallResponseListener<OTPDetailResponse> {
                 override fun onSuccess(result: OTPDetailResponse) {
                     D.print("Get OTP successful")
-                    callback(Result.success(result.responseObject.otpCode))
+                    callback(ActivationResult.success(result.responseObject.otpCode))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    error.toException().also {
-                        D.error(it)
-                        callback(Result.failure(it))
-                    }
+                    D.error(error)
+                    callback(ActivationResult.failure(Fail(error)))
                 }
             }
         )

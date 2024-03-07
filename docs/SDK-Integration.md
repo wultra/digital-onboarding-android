@@ -20,7 +20,7 @@ repositories {
 Then add a dependency
 
 ```kotlin
-implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:1.0.2")
+implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:1.1.1")
 ```
 
 ## Guaranteed PowerAuth Compatibility

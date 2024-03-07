@@ -45,6 +45,8 @@ import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
 import java.time.Duration
 
+typealias VerificationResult = WDOResult<VerificationService.Success, VerificationService.Fail>
+
 /**
  * Digital Onboarding Verification Service
  *
@@ -61,7 +63,6 @@ class VerificationService(
     private val appContext: Context,
     private val powerAuthSDK: PowerAuthSDK
 ) {
-
     /**
      * Accept language for the outgoing requests headers.
      * Default value is "en".
@@ -114,7 +115,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun status(callback: (Result<Success>) -> Unit) {
+    fun status(callback: (VerificationResult) -> Unit) {
         api.getStatus(object: IApiCallResponseListener<VerificationStatusResponse> {
             override fun onSuccess(result: VerificationStatusResponse) {
                 when (result.responseObject.status) {
@@ -182,7 +183,7 @@ class VerificationService(
                                 }
 
                                 override fun onFailure(error: ApiError) {
-                                    D.error("Document status failed : ${error.toException()}")
+                                    D.error("Document status failed : ${error.e}")
                                     markCompleted(error, callback)
                                 }
                             }
@@ -210,7 +211,7 @@ class VerificationService(
             }
 
             override fun onFailure(error: ApiError) {
-                D.error("Status failed : ${error.toException()}")
+                D.error("Status failed : ${error.e}")
                 lastStatus = null
                 markCompleted(error, callback)
             }
@@ -222,7 +223,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun consentGet(callback: (Result<Success>) -> Unit) {
+    fun consentGet(callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -238,7 +239,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("consentGet failed : ${error.toException()}")
+                    D.error("consentGet failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -250,7 +251,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun consentApprove(callback: (Result<Success>) -> Unit) {
+    fun consentApprove(callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -269,7 +270,7 @@ class VerificationService(
                             }
 
                             override fun onFailure(error: ApiError) {
-                                D.error("start failed : ${error.toException()}")
+                                D.error("start failed : ${error.e}")
                                 markCompleted(error, callback)
                             }
                         },
@@ -277,7 +278,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("consentApprove failed : ${error.toException()}")
+                    D.error("consentApprove failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -290,7 +291,7 @@ class VerificationService(
      * @param challenge SDK generated challenge for the server
      * @param callback Callback with the token for the SDK.
      */
-    fun documentsInitSDK(challenge: String, callback: (Result<String>) -> Unit) {
+    fun documentsInitSDK(challenge: String, callback: (WDOResult<String, Fail>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -304,7 +305,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("consentApprove failed : ${error.toException()}")
+                    D.error("consentApprove failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -317,7 +318,7 @@ class VerificationService(
      * @param types Types of documents to scan.
      * @param callback Callback with the result.
      */
-    fun documentsSetSelectedTypes(types: List<DocumentType>, callback: (Result<Success>) -> Unit) {
+    fun documentsSetSelectedTypes(types: List<DocumentType>, callback: (VerificationResult) -> Unit) {
         // TODO: We should verify that we're in the expected state here
         val process = VerificationScanProcess(types)
         cachedProcess = process
@@ -332,11 +333,10 @@ class VerificationService(
      * @param progressCallback Upload progress callback. (Not working at the moment)
      * @param callback Callback with the result.
      */
-    fun documentsSubmit(files: List<DocumentFile>, progressCallback: (Double) -> Unit, callback: (Result<Success>) -> Unit) {
+    fun documentsSubmit(files: List<DocumentFile>, progressCallback: (Double) -> Unit, callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
-        // TODO: different thread?
         // TODO: progress callback
         try {
             val requestData = DocumentPayloadBuilder.build(processId, files)
@@ -352,7 +352,7 @@ class VerificationService(
                     }
 
                     override fun onFailure(error: ApiError) {
-                        D.error("documentsSubmit failed : ${error.toException()}")
+                        D.error("documentsSubmit failed : ${error.e}")
                         markCompleted(error, callback)
                     }
                 }
@@ -368,7 +368,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun presenceCheckInit(callback: (Result<Map<String, Any>>) -> Unit) {
+    fun presenceCheckInit(callback: (WDOResult<Map<String, Any>, Fail>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -381,7 +381,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("presenceCheckInit failed : ${error.toException()}")
+                    D.error("presenceCheckInit failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             }
@@ -393,7 +393,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun presenceCheckSubmit(callback: (Result<Success>) -> Unit) {
+    fun presenceCheckSubmit(callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -409,7 +409,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("presenceCheckSubmit failed : ${error.toException()}")
+                    D.error("presenceCheckSubmit failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             }
@@ -417,11 +417,11 @@ class VerificationService(
     }
 
     /**
-     * Restarts verification. When sucessfully called, intro screen should be presented.
+     * Restarts verification. When successfully called, intro screen should be presented.
      *
      * @param callback Callback with the result.
      */
-    fun restartVerification(callback: (Result<Success>) -> Unit) {
+    fun restartVerification(callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -434,7 +434,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("restartVerification failed : ${error.toException()}")
+                    D.error("restartVerification failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             }
@@ -446,7 +446,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun cancelWholeProcess(callback: (Result<Unit>) -> Unit) {
+    fun cancelWholeProcess(callback: (WDOResult<Unit, Fail>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -455,12 +455,12 @@ class VerificationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     D.print("cancelWholeProcess success")
-                    callback(Result.success(Unit))
+                    callback(WDOResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("cancelWholeProcess failed : ${error.toException()}")
-                    callback(Result.failure(error.toException()))
+                    D.error("cancelWholeProcess failed : ${error.e}")
+                    callback(WDOResult.failure(Fail(error)))
                 }
             }
         )
@@ -472,7 +472,7 @@ class VerificationService(
      * @param otp User entered OTP.
      * @param callback Callback with the result.
      */
-    fun verifyOTP(otp: String, callback: (Result<Success>) -> Unit) {
+    fun verifyOTP(otp: String, callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -488,21 +488,22 @@ class VerificationService(
                             callback,
                         )
                     } else {
-                        D.error("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}")
+                        D.error("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}, expired: ${result.responseObject.expired}")
                         if (result.responseObject.remainingAttempts > 0 && !result.responseObject.expired) {
+                            D.print("There remaining OTP attempts, returning the OTP Status")
                             markCompleted(
                                 VerificationStateOtpData(result.responseObject.remainingAttempts),
                                 callback,
                             )
                         } else {
-                            // TODO: move closer to iOS implementation: self.markCompleted(.failure(.init(.init(reason: .wdo_verification_otpFailed))), completion)
-                            markCompleted(ApiError(Exception("OTP_FAILED")), callback)
+                            D.print("OTP cannot be tried again - returning an OTPFailedException.")
+                            markCompleted(ApiError(OTPFailedException), callback)
                         }
                     }
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("verifyOTP failed : ${error.toException()}")
+                    D.error("verifyOTP failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -514,7 +515,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun resendOTP(callback: (Result<Unit>) -> Unit) {
+    fun resendOTP(callback: (WDOResult<Unit, Fail>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -523,11 +524,11 @@ class VerificationService(
             object : IApiCallResponseListener<ResendOtpResponse> {
                 override fun onSuccess(result: ResendOtpResponse) {
                     D.print("resendOTP success")
-                    callback(Result.success(Unit))
+                    callback(WDOResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("verifyOTP failed : ${error.toException()}")
+                    D.error("verifyOTP failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -539,7 +540,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun getOTP(callback: (Result<String>) -> Unit) {
+    fun getOTP(callback: (WDOResult<String, Fail>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 
@@ -548,12 +549,12 @@ class VerificationService(
             object : IApiCallResponseListener<OTPDetailResponse> {
                 override fun onSuccess(result: OTPDetailResponse) {
                     D.print("getOTP success")
-                    callback(Result.success(result.responseObject.otpCode))
+                    callback(WDOResult.success(result.responseObject.otpCode))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("verifyOTP failed : ${error.toException()}")
-                    callback(Result.failure(Fail(error)))
+                    D.error("verifyOTP failed : ${error.e}")
+                    callback(WDOResult.failure(Fail(error)))
                 }
             }
         )
@@ -575,11 +576,11 @@ class VerificationService(
      *
      * @constructor
      *
-     * @param cause Cause of the error.
+     * @param reason Cause of the error.
      */
-    class Fail(cause: ApiError): Exception(cause.toException()) {
+    class Fail(val reason: ApiError): Exception() {
         /** State of the verification for app to display */
-        val state: VerificationStateData? = when (cause.error) {
+        val state: VerificationStateData? = when (reason.error) {
             ApiErrorCode.ONBOARDING_FAILED -> VerificationStateEndstateData(EndstateReason.OTHER)
             ApiErrorCode.IDENTITY_VERIFICATION_FAILED -> VerificationStateFailedData
             ApiErrorCode.ONBOARDING_PROCESS_LIMIT_REACHED -> VerificationStateEndstateData(EndstateReason.LIMIT_REACHED)
@@ -591,10 +592,12 @@ class VerificationService(
     object ActivationNotActiveException: Exception("PowerAuth instance is not in the active state.")
     /** Verification status needs to be fetched first */
     object ActivationMissingStatusException: Exception("Verification status needs to be fetched first.")
+    /** OTP failed to verify. Refresh status to retrieve current status */
+    object OTPFailedException: Exception("OTP failed to verify.")
 
     // Private helper methods
 
-    private fun <T>guardProcessId(callback: (Result<T>) -> Unit): String? {
+    private fun <T>guardProcessId(callback: (WDOResult<T, Fail>) -> Unit): String? {
 
         val processId = lastStatus?.responseObject?.processId
         if (processId == null) {
@@ -605,7 +608,7 @@ class VerificationService(
         return processId
     }
 
-    private fun <T>markCompleted(error: ApiError, callback: (Result<T>) -> Unit) {
+    private fun <T>markCompleted(error: ApiError, callback: (WDOResult<T, Fail>) -> Unit) {
         if (!error.isOffline() || error.error == ApiErrorCode.POWERAUTH_AUTH_FAIL) {
             D.error("Fetching activation status to determine if activation was not removed on the server")
             powerAuthSDK.fetchActivationStatusWithCallback(
@@ -632,22 +635,22 @@ class VerificationService(
         }
     }
 
-    private fun <T>markCompleted(result: T, callback: (Result<T>) -> Unit) {
-        callback(Result.success(result))
+    private fun <T>markCompleted(result: T, callback: (WDOResult<T, Fail>) -> Unit) {
+        callback(VerificationResult.success(result))
     }
 
-    private fun markCompleted(state: VerificationStateData, callback: (Result<Success>) -> Unit) {
+    private fun markCompleted(state: VerificationStateData, callback: (VerificationResult) -> Unit) {
         val result = Success(state)
         listener?.verificationStatusChanged(this, state)
-        callback(Result.success(result))
+        callback(VerificationResult.success(result))
     }
 
-    private fun <T>markCompleted(fail: Fail, callback: (Result<T>) -> Unit) {
+    private fun <T>markCompleted(fail: Fail, callback: (WDOResult<T, Fail>) -> Unit) {
         if (fail.state != null) {
             listener?.verificationStatusChanged(this, fail.state)
         }
 
-        callback(Result.failure(fail))
+        callback(VerificationResult.failure(fail))
     }
 }
 
