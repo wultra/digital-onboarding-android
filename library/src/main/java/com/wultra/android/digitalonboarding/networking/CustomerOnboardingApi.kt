@@ -17,7 +17,7 @@
 package com.wultra.android.digitalonboarding.networking
 
 import android.content.Context
-import com.google.gson.GsonBuilder
+import com.wultra.android.digitalonboarding.Utils
 import com.wultra.android.powerauth.networking.Api
 import com.wultra.android.powerauth.networking.EndpointBasic
 import com.wultra.android.powerauth.networking.IApiCallResponseListener
@@ -40,7 +40,7 @@ internal class CustomerOnboardingApi(
     okHttpClient: OkHttpClient,
     private val powerAuthSDK: PowerAuthSDK,
     appContext: Context
-) : Api(identityServerUrl, okHttpClient, powerAuthSDK, GsonBuilder(), appContext) {
+) : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
         private fun <T> startEndpoint() = EndpointBasic<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start")

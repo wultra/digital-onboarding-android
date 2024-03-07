@@ -17,8 +17,13 @@
 package com.wultra.android.digitalonboarding.networking
 
 import android.content.Context
-import com.google.gson.GsonBuilder
-import com.wultra.android.powerauth.networking.*
+import com.wultra.android.digitalonboarding.Utils
+import com.wultra.android.powerauth.networking.Api
+import com.wultra.android.powerauth.networking.EndpointBasic
+import com.wultra.android.powerauth.networking.EndpointSigned
+import com.wultra.android.powerauth.networking.EndpointSignedWithToken
+import com.wultra.android.powerauth.networking.IApiCallResponseListener
+import com.wultra.android.powerauth.networking.OkHttpBuilderInterceptor
 import com.wultra.android.powerauth.networking.data.StatusResponse
 import io.getlime.security.powerauth.sdk.PowerAuthAuthentication
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
@@ -41,7 +46,7 @@ internal class CustomerVerificationApi(
     private val powerAuthSDK: PowerAuthSDK,
     private val appContext: Context
 )
-: Api(identityServerUrl, okHttpClient, powerAuthSDK, GsonBuilder(), appContext) {
+: Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
         private val statusEndpoint = EndpointSignedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
@@ -64,7 +69,6 @@ internal class CustomerVerificationApi(
      * @param listener Result listener
      */
     fun getStatus(listener: IApiCallResponseListener<VerificationStatusResponse>) {
-        // TODO: apiCoroutineScope.launch ?
         post(
             EmptyRequest,
             statusEndpoint,

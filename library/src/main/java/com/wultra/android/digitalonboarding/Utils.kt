@@ -16,17 +16,26 @@
 
 package com.wultra.android.digitalonboarding
 
+import com.google.gson.GsonBuilder
+import com.wultra.android.digitalonboarding.networking.SDKInitResponseDataAttributes
+import com.wultra.android.digitalonboarding.networking.SDKInitResponseDataAttributesDeserializer
 import com.wultra.android.powerauth.networking.error.ApiError
-import com.wultra.android.powerauth.networking.error.ApiErrorException
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
 
-/** Creates [ApiErrorException] out of the error */
-fun ApiError.toException() = ApiErrorException(this)
-
 /** If the error means that the device is offline. */
-fun ApiError.isOffline(): Boolean {
+internal fun ApiError.isOffline(): Boolean {
     fun Throwable.isOffline() = this is ConnectException || this is UnknownHostException || this is SocketException
     return e.isOffline() || e.cause?.isOffline() == true
+}
+
+internal class Utils {
+    companion object {
+        fun defaultGsonBuilder(): GsonBuilder {
+            val builder = GsonBuilder()
+            builder.registerTypeAdapter(SDKInitResponseDataAttributes::class.java, SDKInitResponseDataAttributesDeserializer())
+            return builder
+        }
+    }
 }

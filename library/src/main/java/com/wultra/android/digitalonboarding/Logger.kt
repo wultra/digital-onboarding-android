@@ -66,7 +66,7 @@ class Logger {
         }
 
         internal fun error(error: ApiError) {
-            error(error.toException())
+            error(error.e)
         }
 
         internal fun error(throwable: Throwable) {
