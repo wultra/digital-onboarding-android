@@ -60,7 +60,7 @@ fun PowerAuthSDK.createActivation(
 fun FailedApiException.onboardingOtpRemainingAttempts(): Int? = responseJson?.get("remainingAttempts")?.asInt
 fun FailedApiException.allowOnboardingOtpRetry() = onboardingOtpRemainingAttempts()?.let { it > 0 }
 
-fun ActivationStatus.activationFlags() = (customObject["activationFlags"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+private fun ActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
 fun ActivationStatus.verificationPending() = activationFlags().contains("VERIFICATION_PENDING")
 fun ActivationStatus.verificationInProgress() = activationFlags().contains("VERIFICATION_IN_PROGRESS")
 fun ActivationStatus.needVerification() = verificationPending() || verificationInProgress()
