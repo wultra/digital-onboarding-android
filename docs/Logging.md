@@ -1,6 +1,6 @@
 # Logging
 
-The library is intensively logging into the console via `Logger`.
+The library is intensively logging into the console via `WDOLogger`.
 
 Possible log levels:
 
@@ -10,8 +10,16 @@ Possible log levels:
 - `ERROR` - prints errors only
 - `OFF` - logging is turned off
 
-You can set the log level by `Logger.verboseLevel = Logger.VerboseLevel.OFF`.
+You can set the log level by `WDOLogger.verboseLevel = WDOLogger.VerboseLevel.OFF`.
 
 <!-- begin box info -->
-`Logger` calls internally the `android.util.Log` class.
+`WDOLogger` calls internally the `android.util.Log` class.
+<!-- end -->
+
+## Log Listener
+
+The `WDOLogger` class offers a static `logListener` property. If you provide a listener, all logs will also be passed to it (the library always logs into the Android default log).
+
+<!-- begin box info -->
+Log listener comes in handy when you want to log into a file or some online service.
 <!-- end -->
