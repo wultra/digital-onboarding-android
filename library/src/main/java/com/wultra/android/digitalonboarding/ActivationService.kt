@@ -20,6 +20,7 @@ package com.wultra.android.digitalonboarding
 
 import android.content.Context
 import android.os.Build
+import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.CustomerOnboardingApi
 import com.wultra.android.digitalonboarding.networking.GetStatusResponse
 import com.wultra.android.digitalonboarding.networking.OTPDetailResponse
@@ -108,7 +109,7 @@ class ActivationService(
 
     init {
         if (!canRestoreSession) {
-            D.warning("Created ActivationService without restoration.")
+            WDOLogger.w("Created ActivationService without restoration.")
             processId = null
         }
     }
@@ -130,7 +131,7 @@ class ActivationService(
      */
     fun status(callback: (ActivationResult<Status>) -> Unit) {
 
-        D.print("Retrieving the status")
+        WDOLogger.d("Retrieving the status")
 
         val processId = guardProcessId(callback) ?: return
 
@@ -141,12 +142,12 @@ class ActivationService(
             object : IApiCallResponseListener<GetStatusResponse> {
                 override fun onSuccess(result: GetStatusResponse) {
                     val success = Status.fromResponse(result)
-                    D.print("Status call success: ${success.name}")
+                    WDOLogger.i("Status call success: ${success.name}")
                     callback(ActivationResult.success(success))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error(error)
+                    WDOLogger.e(error)
                     callback(ActivationResult.failure(Fail(error)))
                 }
             }
@@ -163,7 +164,7 @@ class ActivationService(
     fun <T> start(credentials: T, callback: (ActivationResult<Unit>) -> Unit) {
 
         if (processId != null) {
-            D.error("Activation can be started only when another activation is not in progress.")
+            WDOLogger.e("Activation can be started only when another activation is not in progress.")
             callback(ActivationResult.failure(Fail(ApiError(ActivationInProgressException))))
             return
         }
@@ -175,12 +176,12 @@ class ActivationService(
             object : IApiCallResponseListener<StartOnboardingResponse> {
                 override fun onSuccess(result: StartOnboardingResponse) {
                     processId = result.responseObject.processId
-                    D.print("Start successful")
+                    WDOLogger.i("Start successful")
                     callback(ActivationResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error(error)
+                    WDOLogger.e(error)
                     callback(ActivationResult.failure(Fail(error)))
                 }
             }
@@ -204,17 +205,17 @@ class ActivationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     this@ActivationService.processId = null
-                    D.print("Cancel successful")
+                    WDOLogger.i("Cancel successful")
                     callback(ActivationResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
                     if (forceCancel) {
                         this@ActivationService.processId = null
-                        D.warning("Cancel failed, but forceCancel was used - returning success anyway.")
+                        WDOLogger.w("Cancel failed, but forceCancel was used - returning success anyway.")
                         callback(ActivationResult.success(Unit))
                     } else {
-                        D.error(error)
+                        WDOLogger.e(error)
                         callback(ActivationResult.failure(Fail(error)))
                     }
                 }
@@ -225,7 +226,7 @@ class ActivationService(
     /** Clears the stored data (without networking call). */
     fun clear() {
         processId = null
-        D.print("Clear successful")
+        WDOLogger.i("Clear successful")
     }
 
     /**
@@ -243,12 +244,12 @@ class ActivationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
-                    D.print("Clear successful")
+                    WDOLogger.i("Clear successful")
                     callback(ActivationResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error(error)
+                    WDOLogger.e(error)
                     callback(ActivationResult.failure(Fail(error)))
                 }
             }
@@ -258,7 +259,7 @@ class ActivationService(
     fun createPowerAuthActivationData(otp: String): ActivationData? {
         val processId = processId
         if (processId == null) {
-            D.error("Cannot create activation data - process not started (missing processId).")
+            WDOLogger.e("Cannot create activation data - process not started (missing processId).")
             return null
         }
         return ActivationDataWithOTP(processId, otp)
@@ -285,7 +286,7 @@ class ActivationService(
         powerAuthSDK.createActivation(data, activationName) { result ->
             result.onSuccess {
                 this.processId = null
-                D.print("PowerAuth activation created")
+                WDOLogger.i("PowerAuth activation created")
                 callback(ActivationResult.success(it))
             }.onFailure {
                 // when no longer possible to retry activation
@@ -293,7 +294,7 @@ class ActivationService(
                 if ((it as? FailedApiException)?.allowOnboardingOtpRetry() == false) {
                     this.processId = null
                 }
-                D.print("PowerAuth activation failed - $it")
+                WDOLogger.e("PowerAuth activation failed - $it")
                 callback(ActivationResult.failure(Fail(ApiError(it))))
             }
         }
@@ -303,7 +304,7 @@ class ActivationService(
 
         val processId = this.processId
         if (processId == null) {
-            D.error("ProcessId is required for the requested method but not available. This mean that the process was not started.")
+            WDOLogger.e("ProcessId is required for the requested method but not available. This mean that the process was not started.")
             callback(WDOResult.failure(Fail(ApiError(ActivationNotRunningException))))
             return null
         }
@@ -313,7 +314,7 @@ class ActivationService(
     private fun <T>verifyCanStartProcess(callback: (ActivationResult<T>) -> Unit): Boolean {
 
         if (!powerAuthSDK.canStartActivation()) {
-            D.error("Cannot start the activation: PowerAuthSDK.canStartActivation() == false")
+            WDOLogger.e("Cannot start the activation: PowerAuthSDK.canStartActivation() == false")
             processId = null
             callback(ActivationResult.failure(Fail(ApiError(CannotActivateException))))
             return false
@@ -334,12 +335,12 @@ class ActivationService(
             processId,
             object : IApiCallResponseListener<OTPDetailResponse> {
                 override fun onSuccess(result: OTPDetailResponse) {
-                    D.print("Get OTP successful")
+                    WDOLogger.i("Get OTP successful")
                     callback(ActivationResult.success(result.responseObject.otpCode))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error(error)
+                    WDOLogger.e(error)
                     callback(ActivationResult.failure(Fail(error)))
                 }
             }
