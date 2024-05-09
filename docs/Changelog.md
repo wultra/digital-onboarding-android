@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0 (May, 2024)
+
+- Changed name of the log class to the `WDOLogger`
+- Added listener to the log class
+
 ## 1.1.1 (Mar 6, 2024)
 
 - Minor fixes

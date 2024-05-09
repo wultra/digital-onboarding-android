@@ -23,7 +23,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
 import com.google.gson.annotations.SerializedName
-import com.wultra.android.digitalonboarding.D
+import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 import com.wultra.android.powerauth.networking.data.StatusResponse
@@ -222,7 +222,7 @@ internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKIn
         // If this wont fit the customer needs, we gonna need to provide this API as generic or make it provider-based for
         // different SDK providers.
         val firstEntry = json.asJsonObject.asMap().entries.firstOrNull() ?: throw JsonParseException("No attribute in the response SDKInitResponseDataAttributes")
-        D.print("Using first SDKInitResponseDataAttributes attribute named ${firstEntry.key}")
+        WDOLogger.d("Using first SDKInitResponseDataAttributes attribute named ${firstEntry.key}")
         return SDKInitResponseDataAttributes(firstEntry.value.asString)
     }
 }

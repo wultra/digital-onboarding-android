@@ -20,6 +20,7 @@ package com.wultra.android.digitalonboarding
 
 import android.content.Context
 import com.wultra.android.digitalonboarding.VerificationStatusNextStep.Value
+import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.ConsentApproveResponse
 import com.wultra.android.digitalonboarding.networking.ConsentResponse
 import com.wultra.android.digitalonboarding.networking.CustomerOnboardingApi
@@ -91,7 +92,7 @@ class VerificationService(
 
     init {
         if (!powerAuthSDK.hasValidActivation()) {
-            D.print("PowerAuth has not a valid activation - clearing cache.")
+            WDOLogger.d("PowerAuth has not a valid activation - clearing cache.")
             cachedProcess = null
         }
     }
@@ -100,7 +101,7 @@ class VerificationService(
     fun otpResendPeriodInSeconds(): Long? {
         val period = lastStatus?.responseObject?.config?.otpResendPeriod
         if (period == null) {
-            D.warning("OTP resend period can be provided only when there was at least 1 status call made")
+            WDOLogger.w("OTP resend period can be provided only when there was at least 1 status call made")
             return null
         }
         return try {
@@ -120,7 +121,7 @@ class VerificationService(
             override fun onSuccess(result: VerificationStatusResponse) {
                 when (result.responseObject.status) {
                     IdentityVerificationStatus.FAILED, IdentityVerificationStatus.REJECTED, IdentityVerificationStatus.NOT_INITIALIZED, IdentityVerificationStatus.ACCEPTED -> {
-                        D.print("We reached endstate, clearing cache")
+                        WDOLogger.d("We reached endstate, clearing cache")
                         cachedProcess = null
                     }
                     else -> {
@@ -132,58 +133,58 @@ class VerificationService(
 
                 val nextStep = VerificationStatusNextStep.fromStatusResponse(result.responseObject)
 
-                D.print("Response status: ${result.responseObject.status.name}:${result.responseObject.phase?.name}. NextStep: ${nextStep.value.name}")
+                WDOLogger.i("Response status: ${result.responseObject.status.name}:${result.responseObject.phase?.name}. NextStep: ${nextStep.value.name}")
 
                 when (nextStep.value) {
                     Value.INTRO -> {
                         markCompleted(VerificationStateIntroData, callback)
                     }
                     Value.DOCUMENT_SCAN -> {
-                        D.print("Asking for a document status.")
+                        WDOLogger.d("Asking for a document status.")
                         api.documentsStatus(
                             result.responseObject.processId,
                             object : IApiCallResponseListener<DocumentsStatusResponse> {
                                 override fun onSuccess(result: DocumentsStatusResponse) {
 
-                                    D.print("Document status success.")
+                                    WDOLogger.d("Document status success.")
 
                                     val documents = result.responseObject.documents
                                     val cachedProcess = this@VerificationService.cachedProcess
 
                                     if (cachedProcess != null) {
-                                        D.print("Cached process obtained, processing retrieved documents")
+                                        WDOLogger.d("Cached process obtained, processing retrieved documents")
                                         cachedProcess.feed(documents)
                                         if (documents.any { it.action() == DocumentAction.ERROR } || documents.any { !it.errors.isNullOrEmpty() }) {
-                                            D.print("There is an document error - returning.")
+                                            WDOLogger.i("There is an document error - returning.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else if (documents.all { it.action() == DocumentAction.PROCEED }) {
-                                            D.print("Document is waiting - continue scanning.")
+                                            WDOLogger.i("Document is waiting - continue scanning.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else if (documents.any { it.action() == DocumentAction.WAIT }) {
                                             // TODO: really verification?
-                                            D.print("Document is processing - wait..")
+                                            WDOLogger.i("Document is processing - wait..")
                                             markCompleted(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION), callback)
                                         } else if (documents.isEmpty()) {
-                                            D.print("There are no document - scan first.")
+                                            WDOLogger.i("There are no document - scan first.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else {
                                             // TODO: is this ok?
-                                            D.warning("Unexpected document state - configuration error.")
+                                            WDOLogger.w("Unexpected document state - configuration error.")
                                             markCompleted(VerificationStateFailedData, callback)
                                         }
                                     } else {
                                         if (documents.isEmpty()) {
-                                            D.print("No documents scanned - start scanning")
+                                            WDOLogger.i("No documents scanned - start scanning")
                                             markCompleted(VerificationStateDocumentsToScanSelectData, callback)
                                         } else {
-                                            D.warning("Unexpected document state - configuration/cache error.")
+                                            WDOLogger.w("Unexpected document state - configuration/cache error.")
                                             markCompleted(VerificationStateFailedData, callback)
                                         }
                                     }
                                 }
 
                                 override fun onFailure(error: ApiError) {
-                                    D.error("Document status failed : ${error.e}")
+                                    WDOLogger.e("Document status failed : ${error.e}")
                                     markCompleted(error, callback)
                                 }
                             }
@@ -211,7 +212,7 @@ class VerificationService(
             }
 
             override fun onFailure(error: ApiError) {
-                D.error("Status failed : ${error.e}")
+                WDOLogger.e("Status failed : ${error.e}")
                 lastStatus = null
                 markCompleted(error, callback)
             }
@@ -231,7 +232,7 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<ConsentResponse> {
                 override fun onSuccess(result: ConsentResponse) {
-                    D.print("consentGet success")
+                    WDOLogger.i("consentGet success")
                     markCompleted(
                         VerificationStateConsentData(result.responseObject.consentText),
                         callback,
@@ -239,7 +240,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("consentGet failed : ${error.e}")
+                    WDOLogger.e("consentGet failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -260,17 +261,17 @@ class VerificationService(
             true,
             object : IApiCallResponseListener<ConsentApproveResponse> {
                 override fun onSuccess(result: ConsentApproveResponse) {
-                    D.print("consentApprove success - starting the process")
+                    WDOLogger.i("consentApprove success - starting the process")
                     api.start(
                         processId,
                         object : IApiCallResponseListener<StatusResponse> {
                             override fun onSuccess(result: StatusResponse) {
-                                D.print("start success")
+                                WDOLogger.i("Process start success")
                                 markCompleted(VerificationStateDocumentsToScanSelectData, callback)
                             }
 
                             override fun onFailure(error: ApiError) {
-                                D.error("start failed : ${error.e}")
+                                WDOLogger.e("start failed : ${error.e}")
                                 markCompleted(error, callback)
                             }
                         },
@@ -278,7 +279,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("consentApprove failed : ${error.e}")
+                    WDOLogger.e("consentApprove failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -300,12 +301,13 @@ class VerificationService(
             challenge,
             object : IApiCallResponseListener<SDKInitResponse> {
                 override fun onSuccess(result: SDKInitResponse) {
-                    D.print("documentsInitSDK success with token: ${result.responseObject.attributes.responseToken}")
+                    WDOLogger.i("documentsInitSDK success")
+                    WDOLogger.d("documentsInitSDK success token: ${result.responseObject.attributes.responseToken}")
                     markCompleted(result.responseObject.attributes.responseToken, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("consentApprove failed : ${error.e}")
+                    WDOLogger.e("consentApprove failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -322,7 +324,7 @@ class VerificationService(
         // TODO: We should verify that we're in the expected state here
         val process = VerificationScanProcess(types)
         cachedProcess = process
-        D.print("Settings documents to scan: ${types.joinToString(",") { it.name }}")
+        WDOLogger.i("Setting documents to scan: ${types.joinToString(",") { it.name }}")
         markCompleted(VerificationStateScanDocumentData(process), callback)
     }
 
@@ -344,7 +346,7 @@ class VerificationService(
                 requestData,
                 object : IApiCallResponseListener<DocumentSubmitResponse> {
                     override fun onSuccess(result: DocumentSubmitResponse) {
-                        D.print("document submitted")
+                        WDOLogger.i("document submitted")
                         markCompleted(
                             VerificationStateProcessingData(ProcessingItem.DOCUMENT_UPLOAD),
                             callback
@@ -352,13 +354,13 @@ class VerificationService(
                     }
 
                     override fun onFailure(error: ApiError) {
-                        D.error("documentsSubmit failed : ${error.e}")
+                        WDOLogger.e("documentsSubmit failed : ${error.e}")
                         markCompleted(error, callback)
                     }
                 }
             )
         } catch (e: Throwable) {
-            D.error("Failed to create payload data : $e")
+            WDOLogger.e("Failed to create payload data : $e")
             markCompleted(ApiError(e), callback)
         }
     }
@@ -376,12 +378,13 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<PresenceCheckResponse> {
                 override fun onSuccess(result: PresenceCheckResponse) {
-                    D.print("presenceCheckInit success with: ${result.responseObject.attributes}")
+                    WDOLogger.e("presenceCheckInit success")
+                    WDOLogger.e("presenceCheckInit success with: ${result.responseObject.attributes}")
                     markCompleted(result.responseObject.attributes, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("presenceCheckInit failed : ${error.e}")
+                    WDOLogger.e("presenceCheckInit failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             }
@@ -401,7 +404,7 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
-                    D.print("presenceCheckSubmit success")
+                    WDOLogger.i("presenceCheckSubmit success")
                     markCompleted(
                         VerificationStateProcessingData(ProcessingItem.VERIFYING_PRESENCE),
                         callback
@@ -409,7 +412,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("presenceCheckSubmit failed : ${error.e}")
+                    WDOLogger.e("presenceCheckSubmit failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             }
@@ -429,12 +432,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
-                    D.print("restartVerification success")
+                    WDOLogger.i("restartVerification success")
                     markCompleted(VerificationStateIntroData, callback)
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("restartVerification failed : ${error.e}")
+                    WDOLogger.e("restartVerification failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             }
@@ -454,12 +457,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
-                    D.print("cancelWholeProcess success")
+                    WDOLogger.i("cancelWholeProcess success")
                     callback(WDOResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("cancelWholeProcess failed : ${error.e}")
+                    WDOLogger.e("cancelWholeProcess failed : ${error.e}")
                     callback(WDOResult.failure(Fail(error)))
                 }
             }
@@ -482,28 +485,28 @@ class VerificationService(
             object : IApiCallResponseListener<VerifyOtpResponse> {
                 override fun onSuccess(result: VerifyOtpResponse) {
                     if (result.responseObject.verified) {
-                        D.print("verifyOTP success")
+                        WDOLogger.i("verifyOTP success")
                         markCompleted(
                             VerificationStateProcessingData(ProcessingItem.OTHER),
                             callback,
                         )
                     } else {
-                        D.error("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}, expired: ${result.responseObject.expired}")
+                        WDOLogger.e("verifyOTP failed. remainingAttempts: ${result.responseObject.remainingAttempts}, expired: ${result.responseObject.expired}")
                         if (result.responseObject.remainingAttempts > 0 && !result.responseObject.expired) {
-                            D.print("There remaining OTP attempts, returning the OTP Status")
+                            WDOLogger.i("There are remaining OTP attempts, returning the OTP Status")
                             markCompleted(
                                 VerificationStateOtpData(result.responseObject.remainingAttempts),
                                 callback,
                             )
                         } else {
-                            D.print("OTP cannot be tried again - returning an OTPFailedException.")
+                            WDOLogger.i("OTP cannot be tried again - returning an OTPFailedException.")
                             markCompleted(ApiError(OTPFailedException), callback)
                         }
                     }
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("verifyOTP failed : ${error.e}")
+                    WDOLogger.e("verifyOTP failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -523,12 +526,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<ResendOtpResponse> {
                 override fun onSuccess(result: ResendOtpResponse) {
-                    D.print("resendOTP success")
+                    WDOLogger.i("resendOTP success")
                     callback(WDOResult.success(Unit))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("verifyOTP failed : ${error.e}")
+                    WDOLogger.e("verifyOTP failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },
@@ -548,12 +551,12 @@ class VerificationService(
             processId,
             object : IApiCallResponseListener<OTPDetailResponse> {
                 override fun onSuccess(result: OTPDetailResponse) {
-                    D.print("getOTP success")
+                    WDOLogger.i("getOTP success")
                     callback(WDOResult.success(result.responseObject.otpCode))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    D.error("verifyOTP failed : ${error.e}")
+                    WDOLogger.e("verifyOTP failed : ${error.e}")
                     callback(WDOResult.failure(Fail(error)))
                 }
             }
@@ -601,7 +604,7 @@ class VerificationService(
 
         val processId = lastStatus?.responseObject?.processId
         if (processId == null) {
-            D.error("ProcessId is required for the requested method but not available. This mean that the process was not started or status was not fetched yet.")
+            WDOLogger.e("ProcessId is required for the requested method but not available. This mean that the process was not started or status was not fetched yet.")
             markCompleted(Fail(ApiError(ActivationMissingStatusException)), callback)
             return null
         }
@@ -610,13 +613,13 @@ class VerificationService(
 
     private fun <T>markCompleted(error: ApiError, callback: (WDOResult<T, Fail>) -> Unit) {
         if (!error.isOffline() || error.error == ApiErrorCode.POWERAUTH_AUTH_FAIL) {
-            D.error("Fetching activation status to determine if activation was not removed on the server")
+            WDOLogger.e("Fetching activation status to determine if activation was not removed on the server")
             powerAuthSDK.fetchActivationStatusWithCallback(
                 appContext,
                 object : IActivationStatusListener {
                     override fun onActivationStatusSucceed(status: ActivationStatus?) {
                         if (status?.state != ActivationStatus.State_Active) {
-                            D.error("PowerAuth status not active.")
+                            WDOLogger.e("PowerAuth status not active.")
                             listener?.powerAuthActivationStatusChanged(this@VerificationService, status)
                             markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
                         } else {
@@ -625,7 +628,7 @@ class VerificationService(
                     }
 
                     override fun onActivationStatusFailed(t: Throwable) {
-                        D.error("Failed to retrieve PowerAuth status")
+                        WDOLogger.e("Failed to retrieve PowerAuth status")
                         markCompleted(Fail(ApiError(t)), callback)
                     }
                 }
