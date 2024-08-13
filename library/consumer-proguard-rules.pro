@@ -5,4 +5,4 @@
   @com.google.gson.annotations.SerializedName <fields>;
 }
 
--keepclassmembers enum com.wultra.android.digitalonboarding.api.*.** { *; }
+-keep,allowobfuscation class com.wultra.android.digitalonboarding.networking.model.**
