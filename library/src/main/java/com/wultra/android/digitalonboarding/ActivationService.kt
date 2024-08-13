@@ -22,10 +22,10 @@ import android.content.Context
 import android.os.Build
 import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.CustomerOnboardingApi
-import com.wultra.android.digitalonboarding.networking.GetStatusResponse
-import com.wultra.android.digitalonboarding.networking.OTPDetailResponse
-import com.wultra.android.digitalonboarding.networking.OnboardingStatus
-import com.wultra.android.digitalonboarding.networking.StartOnboardingResponse
+import com.wultra.android.digitalonboarding.networking.model.GetStatusResponse
+import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
+import com.wultra.android.digitalonboarding.networking.model.OnboardingStatus
+import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
 import com.wultra.android.powerauth.networking.IApiCallResponseListener
 import com.wultra.android.powerauth.networking.data.StatusResponse
 import com.wultra.android.powerauth.networking.error.ApiError

@@ -16,7 +16,7 @@
 
 @file:Suppress("unused")
 
-package com.wultra.android.digitalonboarding.networking
+package com.wultra.android.digitalonboarding.networking.model
 
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer

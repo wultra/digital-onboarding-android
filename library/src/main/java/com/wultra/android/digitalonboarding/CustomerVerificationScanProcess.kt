@@ -18,7 +18,7 @@
 
 package com.wultra.android.digitalonboarding
 
-import com.wultra.android.digitalonboarding.networking.Document
+import com.wultra.android.digitalonboarding.networking.model.Document
 
 /** Verification Scan Process that describes which documents needs to be scanned and uploaded */
 class VerificationScanProcess {

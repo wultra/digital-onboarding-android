@@ -16,11 +16,11 @@
 
 package com.wultra.android.digitalonboarding
 
-import com.wultra.android.digitalonboarding.networking.VerificationPhase
-import com.wultra.android.digitalonboarding.networking.IdentityVerificationStatus.*
-import com.wultra.android.digitalonboarding.networking.VerificationPhase.*
-import com.wultra.android.digitalonboarding.networking.IdentityVerificationStatus
-import com.wultra.android.digitalonboarding.networking.VerificationStatusResponseData
+import com.wultra.android.digitalonboarding.networking.model.VerificationPhase
+import com.wultra.android.digitalonboarding.networking.model.IdentityVerificationStatus.*
+import com.wultra.android.digitalonboarding.networking.model.VerificationPhase.*
+import com.wultra.android.digitalonboarding.networking.model.IdentityVerificationStatus
+import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponseData
 
 // Internal status that works as a translation layer between server API and SDK API
 internal class VerificationStatusNextStep(val value: Value, val statusCheckReason: StatusCheckReason? = null) {

@@ -17,8 +17,8 @@
 package com.wultra.android.digitalonboarding
 
 import android.util.Base64
-import com.wultra.android.digitalonboarding.networking.DocumentSubmitFile
-import com.wultra.android.digitalonboarding.networking.DocumentSubmitRequestData
+import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitFile
+import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRequestData
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
