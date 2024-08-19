@@ -18,6 +18,16 @@ package com.wultra.android.digitalonboarding.networking
 
 import android.content.Context
 import com.wultra.android.digitalonboarding.Utils
+import com.wultra.android.digitalonboarding.networking.model.CancelOnboardingRequest
+import com.wultra.android.digitalonboarding.networking.model.GetStatusRequest
+import com.wultra.android.digitalonboarding.networking.model.GetStatusResponse
+import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
+import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
+import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
+import com.wultra.android.digitalonboarding.networking.model.OTPDetailType
+import com.wultra.android.digitalonboarding.networking.model.ResendOtpRequest
+import com.wultra.android.digitalonboarding.networking.model.StartOnboardingRequest
+import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
 import com.wultra.android.powerauth.networking.Api
 import com.wultra.android.powerauth.networking.EndpointBasic
 import com.wultra.android.powerauth.networking.IApiCallResponseListener

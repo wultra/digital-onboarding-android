@@ -16,7 +16,7 @@
 
 @file:Suppress("unused")
 
-package com.wultra.android.digitalonboarding.networking
+package com.wultra.android.digitalonboarding.networking.model
 
 import com.google.gson.annotations.SerializedName
 import com.wultra.android.powerauth.networking.data.ObjectRequest
@@ -52,9 +52,13 @@ internal class CancelOnboardingRequest(processId: String): ObjectRequest<Process
     ProcessRequestData(processId)
 )
 
-internal class ResendOtpRequest(processId: String): ObjectRequest<ProcessRequestData>(ProcessRequestData(processId))
+internal class ResendOtpRequest(processId: String): ObjectRequest<ProcessRequestData>(
+    ProcessRequestData(processId)
+)
 
-internal class GetStatusRequest(processId: String): ObjectRequest<ProcessRequestData>(ProcessRequestData(processId))
+internal class GetStatusRequest(processId: String): ObjectRequest<ProcessRequestData>(
+    ProcessRequestData(processId)
+)
 internal class GetStatusResponse(responseObject: ProcessResponseData, status: Status): ObjectResponse<ProcessResponseData>(responseObject, status)
 
 internal class ProcessRequestData(@SerializedName("processId") val processId: String)

@@ -17,8 +17,8 @@
 package com.wultra.android.digitalonboarding
 
 import com.google.gson.GsonBuilder
-import com.wultra.android.digitalonboarding.networking.SDKInitResponseDataAttributes
-import com.wultra.android.digitalonboarding.networking.SDKInitResponseDataAttributesDeserializer
+import com.wultra.android.digitalonboarding.networking.model.SDKInitResponseDataAttributes
+import com.wultra.android.digitalonboarding.networking.model.SDKInitResponseDataAttributesDeserializer
 import com.wultra.android.powerauth.networking.error.ApiError
 import java.net.ConnectException
 import java.net.SocketException

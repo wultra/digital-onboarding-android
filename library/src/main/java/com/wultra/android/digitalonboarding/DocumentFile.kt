@@ -18,8 +18,8 @@
 
 package com.wultra.android.digitalonboarding
 
-import com.wultra.android.digitalonboarding.networking.DocumentFileSide
-import com.wultra.android.digitalonboarding.networking.DocumentSubmitFileType
+import com.wultra.android.digitalonboarding.networking.model.DocumentFileSide
+import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitFileType
 
 class DocumentFile {
     /** Image to be uploaded. */
