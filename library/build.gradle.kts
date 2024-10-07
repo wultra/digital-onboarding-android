@@ -67,13 +67,13 @@ android {
 dependencies {
     // Bundled
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${Constants.BuildScript.kotlinVersion}")
-    implementation("androidx.annotation:annotation:1.6.0")
-    implementation("com.google.code.gson:gson:2.8.9")
-    implementation("com.wultra.android.powerauth:powerauth-networking:1.3.0")
+    implementation("androidx.annotation:annotation:1.8.2")
+    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.wultra.android.powerauth:powerauth-networking:1.5.0-SNAPSHOT")
     implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
 
     // Dependencies
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.8.0")
+    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.9.1")
 }
 
 apply("android-release-aar.gradle")

@@ -44,12 +44,7 @@ import com.wultra.android.digitalonboarding.networking.model.VerificationResendO
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.VerifyOtpRequest
 import com.wultra.android.digitalonboarding.networking.model.VerifyOtpResponse
-import com.wultra.android.powerauth.networking.Api
-import com.wultra.android.powerauth.networking.EndpointBasic
-import com.wultra.android.powerauth.networking.EndpointSigned
-import com.wultra.android.powerauth.networking.EndpointSignedWithToken
-import com.wultra.android.powerauth.networking.IApiCallResponseListener
-import com.wultra.android.powerauth.networking.OkHttpBuilderInterceptor
+import com.wultra.android.powerauth.networking.*
 import com.wultra.android.powerauth.networking.data.StatusResponse
 import io.getlime.security.powerauth.sdk.PowerAuthAuthentication
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
@@ -81,12 +76,12 @@ internal class CustomerVerificationApi(
         private val consentTextEndpoint = EndpointSignedWithToken<ConsentRequest, ConsentResponse>("/api/identity/consent/text", "possession_universal")
         private val consentApproveEndpoint = EndpointSigned<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
         private val docsStatusEndpoint = EndpointSignedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
-        private val documentSdkInitEndpoint = EndpointSigned<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk")
-        private val submitDocsEndpoint = EndpointSignedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/identity/document/submit", "possession_universal")
-        private val presenceCheckEndpoint = EndpointSigned<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init")
+        private val documentSdkInitEndpoint = EndpointSigned<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val submitDocsEndpoint = EndpointSignedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/identity/document/submit", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val presenceCheckEndpoint = EndpointSigned<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
         private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
-        private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify")
+        private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
     }
 
     /**
@@ -98,7 +93,6 @@ internal class CustomerVerificationApi(
         post(
             EmptyRequest,
             statusEndpoint,
-            null,
             null,
             null,
             listener
@@ -118,7 +112,6 @@ internal class CustomerVerificationApi(
             PowerAuthAuthentication.possession(),
             null,
             null,
-            null,
             listener
         )
     }
@@ -136,7 +129,6 @@ internal class CustomerVerificationApi(
             PowerAuthAuthentication.possession(),
             null,
             null,
-            null,
             listener
         )
     }
@@ -151,7 +143,6 @@ internal class CustomerVerificationApi(
         post(
             ConsentRequest(processId),
             consentTextEndpoint,
-            null,
             null,
             null,
             listener
@@ -172,7 +163,6 @@ internal class CustomerVerificationApi(
             PowerAuthAuthentication.possession(),
             null,
             null,
-            null,
             listener
         )
     }
@@ -190,7 +180,6 @@ internal class CustomerVerificationApi(
             documentSdkInitEndpoint,
             PowerAuthAuthentication.possession(),
             null,
-            powerAuthSDK.getEciesEncryptorForActivationScope(appContext),
             null,
             listener
         )
@@ -210,7 +199,6 @@ internal class CustomerVerificationApi(
             DocumentSubmitRequest(data),
             submitDocsEndpoint,
             null,
-            powerAuthSDK.getEciesEncryptorForActivationScope(appContext),
             object: OkHttpBuilderInterceptor {
                 override fun intercept(builder: OkHttpClient.Builder) {
                     // document upload can take some time
@@ -236,7 +224,6 @@ internal class CustomerVerificationApi(
             docsStatusEndpoint,
             null,
             null,
-            null,
             listener
         )
     }
@@ -255,7 +242,6 @@ internal class CustomerVerificationApi(
             presenceCheckEndpoint,
             PowerAuthAuthentication.possession(),
             null,
-            powerAuthSDK.getEciesEncryptorForActivationScope(appContext),
             null,
             listener
         )
@@ -272,7 +258,6 @@ internal class CustomerVerificationApi(
             PresenceCheckSubmitRequest(processId),
             presenceCheckSubmitEndpoint,
             PowerAuthAuthentication.possession(),
-            null,
             null,
             null,
             listener
@@ -292,7 +277,6 @@ internal class CustomerVerificationApi(
             PowerAuthAuthentication.possession(),
             null,
             null,
-            null,
             listener
         )
     }
@@ -309,7 +293,6 @@ internal class CustomerVerificationApi(
             VerifyOtpRequest(processId, otp),
             otpVerifyEndpoint,
             null,
-            powerAuthSDK.getEciesEncryptorForActivationScope(appContext),
             null,
             listener
         )
@@ -330,7 +313,6 @@ internal class CustomerVerificationApi(
             OTPDetailRequest(OTPDetailRequestData(processId, OTPDetailType.USER_VERIFICATION)),
             CustomerOnboardingApi.getOtpEndpoint,
             null,
-            powerAuthSDK.eciesEncryptorForApplicationScope,
             null,
             listener
         )

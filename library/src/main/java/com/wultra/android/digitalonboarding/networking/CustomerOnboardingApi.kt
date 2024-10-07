@@ -29,6 +29,7 @@ import com.wultra.android.digitalonboarding.networking.model.ResendOtpRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
 import com.wultra.android.powerauth.networking.Api
+import com.wultra.android.powerauth.networking.E2EEConfiguration
 import com.wultra.android.powerauth.networking.EndpointBasic
 import com.wultra.android.powerauth.networking.IApiCallResponseListener
 import com.wultra.android.powerauth.networking.data.StatusResponse
@@ -53,11 +54,11 @@ internal class CustomerOnboardingApi(
 ) : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
-        private fun <T> startEndpoint() = EndpointBasic<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start")
-        private val cancelEndpoint = EndpointBasic<CancelOnboardingRequest, StatusResponse>("api/onboarding/cleanup")
-        private val statusEndpoint = EndpointBasic<GetStatusRequest, GetStatusResponse>("api/onboarding/status")
-        private val resendOtpEndpoint = EndpointBasic<ResendOtpRequest, StatusResponse>("api/onboarding/otp/resend")
-        val getOtpEndpoint = EndpointBasic<OTPDetailRequest, OTPDetailResponse>("api/onboarding/otp/detail")
+        private fun <T> startEndpoint() = EndpointBasic<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", E2EEConfiguration.APPLICATION_SCOPE)
+        private val cancelEndpoint = EndpointBasic<CancelOnboardingRequest, StatusResponse>("api/onboarding/cleanup", E2EEConfiguration.APPLICATION_SCOPE)
+        private val statusEndpoint = EndpointBasic<GetStatusRequest, GetStatusResponse>("api/onboarding/status", E2EEConfiguration.APPLICATION_SCOPE)
+        private val resendOtpEndpoint = EndpointBasic<ResendOtpRequest, StatusResponse>("api/onboarding/otp/resend", E2EEConfiguration.APPLICATION_SCOPE)
+        val getOtpEndpoint = EndpointBasic<OTPDetailRequest, OTPDetailResponse>("api/onboarding/otp/detail", E2EEConfiguration.APPLICATION_SCOPE)
     }
 
     /**
@@ -74,7 +75,6 @@ internal class CustomerOnboardingApi(
             StartOnboardingRequest(credentials),
             startEndpoint(),
             null,
-            powerAuthSDK.eciesEncryptorForApplicationScope,
             null,
             listener
         )
@@ -93,7 +93,6 @@ internal class CustomerOnboardingApi(
             CancelOnboardingRequest(processId),
             cancelEndpoint,
             null,
-            powerAuthSDK.eciesEncryptorForApplicationScope,
             null,
             listener
         )
@@ -112,7 +111,6 @@ internal class CustomerOnboardingApi(
             GetStatusRequest(processId),
             statusEndpoint,
             null,
-            powerAuthSDK.eciesEncryptorForApplicationScope,
             null,
             listener
         )
@@ -130,7 +128,13 @@ internal class CustomerOnboardingApi(
      * @param listener Result listener
      */
     fun resendOtp(processId: String, listener: IApiCallResponseListener<StatusResponse>) {
-        post(ResendOtpRequest(processId), resendOtpEndpoint, null, powerAuthSDK.eciesEncryptorForApplicationScope, null, listener)
+        post(
+            ResendOtpRequest(processId),
+            resendOtpEndpoint,
+            null,
+            null,
+            listener
+        )
     }
 
     /**
@@ -148,7 +152,6 @@ internal class CustomerOnboardingApi(
             OTPDetailRequest(OTPDetailRequestData(processId, OTPDetailType.ACTIVATION)),
             getOtpEndpoint,
             null,
-            powerAuthSDK.eciesEncryptorForApplicationScope,
             null,
             listener
         )
