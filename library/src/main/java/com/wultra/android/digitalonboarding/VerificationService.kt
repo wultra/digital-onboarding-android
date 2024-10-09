@@ -307,7 +307,7 @@ class VerificationService(
                 }
 
                 override fun onFailure(error: ApiError) {
-                    WDOLogger.e("consentApprove failed : ${error.e}")
+                    WDOLogger.e("documentsInitSDK failed : ${error.e}")
                     markCompleted(error, callback)
                 }
             },

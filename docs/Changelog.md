@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 (Oct, 2024)
+
+- Using PowerAuth SDK `1.9.x`
+- Minor fixes
+
 ## 1.2.0 (May, 2024)
 
 - Changed name of the log class to the `WDOLogger`
