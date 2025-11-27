@@ -149,7 +149,8 @@ internal class SDKInitRequestData(
     @SerializedName("attributes") val attributes: SDKInitRequestDataAttributes
 )
 internal class SDKInitRequestDataAttributes(
-    @SerializedName("sdk-init-token") val challengeToken: String
+    @SerializedName("sdk-init-token") val challengeToken: String,
+    @SerializedName("platform") val platform: String = "android"
 )
 internal class SDKInitResponse(
     responseObject: SDKInitResponseData,
