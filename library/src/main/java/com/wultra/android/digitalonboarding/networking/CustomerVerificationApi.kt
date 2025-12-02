@@ -77,7 +77,7 @@ internal class CustomerVerificationApi(
         private val consentApproveEndpoint = EndpointSigned<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
         private val docsStatusEndpoint = EndpointSignedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
         private val documentSdkInitEndpoint = EndpointSigned<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val submitDocsEndpoint = EndpointSignedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/identity/document/submit", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val submitDocsEndpointV2 = EndpointSignedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/v2/identity/document/submit", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
         private val presenceCheckEndpoint = EndpointSigned<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
         private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
@@ -197,7 +197,7 @@ internal class CustomerVerificationApi(
     fun submitDocuments(data: DocumentSubmitRequestData, listener: IApiCallResponseListener<DocumentSubmitResponse>) {
         post(
             DocumentSubmitRequest(data),
-            submitDocsEndpoint,
+            submitDocsEndpointV2,
             null,
             object: OkHttpBuilderInterceptor {
                 override fun intercept(builder: OkHttpClient.Builder) {

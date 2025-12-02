@@ -19,45 +19,24 @@ package com.wultra.android.digitalonboarding
 import android.util.Base64
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitFile
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRequestData
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.util.UUID
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 internal class DocumentPayloadBuilder {
 
     companion object {
-
-        @Throws
-        fun build(processId: String, files: List<DocumentFile>): DocumentSubmitRequestData {
-            val zipFile = File.createTempFile(UUID.randomUUID().toString(), ".zip")
-            zipFile.deleteOnExit()
-
-            try {
-                ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).use { zos ->
-                    files.forEach { file ->
-                        zos.putNextEntry(ZipEntry(file.filename()))
-                        file.data.inputStream().copyTo(zos)
-                    }
-                }
-
-                val base64data = Base64.encodeToString(zipFile.readBytes(), Base64.DEFAULT)
-
-                return DocumentSubmitRequestData(
-                    processId,
-                    base64data,
-                    files.any { it.originalDocumentId != null },
-                    files.map { it.metadata() }
-                )
-            } finally {
-                zipFile.delete()
-            }
-        }
+        fun build(processId: String, files: List<DocumentFile>) = DocumentSubmitRequestData(
+            processId = processId,
+            resubmit = files.any { it.originalDocumentId != null },
+            documents = files.map { it.toSubmitFile() }
+        )
     }
 }
 
+private fun DocumentFile.toSubmitFile() = DocumentSubmitFile(
+    filename = filename(),
+    type = type.apiType(),
+    side = side.apiType(),
+    data = data(),
+    originalDocumentId = originalDocumentId
+)
 private fun DocumentFile.filename() = "${type.name.lowercase()}_${side.name.lowercase()}.jpg"
-
-private fun DocumentFile.metadata() = DocumentSubmitFile(filename(), type.apiType(), side.apiType(), originalDocumentId)
+private fun DocumentFile.data() = Base64.encodeToString(data, Base64.DEFAULT)
