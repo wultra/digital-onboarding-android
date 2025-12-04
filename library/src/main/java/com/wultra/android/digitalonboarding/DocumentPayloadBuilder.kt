@@ -35,8 +35,9 @@ private fun DocumentFile.toSubmitFile() = DocumentSubmitFile(
     filename = filename(),
     type = type.apiType(),
     side = side.apiType(),
-    data = data(),
+    data = dataUrlSafe(),
     originalDocumentId = originalDocumentId
 )
 private fun DocumentFile.filename() = "${type.name.lowercase()}_${side.name.lowercase()}.jpg"
-private fun DocumentFile.data() = Base64.encodeToString(data, Base64.DEFAULT)
+private fun DocumentFile.dataUrlSafe() =
+    Base64.encodeToString(data, Base64.NO_PADDING or Base64.NO_WRAP)
