@@ -166,7 +166,6 @@ internal class SDKInitResponseDataAttributes(
 internal class DocumentSubmitRequest(data: DocumentSubmitRequestData): ObjectRequest<DocumentSubmitRequestData>(data)
 internal class DocumentSubmitRequestData(
     processId: String,
-    @SerializedName("data") val data: String,
     @SerializedName("resubmit") val resubmit: Boolean,
     @SerializedName("documents") val documents: List<DocumentSubmitFile>
 ): VerificationProcessRequestData(processId)
@@ -175,7 +174,8 @@ internal data class DocumentSubmitFile(
     @SerializedName("filename") val filename: String,
     @SerializedName("type") val type: DocumentSubmitFileType,
     @SerializedName("side") val side: DocumentFileSide?,
-    @SerializedName("originalDocumentId") val originalDocumentId: String?
+    @SerializedName("originalDocumentId") val originalDocumentId: String?,
+    @SerializedName("data") val data: String
 )
 
 internal class DocumentSubmitResponse(status: Status): StatusResponse(status)
