@@ -36,11 +36,11 @@ internal class ConfigurationRequestData(
  * RESPONSE
  * */
 
-internal class ConfigurationResponse(
+class ConfigurationResponse(
     responseObject: ConfigurationResponseData,
     status: Status
 ): ObjectResponse<ConfigurationResponseData>(responseObject, status)
-internal class ConfigurationResponseData(
+class ConfigurationResponseData(
     // Is the onboarding process enabled
     @SerializedName("enabled") val enabled: Boolean,
     // Is OTP required for the first part - identification/activation.
@@ -51,14 +51,14 @@ internal class ConfigurationResponseData(
     @SerializedName("documents") val documents: ConfigurationDocumentsData
 )
 
-internal class ConfigurationDocumentsData(
+class ConfigurationDocumentsData(
     // Number of required documents
     @SerializedName("requiredDocumentsCount") val requiredDocumentsCount: Int,
     // List of documents
     @SerializedName("items") val items: Array<ConfigurationDocumentData>
 )
 
-internal class ConfigurationDocumentData(
+class ConfigurationDocumentData(
     // Type of the document
     @SerializedName("type") val type: String,
     // Is the document mandatory?

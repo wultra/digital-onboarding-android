@@ -19,8 +19,6 @@ package com.wultra.android.digitalonboarding.networking
 import android.content.Context
 import com.wultra.android.digitalonboarding.Utils
 import com.wultra.android.digitalonboarding.networking.model.CancelRequest
-import com.wultra.android.digitalonboarding.networking.model.ConfigurationRequest
-import com.wultra.android.digitalonboarding.networking.model.ConfigurationResponse
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveRequest
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveResponse
 import com.wultra.android.digitalonboarding.networking.model.ConsentRequest
@@ -84,8 +82,6 @@ internal class CustomerVerificationApi(
         private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
         private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val configurationEndpoint = EndpointBasic<ConfigurationRequest, ConfigurationResponse>("api/configuration",
-            E2EEConfiguration.APPLICATION_SCOPE)
     }
 
     /**
