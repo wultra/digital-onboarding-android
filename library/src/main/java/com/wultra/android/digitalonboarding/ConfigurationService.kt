@@ -34,7 +34,7 @@ typealias ConfigurationResult<T> = WDOResult<T, ApiError>
  * The configuration contains information about which steps are required to be performed during
  * the onboarding process and which document types are supported or required for scanning.
  *
- * @property powerAuthSDK Configured PowerAuthSDK instance. This instance needs to be without valid activation otherwise you'll get errors.
+ * @property powerAuthSDK Configured PowerAuthSDK instance. Activation is not required for configuration retrieval.
  *
  * @param identityServerUrl Base URL for service requests. Usually ending with `enrollment-onboarding-server`.
  * @param appContext Application context.
