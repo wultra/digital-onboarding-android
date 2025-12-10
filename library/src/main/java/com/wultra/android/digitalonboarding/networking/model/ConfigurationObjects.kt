@@ -55,7 +55,7 @@ class ConfigurationDocumentsData(
     // Number of required documents
     @SerializedName("requiredDocumentsCount") val requiredDocumentsCount: Int,
     // List of documents
-    @SerializedName("items") val items: Array<ConfigurationDocumentData>
+    @SerializedName("items") val items: List<ConfigurationDocumentData>
 )
 
 class ConfigurationDocumentData(

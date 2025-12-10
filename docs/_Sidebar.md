@@ -1,6 +1,7 @@
 **Tutorials**
 
 - [SDK Integration](SDK-Integration.md)
+- [Process Configuration](Process-Configuration.md) 
 - [Device Activation (With UserID Only)](Device-Activation.md)
 - [Verifying User With Document Scan And Genuine Presence Check](Verifying-User.md)
 - [Language Configuration](Language-Configuration.md)
