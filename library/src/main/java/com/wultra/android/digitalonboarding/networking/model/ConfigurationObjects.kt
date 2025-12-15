@@ -41,28 +41,28 @@ class ConfigurationResponse(
     status: Status
 ): ObjectResponse<ConfigurationResponseData>(responseObject, status)
 class ConfigurationResponseData(
-    // Is the onboarding process enabled
+    /** Is the onboarding process enabled */
     @SerializedName("enabled") val enabled: Boolean,
-    // Is OTP required for the first part - identification/activation.
+    /** Is OTP required for the first part - identification/activation. */
     @SerializedName("otpForIdentification") val otpForIdentification: Boolean,
-    // Is OTP required for the second part - identity verification.
+    /** Is OTP required for the second part - identity verification. */
     @SerializedName("otpForIdentityVerification") val otpForIdentityVerification: Boolean,
-    // Documents required for identity verification.
+    /** Documents required for identity verification. */
     @SerializedName("documents") val documents: ConfigurationDocumentsData
 )
 
 class ConfigurationDocumentsData(
-    // Number of required documents
+    /** Number of required documents */
     @SerializedName("requiredDocumentsCount") val requiredDocumentsCount: Int,
-    // List of documents
+    /** List of documents */
     @SerializedName("items") val items: List<ConfigurationDocumentData>
 )
 
 class ConfigurationDocumentData(
-    // Type of the document
+    /** Type of the document */
     @SerializedName("type") val type: String,
-    // Is the document mandatory?
+    /** Is the document mandatory? */
     @SerializedName("mandatory") val mandatory: Boolean,
-    // Number of sides the document has
+    /** Number of sides the document has */
     @SerializedName("sideCount") val sideCount: Int
 )
