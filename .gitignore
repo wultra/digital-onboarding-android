@@ -9,6 +9,7 @@
 jd-gui.cfg
 .java-version
 ktlint
+.credentials
 
 # release folder
 /release
