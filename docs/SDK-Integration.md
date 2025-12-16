@@ -32,4 +32,4 @@ implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:1
 
 ## Read next
 
-- [Device Activation](Device-Activation.md)
+- [Process Configuration](Process-Configuration.md)

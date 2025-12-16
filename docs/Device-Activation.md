@@ -159,6 +159,7 @@ class MyUserService {
 ## Creating the activation
 
 To activate the user (activating the `PowerAuthSDK` instance), data retrieved from the process start can be used with additional `OTP`. The OTP is usually sent via SMS, email, or other channel.
+To decide if the OTP is needed, you can use the [Configuration API](Process-Configuration.md) or have it hardcoded.
 
 Use the `activate` function to create the activation.
 
