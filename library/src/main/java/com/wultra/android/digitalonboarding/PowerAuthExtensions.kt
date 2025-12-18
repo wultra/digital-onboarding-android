@@ -62,7 +62,7 @@ fun PowerAuthSDK.createActivation(
  * Creates PowerAuth activation based on the activation code and OTP.
  *
  * @param activationCode Activation code
- * @param otp One Time Password
+ * @param otp OTP code received by the user (via SMS or email). Optional when not required.
  * @param activationName Name of the activation
  * @param callback Result callback
  *
