@@ -125,9 +125,10 @@ To start the activation, use the `start` function.
  *
  * @param T Type that represents user credentials.
  * @param credentials Object with credentials. Which credentials are needed should be provided by a system/backend provider.
+ * @param processType The process type identification. If not specified, the default process type will be used.
  * @param callback Callback with the result.
  */
-fun <T> start(credentials: T, callback: (ActivationResult<Unit>) -> Unit)
+fun <T> start(credentials: T, processType: String?, callback: (ActivationResult<Unit>) -> Unit)
 ```
 
 ### Example
@@ -141,10 +142,11 @@ data class UserData(
 class MyUserService {
     // prepared service
     private lateinit var activationService: ActivationService
-
+    private lateinit var processType: String = "ONBOARDING"
+    
     fun startActivation(id: String, bday: String) {
         val data = UserData(id, bday)
-        activationService.start(data) { result ->
+        activationService.start(data, processType) { result ->
             result.onSuccess {
                 // success, continue with `activate()`
                 // at this moment, the `hasActiveProcess` starts return true
@@ -167,7 +169,7 @@ Use the `activate` function to create the activation.
 /**
  * Activates PowerAuthSDK instance that was passed in the initializer.
  *
- * @param otp OTP provided by the user
+ * @param otp OTP code received by the user (via SMS or email). Optional when not required.
  * @param activationName Name of the activation. Device name by default.
  * @param callback Callback with the result.
  */

@@ -42,9 +42,44 @@ fun PowerAuthSDK.createActivation(
     activationName: String,
     callback: (Result<CreateActivationResult>) -> Unit
 ) {
-    val activation = PowerAuthActivation.Builder.customActivation(data.asAttributes(), activationName).build()
+    val activation = PowerAuthActivation.Builder.customActivation(data.asAttributes(), activationName)
+
     createActivation(
-        activation,
+        activation.build(),
+        object : ICreateActivationListener {
+            override fun onActivationCreateSucceed(result: CreateActivationResult) {
+                callback(Result.success(result))
+            }
+
+            override fun onActivationCreateFailed(t: Throwable) {
+                callback(Result.failure(t))
+            }
+        }
+    )
+}
+
+/**
+ * Creates PowerAuth activation based on the activation code and OTP.
+ *
+ * @param activationCode Activation code
+ * @param otp OTP code received by the user (via SMS or email). Optional when not required.
+ * @param activationName Name of the activation
+ * @param callback Result callback
+ *
+ * @throws PowerAuthErrorException when powerauth data cannot be constructed.
+ */
+fun PowerAuthSDK.createActivation(
+    activationCode: String,
+    otp: String?,
+    activationName: String,
+    callback: (Result<CreateActivationResult>) -> Unit
+) {
+    val activation = PowerAuthActivation.Builder.activation(activationCode, activationName)
+    if (otp != null) {
+        activation.setAdditionalActivationOtp(otp)
+    }
+    createActivation(
+        activation.build(),
         object : ICreateActivationListener {
             override fun onActivationCreateSucceed(result: CreateActivationResult) {
                 callback(Result.success(result))
