@@ -22,12 +22,13 @@ object Constants {
         // It's the only way to make them available in buildSrc/build.gradle.kts
         val androidPluginVersion: String by System.getProperties()
         val kotlinVersion: String by System.getProperties()
+        val dokkaVersion: String by System.getProperties()
     }
 
     object Java {
-        val sourceCompatibility = JavaVersion.VERSION_11
-        val targetCompatibility = JavaVersion.VERSION_11
-        const val kotlinJvmTarget = "11"
+        val sourceCompatibility = JavaVersion.VERSION_17
+        val targetCompatibility = JavaVersion.VERSION_17
+        const val kotlinJvmTarget = "17"
     }
 
     object Android {

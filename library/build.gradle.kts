@@ -19,7 +19,10 @@
 plugins {
     id("com.android.library")
     kotlin("android")
+    id("org.jetbrains.dokka")
 }
+
+apply<com.wultra.plugin.WultraAndroidReleasePlugin>()
 
 android {
 
@@ -46,6 +49,7 @@ android {
     compileOptions {
         sourceCompatibility = Constants.Java.sourceCompatibility
         targetCompatibility = Constants.Java.targetCompatibility
+        //noinspection WrongGradleMethod
         kotlinOptions {
             jvmTarget = Constants.Java.kotlinJvmTarget
             suppressWarnings = false
@@ -75,5 +79,3 @@ dependencies {
     // Dependencies
     compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.9.2")
 }
-
-apply("android-release-aar.gradle")
