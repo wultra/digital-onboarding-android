@@ -1,4 +1,4 @@
-# Verifyng user
+# Verifying user
 
 If your PowerAuthSDK instance was activated with the `ActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
 
@@ -58,25 +58,14 @@ The service can return the state via the `status()` method or various other call
 
 ### Intro
 
-| `VerificationState` value | `VerificationStateData` class |  
-|---------------------------|-------------------------------|
-| `INTRO`                   | `VerificationStateIntroData`  | 
+| `VerificationState` value | `VerificationStateData` class                                             |  
+|---------------------------|---------------------------------------------------------------------------|
+| `INTRO`                   | `VerificationStateIntroData` with `val consentRequired: Boolean` property | 
 
 Show the verification introduction screen where the user can start the activation.
 
-The next step should be calling the `getConsentText()`.
-
-### Consent
-
-| `VerificationState` value | `VerificationStateData` class                                          |  
-|---------------------------|------------------------------------------------------------------------|
-| `CONSENT`                 | `VerificationStateConsentData` with `val consentHtml: String` property | 
-
-Show approve/cancel user consent.
-
-The content of the text (in the `consentHtml` property) depends on the server configuration and might be plain text or HTML.
-
-The next step should be calling the `consentApprove()`
+If `consentRequired` is `true`, the next step should be calling the `getConsent()`. If it is `false`, 
+you can skip the consent and call `start(ConsentResponse.NOT_REQUIRED)` to start the verification process.
 
 ### Select documents to scan
 
@@ -210,36 +199,34 @@ verification.status { result ->
 
 ## Getting the user consent text
 
-When the state is `INTRO`, the first step in the flow is to get the context text for the user to approve.
+When the state is `INTRO` and `consentRequired` is `true`, the first step in the flow is to get the context text for the user to approve.
 
 ```kotlin
 lateinit var verification: VerificationService // configured instance
-verification.consentGet { result ->
-    result.onSuccess { stateData ->
-        if (stateData.state is VerificationStateConsentData) {
-            // handle consent state
-        }
+verification.getConsent { result ->
+    result.onSuccess { consentText ->
+        // show consent text to user
     }.onFailure {
-        if (it.state != null) {
-            // show expected screen based on the state
-        } else {
-            // navigate to error screen and show the error in `it.reason`
-        }
+        // navigate to error screen and show the error in `it.reason`
     }
 }
 ```
 
-## Approving the user consent
+## Starting the verification (resolving the consent)
 
-When the state is `consent`, you should display the consent text to the user to approve or reject.
+When the state is `CONSENT`, you should display the consent text to the user to approve or reject.
 
-If the user __rejects the consent__, just return him to the intro screen, there's no API call for reject.
+If the user __rejects the consent__, call `start(ConsentResponse.DECLINED)`.
 
-If the user chooses to accept the consent, call `consentApprove` function. If successful, `DOCUMENTS_TO_SCAN_SELECT ` state will be returned.
+If the user chooses to accept the consent, call `start(ConsentResponse.APPROVED)` function. If successful, `DOCUMENTS_TO_SCAN_SELECT` state will be returned.
+
+If the `INTRO` state reported `consentRequired` as `false`, call `start(ConsentResponse.NOT_REQUIRED)`.
 
 ```kotlin
 lateinit var verification: VerificationService // configured instance
-verification.consentApprove { result ->
+
+// example when user approved the consent
+verification.start(ConsentResponse.APPROVED) { result ->
     result.onSuccess { stateData ->
         if (stateData.state is VerificationStateDocumentsToScanSelectData) {
             // handle consent state
@@ -338,7 +325,7 @@ Example:
 lateinit var verification: VerificationService // configured instance
 val passportToUpload = DocumentFile(
     byteArrayOf(), // raw image data from the document scanning library/photo camera
-    null, // signature onlu when supported by the backend
+    null, // signature only when supported by the backend
     DocumentType.PASSPORT,
     DocumentSide.FRONT, // passport has only front side
     null // use only when re-uploading the file (for example when first upload was rejected because of a blur)
@@ -423,7 +410,7 @@ verification.verifyOTP(userOTP) { result ->
         // React to a new state returned in the result
     }.onFailure {
         // handle error
-        // in case that the OTP cannot be filled again (too mant attempts or other), the `it.reason` will be type of `OTPFailedException`
+        // in case that the OTP cannot be filled again (too many attempts or other), the `it.reason` will be type of `OTPFailedException`
     }
 }
 ```
