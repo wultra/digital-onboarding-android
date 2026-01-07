@@ -46,7 +46,12 @@ abstract class VerificationStateData(
     val state: VerificationState
 )
 
-object VerificationStateIntroData: VerificationStateData(VerificationState.INTRO)
+class VerificationStateIntroData(
+    /** If the user consent is required before scanning documents.
+     *  For native platforms we are considering as mandatory by default.
+     */
+    val consentRequired: Boolean = true
+): VerificationStateData(VerificationState.INTRO)
 object VerificationStateDocumentsToScanSelectData: VerificationStateData(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
 object VerificationStatePresenceCheckData: VerificationStateData(VerificationState.PRESENCE_CHECK)
 object VerificationStateSuccessData: VerificationStateData(VerificationState.SUCCESS)
