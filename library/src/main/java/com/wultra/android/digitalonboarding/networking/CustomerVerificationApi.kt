@@ -22,7 +22,7 @@ import com.wultra.android.digitalonboarding.networking.model.CancelRequest
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveRequest
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveResponse
 import com.wultra.android.digitalonboarding.networking.model.ConsentRequest
-import com.wultra.android.digitalonboarding.networking.model.ConsentResponse
+import com.wultra.android.digitalonboarding.networking.model.ConsentTextResponse
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRequest
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRequestData
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitResponse
@@ -73,7 +73,7 @@ internal class CustomerVerificationApi(
         private val statusEndpoint = EndpointSignedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
         private val startEndpoint = EndpointSigned<StartRequest, StatusResponse>("api/identity/init", "/api/identity/init")
         private val cancelEndpoint = EndpointSigned<CancelRequest, StatusResponse>("api/identity/cleanup", "/api/identity/cleanup")
-        private val consentTextEndpoint = EndpointSignedWithToken<ConsentRequest, ConsentResponse>("/api/identity/consent/text", "possession_universal")
+        private val consentTextEndpoint = EndpointSignedWithToken<ConsentRequest, ConsentTextResponse>("/api/identity/consent/text", "possession_universal")
         private val consentApproveEndpoint = EndpointSigned<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
         private val docsStatusEndpoint = EndpointSignedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
         private val documentSdkInitEndpoint = EndpointSigned<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
@@ -139,7 +139,7 @@ internal class CustomerVerificationApi(
      * @param processId ID of the process.
      * @param listener Result listener.
      */
-    fun getConsentText(processId: String, listener: IApiCallResponseListener<ConsentResponse>) {
+    fun getConsentText(processId: String, listener: IApiCallResponseListener<ConsentTextResponse>) {
         post(
             ConsentRequest(processId),
             consentTextEndpoint,
