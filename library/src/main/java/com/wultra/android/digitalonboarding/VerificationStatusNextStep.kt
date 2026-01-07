@@ -23,15 +23,21 @@ import com.wultra.android.digitalonboarding.networking.model.IdentityVerificatio
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponseData
 
 // Internal status that works as a translation layer between server API and SDK API
-internal class VerificationStatusNextStep(val value: Value, val statusCheckReason: StatusCheckReason? = null) {
+internal class VerificationStatusNextStep(
+    val value: Value,
+    val statusCheckReason: StatusCheckReason? = null,
+    val consentRequired: Boolean = true
+) {
 
     companion object {
         fun fromStatusResponse(response: VerificationStatusResponseData): VerificationStatusNextStep {
 
             fun match(phase: VerificationPhase?, status: IdentityVerificationStatus) = response.phase == phase && response.status == status
 
+            val consentRequired = response.consentRequired ?: true // fallback to consent required on native platforms if not configured on backend
+
             return when {
-                match(null, NOT_INITIALIZED) -> VerificationStatusNextStep(Value.INTRO)
+                match(null, NOT_INITIALIZED) -> VerificationStatusNextStep(Value.INTRO, consentRequired = consentRequired)
                 match(null, FAILED) -> VerificationStatusNextStep(Value.FAILED)
                 match(DOCUMENT_UPLOAD, IN_PROGRESS) -> VerificationStatusNextStep(Value.DOCUMENT_SCAN)
                 match(DOCUMENT_UPLOAD, VERIFICATION_PENDING) -> VerificationStatusNextStep(Value.STATUS_CHECK, StatusCheckReason.DOCUMENT_VERIFICATION)
