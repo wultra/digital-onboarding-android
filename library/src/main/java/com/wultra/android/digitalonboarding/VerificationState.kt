@@ -21,8 +21,6 @@ enum class VerificationState {
 
     /** Show verification introduction screen */
     INTRO,
-    /** Show approve/cancel user consent */
-    CONSENT,
     /** Show document selection to the user */
     DOCUMENTS_TO_SCAN_SELECT,
     /** User should scan documents */
@@ -60,7 +58,7 @@ object VerificationStateFailedData: VerificationStateData(VerificationState.FAIL
 class VerificationStateConsentData(
     /** HTML data for the `CONSENT` state */
     val consentHtml: String
-): VerificationStateData(VerificationState.CONSENT)
+)
 
 class VerificationStateScanDocumentData(
     /** Data for the `SCAN_DOCUMENT` state */

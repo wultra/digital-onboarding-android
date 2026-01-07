@@ -236,24 +236,19 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun consentGet(callback: (VerificationResult) -> Unit) {
-
+    fun getConsent(callback: (WDOResult<String, Fail>) -> Unit) {
         val processId = guardProcessId(callback) ?: return
-
         api.getConsentText(
             processId,
             object : IApiCallResponseListener<ConsentTextResponse> {
                 override fun onSuccess(result: ConsentTextResponse) {
-                    WDOLogger.i("consentGet success")
-                    markCompleted(
-                        VerificationStateConsentData(result.responseObject.consentText),
-                        callback,
-                    )
+                    WDOLogger.i("getConsent success")
+                    callback(WDOResult.success(result.responseObject.consentText))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    WDOLogger.e("consentGet failed : ${error.e}")
-                    markCompleted(error, callback)
+                    WDOLogger.e("getConsent failed : ${error.e}")
+                    callback(WDOResult.failure(Fail(reason = error)))
                 }
             },
         )
@@ -294,7 +289,6 @@ class VerificationService(
                     object : IApiCallResponseListener<ConsentApproveResponse> {
                         override fun onSuccess(result: ConsentApproveResponse) {
                             WDOLogger.i("Consent declined success.")
-                            // @TODO Marek - same as iOS - refresh or use last status instead?
                             val consentRequired = lastStatus?.responseObject?.consentRequired ?: true
                             markCompleted(VerificationStateIntroData(consentRequired), callback)
                         }
