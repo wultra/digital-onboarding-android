@@ -5,6 +5,11 @@
 - Refactored document upload to use the new v2 API.
 - `ConfigurationService` allows to fetch Wultra Digital Onboarding configuration from the server.
 - Added support for `processType` and `activationCode` in `ActivationService`
+- Support for optional Identity Consent:
+  - `VerificationStateIntroData` contains `consentRequired` flag.
+  - `VerificationService.start` handles mandatory and optional consent (replaces `consentApprove`).
+  - `consentGet(callback:)` renamed to `getConsent(callback:)`.
+  - Removed `VerificationState.CONSENT` state; consent is resolved via `start` method.
 
 ## 1.3.0 (Oct, 2024)
 
