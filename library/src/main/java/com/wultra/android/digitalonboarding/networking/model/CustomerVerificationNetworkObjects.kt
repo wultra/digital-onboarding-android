@@ -37,6 +37,7 @@ internal class VerificationStatusResponseData(
     @SerializedName("processId") val processId: String,
     @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
     @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
+    @SerializedName("consentRequired") val consentRequired: Boolean?,
     @SerializedName("config") val config: IdentityVerificationConfig
 )
 internal class IdentityVerificationConfig(
@@ -119,12 +120,12 @@ internal class ConsentRequestData(
     @SerializedName("processId") val processId: String,
     @SerializedName("consentType") val consentType: String
 )
-internal class ConsentResponse(
-    responseObject: ConsentResponseData,
+internal class ConsentTextResponse(
+    responseObject: ConsentTextResponseData,
     status: Status
-): ObjectResponse<ConsentResponseData>(responseObject, status)
+): ObjectResponse<ConsentTextResponseData>(responseObject, status)
 
-internal class ConsentResponseData(
+internal class ConsentTextResponseData(
     @SerializedName("consentText") val consentText: String
 )
 

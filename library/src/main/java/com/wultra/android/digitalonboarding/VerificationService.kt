@@ -22,7 +22,7 @@ import android.content.Context
 import com.wultra.android.digitalonboarding.VerificationStatusNextStep.Value
 import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveResponse
-import com.wultra.android.digitalonboarding.networking.model.ConsentResponse
+import com.wultra.android.digitalonboarding.networking.model.ConsentTextResponse
 import com.wultra.android.digitalonboarding.networking.CustomerOnboardingApi
 import com.wultra.android.digitalonboarding.networking.CustomerVerificationApi
 import com.wultra.android.digitalonboarding.networking.model.Document
@@ -47,6 +47,18 @@ import okhttp3.OkHttpClient
 import java.time.Duration
 
 typealias VerificationResult = WDOResult<VerificationService.Success, VerificationService.Fail>
+
+/**
+ * User response for the consent.
+ */
+enum class ConsentResponse {
+    /** User approved the consent. */
+    APPROVED,
+    /** User declined the consent. */
+    DECLINED,
+    /** Consent is not required. */
+    NOT_REQUIRED
+}
 
 /**
  * Digital Onboarding Verification Service
@@ -137,7 +149,7 @@ class VerificationService(
 
                 when (nextStep.value) {
                     Value.INTRO -> {
-                        markCompleted(VerificationStateIntroData, callback)
+                        markCompleted(VerificationStateIntroData(nextStep.consentRequired), callback)
                     }
                     Value.DOCUMENT_SCAN -> {
                         WDOLogger.d("Asking for a document status.")
@@ -224,66 +236,74 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun consentGet(callback: (VerificationResult) -> Unit) {
-
+    fun getConsent(callback: (WDOResult<String, Fail>) -> Unit) {
         val processId = guardProcessId(callback) ?: return
-
         api.getConsentText(
             processId,
-            object : IApiCallResponseListener<ConsentResponse> {
-                override fun onSuccess(result: ConsentResponse) {
-                    WDOLogger.i("consentGet success")
-                    markCompleted(
-                        VerificationStateConsentData(result.responseObject.consentText),
-                        callback,
-                    )
+            object : IApiCallResponseListener<ConsentTextResponse> {
+                override fun onSuccess(result: ConsentTextResponse) {
+                    WDOLogger.i("getConsent success")
+                    callback(WDOResult.success(result.responseObject.consentText))
                 }
 
                 override fun onFailure(error: ApiError) {
-                    WDOLogger.e("consentGet failed : ${error.e}")
-                    markCompleted(error, callback)
+                    WDOLogger.e("getConsent failed : ${error.e}")
+                    callback(WDOResult.failure(Fail(reason = error)))
                 }
             },
         )
     }
 
     /**
-     * Approves the consent for this process and starts the activation.
+     * Starts the verification process with the user consent.
      *
+     * @param consentApprovedByUser User response for the consent.
      * @param callback Callback with the result.
      */
-    fun consentApprove(callback: (VerificationResult) -> Unit) {
-
+    fun start(consentApprovedByUser: ConsentResponse, callback: (VerificationResult) -> Unit) {
         val processId = guardProcessId(callback) ?: return
 
-        api.resolveConsent(
-            processId,
-            true,
-            object : IApiCallResponseListener<ConsentApproveResponse> {
-                override fun onSuccess(result: ConsentApproveResponse) {
-                    WDOLogger.i("consentApprove success - starting the process")
-                    api.start(
-                        processId,
-                        object : IApiCallResponseListener<StatusResponse> {
-                            override fun onSuccess(result: StatusResponse) {
-                                WDOLogger.i("Process start success")
-                                markCompleted(VerificationStateDocumentsToScanSelectData, callback)
-                            }
-
-                            override fun onFailure(error: ApiError) {
-                                WDOLogger.e("start failed : ${error.e}")
-                                markCompleted(error, callback)
-                            }
-                        },
-                    )
-                }
-
-                override fun onFailure(error: ApiError) {
-                    WDOLogger.e("consentApprove failed : ${error.e}")
-                    markCompleted(error, callback)
-                }
-            },
-        )
+        when (consentApprovedByUser) {
+            ConsentResponse.APPROVED -> {
+                WDOLogger.i("User approved consent - resolving on the server")
+                api.resolveConsent(
+                    processId,
+                    true,
+                    object : IApiCallResponseListener<ConsentApproveResponse> {
+                        override fun onSuccess(result: ConsentApproveResponse) {
+                            WDOLogger.i("Consent granted - starting the verification process.")
+                            startProcess(processId, callback)
+                        }
+                        override fun onFailure(error: ApiError) {
+                            WDOLogger.e("Consent approve failed : ${error.e}")
+                            markCompleted(error, callback)
+                        }
+                    },
+                )
+            }
+            ConsentResponse.DECLINED -> {
+                WDOLogger.i("User declined consent - returning to intro state")
+                api.resolveConsent(
+                    processId,
+                    false,
+                    object : IApiCallResponseListener<ConsentApproveResponse> {
+                        override fun onSuccess(result: ConsentApproveResponse) {
+                            WDOLogger.i("Consent declined success.")
+                            val consentRequired = lastStatus?.responseObject?.consentRequired ?: true
+                            markCompleted(VerificationStateIntroData(consentRequired), callback)
+                        }
+                        override fun onFailure(error: ApiError) {
+                            WDOLogger.e("Consent decline failed : ${error.e}")
+                            markCompleted(error, callback)
+                        }
+                    },
+                )
+            }
+            ConsentResponse.NOT_REQUIRED -> {
+                WDOLogger.i("Consent not required - start verification process immediately")
+                startProcess(processId, callback)
+            }
+        }
     }
 
     /**
@@ -433,7 +453,7 @@ class VerificationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     WDOLogger.i("restartVerification success")
-                    markCompleted(VerificationStateIntroData, callback)
+                    markCompleted(VerificationStateIntroData(), callback)
                 }
 
                 override fun onFailure(error: ApiError) {
@@ -599,6 +619,23 @@ class VerificationService(
     object OTPFailedException: Exception("OTP failed to verify.")
 
     // Private helper methods
+
+    // Starts the verification process on backend.
+    private fun startProcess(processId: String, callback: (VerificationResult) -> Unit) {
+        api.start(
+            processId,
+            object : IApiCallResponseListener<StatusResponse> {
+                override fun onSuccess(result: StatusResponse) {
+                    WDOLogger.i("Verification process start success")
+                    markCompleted(VerificationStateDocumentsToScanSelectData, callback)
+                }
+                override fun onFailure(error: ApiError) {
+                    WDOLogger.e("Verification process start failed : ${error.e}")
+                    markCompleted(error, callback)
+                }
+            },
+        )
+    }
 
     private fun <T>guardProcessId(callback: (WDOResult<T, Fail>) -> Unit): String? {
 
