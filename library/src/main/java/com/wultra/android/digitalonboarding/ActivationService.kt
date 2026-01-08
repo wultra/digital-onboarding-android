@@ -281,12 +281,12 @@ class ActivationService(
     /**
      * Activates PowerAuthSDK instance that was passed in the initializer.
      *
-     * @param otp OTP provided by the user
+     * @param otp OTP provided by the user. Optional when not required by backend.
      * @param activationName Name of the activation. Device name by default.
      * @param callback Callback with the result.
      */
     fun activate(
-        otp: String,
+        otp: String?,
         activationName: String = Build.MODEL,
         callback: (ActivationResult<CreateActivationResult>) -> Unit
     ) {
@@ -385,14 +385,15 @@ class ActivationService(
 
 private data class ActivationDataWithOTP(
     val processId: String,
-    val otp: String,
+    val otp: String?,
 ): ActivationData {
     override fun processId() = processId
-    override fun asAttributes() = mapOf(
-        Pair("processId", processId),
-        Pair("otpCode", otp),
-        Pair("credentialsType", "ONBOARDING")
-    )
+    override fun asAttributes(): Map<String, String> =
+        buildMap {
+            put("processId", processId)
+            put("credentialsType", "ONBOARDING")
+            otp?.let { put("otpCode", it) }
+        }
 }
 
 private fun dataToStorage(processData: ProcessData?): String? {
