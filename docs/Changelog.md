@@ -1,6 +1,7 @@
 # Changelog
 
-### TBA
+## TBA
+
 - `SDKInitRequestDataAttributes` now contains `platform` property (mainly to support BlinkID SDK).
 - Refactored document upload to use the new v2 API.
 - `ConfigurationService` allows to fetch Wultra Digital Onboarding configuration from the server.
