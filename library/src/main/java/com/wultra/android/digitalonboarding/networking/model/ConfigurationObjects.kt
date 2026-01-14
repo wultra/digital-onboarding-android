@@ -19,7 +19,6 @@ package com.wultra.android.digitalonboarding.networking.model
 import com.google.gson.annotations.SerializedName
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
-import com.wultra.android.powerauth.networking.data.StatusResponse.Status
 
 /**
  * REQUEST
@@ -50,27 +49,27 @@ data class ConfigurationResponseData(
     /** Is OTP required for the second part - identity verification. */
     @SerializedName("otpForIdentityVerification") val otpForIdentityVerification: Boolean,
     /** Documents required for identity verification. */
-    @SerializedName("documents") val documents: ConfigurationDocumentsData
+    @SerializedName("documents") val documents: ConfigurationDocuments
 )
 
 /** Documents required for identity verification */
-data class ConfigurationDocumentsData(
+data class ConfigurationDocuments(
     /** Number of total required documents */
     @SerializedName("totalRequiredDocumentsCount") val totalRequiredDocumentsCount: Int,
     /** Groups of documents */
-    @SerializedName("groups") val groups: List<ConfigurationDocumentGroupData>
+    @SerializedName("groups") val groups: List<ConfigurationDocumentGroup>
 )
 
 /** Configuration for a document */
-class ConfigurationDocumentGroupData(
+class ConfigurationDocumentGroup(
     /** Number of required documents in the group */
     @SerializedName("requiredDocumentsCount") val requiredDocumentsCount: Int,
     /** Documents in the group */
-    @SerializedName("items") val items: List<ConfigurationDocumentData>
+    @SerializedName("items") val items: List<ConfigurationDocument>
 )
 
 /** Group of documents in the configuration */
-data class ConfigurationDocumentData(
+data class ConfigurationDocument(
     /** Type of the document */
     @SerializedName("type") val type: String,
     /** Number of sides the document has */

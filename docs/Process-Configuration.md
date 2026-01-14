@@ -35,27 +35,27 @@ data class ConfigurationResponseData(
     /** Is OTP required for the second part - identity verification. */
     val otpForIdentityVerification: Boolean,
     /** Documents required for identity verification. */
-    val documents: ConfigurationDocumentsData
+    val documents: ConfigurationDocuments
 )
 
 /** Documents required for identity verification */
-data class ConfigurationDocumentsData(
+data class ConfigurationDocuments(
     /** Number of total required documents */
     val totalRequiredDocumentsCount: Int,
     /** Groups of documents */
-    val groups: List<ConfigurationDocumentGroupData>
+    val groups: List<ConfigurationDocumentGroup>
 )
 
 /** Configuration for a document */
-class ConfigurationDocumentGroupData(
+class ConfigurationDocumentGroup(
     /** Number of required documents in the group */
     val requiredDocumentsCount: Int,
     /** Documents in the group */
-    val items: List<ConfigurationDocumentData>
+    val items: List<ConfigurationDocument>
 )
 
 /** Group of documents in the configuration */
-data class ConfigurationDocumentData(
+data class ConfigurationDocument(
     /** Type of the document */
     val type: String,
     /** Number of sides the document has */
