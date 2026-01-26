@@ -563,7 +563,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun getOTP(callback: (WDOResult<String, Fail>) -> Unit) {
+    internal fun getOTP(callback: (WDOResult<String, Fail>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 

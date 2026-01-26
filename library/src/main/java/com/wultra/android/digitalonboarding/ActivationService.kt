@@ -355,7 +355,7 @@ class ActivationService(
      *
      * @param callback Result callback.
      */
-    fun getOtp(callback: (ActivationResult<String>) -> Unit) {
+    internal fun getOTP(callback: (ActivationResult<String>) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
 

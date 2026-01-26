@@ -11,6 +11,7 @@
   - `VerificationService.start` handles mandatory and optional consent (replaces `consentApprove`).
   - `consentGet(callback:)` renamed to `getConsent(callback:)`.
   - Removed `VerificationState.CONSENT` state; consent is resolved via `start` method.
+- `getOTP` methods in `ActivationService` and `VerificationService` were moved to `DemoEndpoints` helper class.
 
 ## 1.3.0 (Oct, 2024)
 
