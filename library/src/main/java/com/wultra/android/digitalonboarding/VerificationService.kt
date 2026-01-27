@@ -598,22 +598,29 @@ class VerificationService(
 
         val processId = guardProcessId(callback) ?: return
 
+        // Helper to clear the created activation in case of failure
         val clearPaInstanceIfNeeded = {
             if (!newPowerAuthInstance.canStartActivation()) {
                 newPowerAuthInstance.removeActivationLocal(appContext)
             }
         }
 
+        // Validate password if required
         validatePasswordIfRequired(
             validatePassword,
             newPassword,
             onValid = {
+                // Proceed with finish activation API call
                 api.finishActivation(
                     processId,
                     userIdentification,
                     object: IApiCallResponseListener<FinishActivationResponse> {
                         override fun onSuccess(result: FinishActivationResponse) {
+
                             WDOLogger.i("finishActivation success")
+
+                            // Create new activation on the new PowerAuth instance with obtained activation code
+
                             val activation = PowerAuthActivation.Builder.activation(
                                 result.responseObject.activationCode,
                                 newActivationName
@@ -622,10 +629,15 @@ class VerificationService(
                                 activation.build(),
                                 object : ICreateActivationListener {
                                     override fun onActivationCreateSucceed(result: CreateActivationResult) {
+
+                                        // New activation created, now persist it with the provided password
+
                                         val persistResult = newPowerAuthInstance.persistActivationWithPassword(appContext, newPassword)
                                         if (persistResult == PowerAuthErrorCodes.SUCCEED) {
+                                            // New activation persisted
                                             markCompleted(VerificationStateSuccessData, callback)
                                         } else {
+                                            // Failed to persist new activation, clean up
                                             clearPaInstanceIfNeeded()
                                             WDOLogger.e("Failed to persist PowerAuth activation. Code: $persistResult")
                                             markCompleted(Fail(ApiError(Exception("Failed to persist PowerAuth activation. Code: $persistResult"))), callback)
@@ -633,6 +645,7 @@ class VerificationService(
                                     }
 
                                     override fun onActivationCreateFailed(t: Throwable) {
+                                        // Failed to create new activation, clean up
                                         clearPaInstanceIfNeeded()
                                         WDOLogger.e("finishActivation failed - failed to create activation : $t")
                                         markCompleted(Fail(ApiError(t)), callback)
@@ -643,6 +656,7 @@ class VerificationService(
                         }
 
                         override fun onFailure(error: ApiError) {
+                            // Finish activation API call failed
                             WDOLogger.e("finishActivation failed : ${error.e}")
                             markCompleted(error, callback)
                         }
@@ -650,12 +664,20 @@ class VerificationService(
                 )
             },
             onInvalid = { t ->
+                // Password validation failed
                 WDOLogger.e("finishActivation - password validation failed : ${t.message}")
                 markCompleted(ApiError(t), callback)
             }
         )
     }
 
+    /** Validates password if required. If not required, calls onValid callback immediately.
+     *
+     * @param required Whether the password validation is required.
+     * @param password Password to validate.
+     * @param onValid Callback called when the password is valid or validation is not required.
+     * @param onInvalid Callback called when the password is invalid.
+     */
     private fun validatePasswordIfRequired(
         required: Boolean,
         password: Password,
