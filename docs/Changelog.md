@@ -14,7 +14,7 @@
 - `getOTP` methods in `ActivationService` and `VerificationService` were moved to `DemoEndpoints` helper class.
 - added `ONBOARDING_APPROVAL` process type constant, which signals that the onboarding requires approval step.
 - new `ACTIVATION_FINISH` state in `VerificationState`
-  -  when this status is reached, the activation needs to be finalized by calling `ActivationService.finishActivation` method.
+  -  when this status is reached, the activation needs to be finalized by calling `VerificationService.finishActivation` method.
 
 ## 1.3.0 (Oct, 2024)
 

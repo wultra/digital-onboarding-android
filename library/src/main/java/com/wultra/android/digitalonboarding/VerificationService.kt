@@ -652,7 +652,6 @@ class VerificationService(
                                     }
                                 }
                             )
-                            markCompleted(VerificationStateSuccessData, callback)
                         }
 
                         override fun onFailure(error: ApiError) {
@@ -671,7 +670,8 @@ class VerificationService(
         )
     }
 
-    /** Validates password if required. If not required, calls onValid callback immediately.
+    /**
+     * Validates password if required. If not required, calls onValid callback immediately.
      *
      * @param required Whether the password validation is required.
      * @param password Password to validate.

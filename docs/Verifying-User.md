@@ -20,7 +20,7 @@ val powerAuth: PowerAuthSDK // configured and activated PowerAuth instance
 powerAuthSDK.fetchActivationStatusWithCallback(
     appContext,
     object : IActivationStatusListener {
-        override fun onActivationStatusSucceed(status: ActivationStatus)w {
+        override fun onActivationStatusSucceed(status: ActivationStatus) {
             // note that `needVerification()` method is an extension
             // from the `WultraDigitalOnboarding` space
             if (status.needVerification()) {
