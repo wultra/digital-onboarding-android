@@ -1,26 +1,37 @@
 {
-    "_purpose": "This file is used as a definition file for the prepare-release script.",
-    "_info": "It defines files that contains version number that should be updated during the release preparation.",
-    "library": {
-        "name": "digital-onboarding-android",
-        "type": "android-oss",
-        "publishScript": "scripts/build-and-publish.sh central"
+  "_purpose": "This file is used as a definition file for the prepare-release script.",
+  "_info": "It defines files that contains version number that should be updated during the release preparation.",
+  "library": {
+    "name": "digital-onboarding-android",
+    "type": "android-oss",
+    "publishScript": "scripts/build-and-publish.sh central"
+  },
+  "files": [
+    {
+      "description": "Gradle properties file.",
+      "path": "library/gradle.properties",
+      "type": "version_replace",
+      "match": "VERSION_NAME=%VERSION%"
     },
-    "files": [
-        {
-            "description": "Gradle properties file.",
-            "path": "library/gradle.properties",
-            "type": "version_replace",
-            "match": "VERSION_NAME=%VERSION%"
-        },
-        {
-            "description": "Changelog for the wultra documentation.",
-            "path": "docs/Changelog.md",
-            "type": "version_verify",
-            "match": "## %VERSION%"
-        }
-    ],
-    "scripts": [
-        
-    ]
+    {
+      "description": "SDK integration tutorial.",
+      "path": "docs/SDK-integration.md",
+      "type": "version_replace",
+      "match": "wultra-digital-onboarding:%VERSION%"
+    },
+    {
+      "description": "SDK integration tutorial.",
+      "path": "docs/SDK-integration.md",
+      "type": "versionstream_verify",
+      "match": "`%VERSION_STREAM%`"
+    },
+    {
+      "description": "Changelog for the wultra documentation.",
+      "path": "docs/Changelog.md",
+      "type": "version_verify",
+      "match": "## %VERSION%"
+    }
+  ],
+  "scripts": [
+  ]
 }

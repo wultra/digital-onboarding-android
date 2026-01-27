@@ -1,14 +1,16 @@
-# Verifying user
+# Verifying the User
 
-If your PowerAuthSDK instance was activated with the `ActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
+If your `PowerAuthSDK` instance was activated with the `ActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
 
-Additional verification means that the user will need to scan his face and documents like ID and/or passport.
+Additional verification requires the user to scan their face and provide documents such as an ID card or passport.
 
 ## When is the verification needed?
 
 Verification is needed if the `activationFlags` in the `io.getlime.security.powerauth.core.ActivationStatus` contains `VERIFICATION_PENDING` or `VERIFICATION_IN_PROGRESS` value.
 
+<!-- begin box info -->
 These values can be accessed via the extension methods `verificationPending()` and `verificationInProgress()` or just simply `needVerification()` if one of them is true.
+<!-- end -->
 
 Example:
 
@@ -18,7 +20,7 @@ val powerAuth: PowerAuthSDK // configured and activated PowerAuth instance
 powerAuthSDK.fetchActivationStatusWithCallback(
     appContext,
     object : IActivationStatusListener {
-        override fun onActivationStatusSucceed(status: ActivationStatus) {
+        override fun onActivationStatusSucceed(status: ActivationStatus)w {
             // note that `needVerification()` method is an extension
             // from the `WultraDigitalOnboarding` space
             if (status.needVerification()) {
@@ -119,6 +121,16 @@ The next step should be calling the `presenceCheckInit` to start the check and `
 Show enter OTP screen with the resend button. `remainingAttempts` property contains a number of OTP attempts a user can try.
 
 The next step should be calling the `verifyOTP` with the user-entered OTP. The OTP is usually SMS or email.
+
+### Finish Activation
+
+| `VerificationState` | `VerificationStateData` class           |  
+|---------------------|-----------------------------------------|
+| `ACTIVATION_FINISH` | `VerificationStateActivationFinishData` | 
+
+Show "finish activation" with PIN prompt screen.
+
+The next step should be calling the `finishActivation` with user entered PIN.
 
 ### Failed
 
@@ -314,7 +326,7 @@ for your implementation.
 When a document is scanned (both sides when required), it needs to be uploaded to the server.
 
 <!-- begin box warning -->
-__Images of the document should not be bigger than 1MB. Files that are too big will take longer time to upload and process on the server.__
+__Images of the document should not be bigger than hundreds of kilobytes. Files that are too big will take longer time to upload and process on the server.__
 <!-- end -->
 
 To upload a document, use `documentsSubmit` function. Each side of a document is a single `DocumentFile` instance.
@@ -411,6 +423,34 @@ verification.verifyOTP(userOTP) { result ->
     }.onFailure {
         // handle error
         // in case that the OTP cannot be filled again (too many attempts or other), the `it.reason` will be type of `OTPFailedException`
+    }
+}
+```
+
+# Finalizing the verification (optional)
+
+When the state `ACTIVATION_FINISH` is received, prompt the user for a PIN code.
+
+This PIN code is then used to activate a new `PowerAuthSDK` object that will be used for signing requests.
+
+Once the new `PowerAuthSDK` instance is activated, the verification process is finished, and the user can proceed to the main app flow *with the new `PowerAuthSDK` instance*.
+
+<!-- begin box info -->
+If the user's PIN used for the original activation should be equal to the one used for the new activation, then set the `validatePassword` parameter to `true` in the `finishActivation` call.
+<!-- end -->
+
+Example:
+
+```kotlin
+val verification: VerificationService // configured instance
+val newPaInstance: PowerAuthSDK // new PowerAuth instance to be activated and then used in the app
+val password = Password("1234") // user entered PIN code
+verification.finishActivation(newPaInstance, "my-new-activation-name", password, true, null) { result ->
+    result.onSuccess {
+        // When here, the newPaInstance is activated and ready to use (to sign requests and so on).
+        // The original PowerAuthSDK instance used for the verification will be in the `REMOVED` state and the `verification` instance can't be used anymore.
+    }.onFailure {
+        // handle error
     }
 }
 ```
