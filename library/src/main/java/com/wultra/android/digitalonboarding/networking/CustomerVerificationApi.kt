@@ -29,6 +29,8 @@ import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRespo
 import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusRequest
 import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.EmptyRequest
+import com.wultra.android.digitalonboarding.networking.model.FinishActivationRequest
+import com.wultra.android.digitalonboarding.networking.model.FinishActivationResponse
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
@@ -82,6 +84,7 @@ internal class CustomerVerificationApi(
         private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
         private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val finishVerificationEndpoint = EndpointSignedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
     }
 
     /**
@@ -312,6 +315,23 @@ internal class CustomerVerificationApi(
         post(
             OTPDetailRequest(OTPDetailRequestData(processId, OTPDetailType.USER_VERIFICATION)),
             CustomerOnboardingApi.getOtpEndpoint,
+            null,
+            null,
+            listener
+        )
+    }
+
+    /**
+     * Retrieves OTP needed to finish Activation.
+     *
+     * @param processId ID of the Identity Onboarding process
+     * @param userIdentification Optional user identification provided by the user
+     * @param listener Result listener
+     */
+    fun finishActivation(processId: String, userIdentification: Any?, listener: IApiCallResponseListener<FinishActivationResponse>) {
+        post(
+            FinishActivationRequest(processId, userIdentification),
+            finishVerificationEndpoint,
             null,
             null,
             listener
