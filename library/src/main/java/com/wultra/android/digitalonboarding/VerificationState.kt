@@ -62,11 +62,6 @@ object VerificationStateActivationFinishData: VerificationStateData(Verification
 object VerificationStateSuccessData: VerificationStateData(VerificationState.SUCCESS)
 object VerificationStateFailedData: VerificationStateData(VerificationState.FAILED)
 
-class VerificationStateConsentData(
-    /** HTML data for the `CONSENT` state */
-    val consentHtml: String
-)
-
 class VerificationStateScanDocumentData(
     /** Data for the `SCAN_DOCUMENT` state */
     val scanDocumentProcess: VerificationScanProcess

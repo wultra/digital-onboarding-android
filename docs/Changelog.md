@@ -10,7 +10,7 @@
   - `VerificationStateIntroData` contains `consentRequired` flag.
   - `VerificationService.start` handles mandatory and optional consent (replaces `consentApprove`).
   - `consentGet(callback:)` renamed to `getConsent(callback:)`.
-  - Removed `VerificationState.CONSENT` state; consent is resolved via `start` method.
+  - Removed `VerificationState.CONSENT` state (and `VerificationStateConsentData` class); consent is resolved via `start` method.
 - `getOTP` methods in `ActivationService` and `VerificationService` were moved to `DemoEndpoints` helper class.
 - added `ONBOARDING_APPROVAL` process type constant, which signals that the onboarding requires approval step.
 - new `ACTIVATION_FINISH` state in `VerificationState`
