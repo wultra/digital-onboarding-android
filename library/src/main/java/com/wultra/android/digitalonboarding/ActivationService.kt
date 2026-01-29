@@ -269,7 +269,7 @@ class ActivationService(
         )
     }
 
-    fun createPowerAuthActivationData(otp: String): ActivationData? {
+    fun createPowerAuthActivationData(otp: String?): ActivationData? {
         val processId = processId
         if (processId == null) {
             WDOLogger.e("Cannot create activation data - process not started (missing processId).")
