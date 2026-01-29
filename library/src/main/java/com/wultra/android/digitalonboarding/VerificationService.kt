@@ -598,110 +598,114 @@ class VerificationService(
 
         val processId = guardProcessId(callback) ?: return
 
-        // Helper to clear the created activation in case of failure
-        val clearPaInstanceIfNeeded = {
-            if (!newPowerAuthInstance.canStartActivation()) {
-                newPowerAuthInstance.removeActivationLocal(appContext)
-            }
-        }
-
         // Validate password if required
-        validatePasswordIfRequired(
-            validatePassword,
-            newPassword,
-            onValid = {
-                // Proceed with finish activation API call
-                api.finishActivation(
-                    processId,
-                    userIdentification,
-                    object: IApiCallResponseListener<FinishActivationResponse> {
-                        override fun onSuccess(result: FinishActivationResponse) {
+        validatePasswordIfRequired(validatePassword, newPassword) { error ->
 
-                            WDOLogger.i("finishActivation success")
+            if (error != null) {
+                // Password validation failed
+                WDOLogger.e("finishActivation - password validation failed : ${error.message}")
+                markCompleted(ApiError(error), callback)
+                return@validatePasswordIfRequired
+            }
 
-                            // Create new activation on the new PowerAuth instance with obtained activation code
+            if (!newPowerAuthInstance.canStartActivation()) {
+                WDOLogger.e("finishActivation - cannot activate, the `newPowerAuthInstance` is not in a state that allows it")
+                markCompleted(ApiError(Exception("Cannot start activation on given PowerAuth object.")), callback)
+                return@validatePasswordIfRequired
+            }
 
-                            val activation = PowerAuthActivation.Builder.activation(
-                                result.responseObject.activationCode,
-                                newActivationName
-                            )
-                            newPowerAuthInstance.createActivation(
-                                activation.build(),
-                                object : ICreateActivationListener {
-                                    override fun onActivationCreateSucceed(result: CreateActivationResult) {
+            // Proceed with finish activation API call
+            api.finishActivation(
+                processId,
+                userIdentification,
+                object: IApiCallResponseListener<FinishActivationResponse> {
 
-                                        // New activation created, now persist it with the provided password
+                    override fun onSuccess(result: FinishActivationResponse) { // onSuccess:finishActivation
 
-                                        val persistResult = newPowerAuthInstance.persistActivationWithPassword(appContext, newPassword)
-                                        if (persistResult == PowerAuthErrorCodes.SUCCEED) {
-                                            // New activation persisted
-                                            markCompleted(VerificationStateSuccessData, callback)
-                                        } else {
-                                            // Failed to persist new activation, clean up
-                                            clearPaInstanceIfNeeded()
-                                            WDOLogger.e("Failed to persist PowerAuth activation. Code: $persistResult")
-                                            markCompleted(Fail(ApiError(Exception("Failed to persist PowerAuth activation. Code: $persistResult"))), callback)
-                                        }
-                                    }
+                        WDOLogger.i("finishActivation success")
 
-                                    override fun onActivationCreateFailed(t: Throwable) {
-                                        // Failed to create new activation, clean up
+                        // Create new activation on the new PowerAuth instance with obtained activation code
+                        val activation = PowerAuthActivation.Builder.activation(
+                            result.responseObject.activationCode,
+                            newActivationName
+                        )
+
+                        // Helper to clear the created activation in case of failure
+                        val clearPaInstanceIfNeeded = {
+                            if (!newPowerAuthInstance.canStartActivation()) {
+                                newPowerAuthInstance.removeActivationLocal(appContext)
+                            }
+                        }
+
+                        // create activation
+                        newPowerAuthInstance.createActivation(
+                            activation.build(),
+                            object : ICreateActivationListener {
+
+                                override fun onActivationCreateSucceed(result: CreateActivationResult) {
+                                    // New activation created, now persist it with the provided password
+                                    val persistResult = newPowerAuthInstance.persistActivationWithPassword(appContext, newPassword)
+                                    if (persistResult == PowerAuthErrorCodes.SUCCEED) {
+                                        // New activation persisted
+                                        markCompleted(VerificationStateSuccessData, callback)
+                                    } else {
+                                        // Failed to persist new activation, clean up
                                         clearPaInstanceIfNeeded()
-                                        WDOLogger.e("finishActivation failed - failed to create activation : $t")
-                                        markCompleted(Fail(ApiError(t)), callback)
+                                        WDOLogger.e("Failed to persist PowerAuth activation. Code: $persistResult")
+                                        markCompleted(Fail(ApiError(Exception("Failed to persist PowerAuth activation. Code: $persistResult"))), callback)
                                     }
                                 }
-                            )
-                        }
 
-                        override fun onFailure(error: ApiError) {
-                            // Finish activation API call failed
-                            WDOLogger.e("finishActivation failed : ${error.e}")
-                            markCompleted(error, callback)
-                        }
+                                override fun onActivationCreateFailed(t: Throwable) {
+                                    // Failed to create new activation, clean up
+                                    clearPaInstanceIfNeeded()
+                                    WDOLogger.e("finishActivation failed - failed to create activation : $t")
+                                    markCompleted(Fail(ApiError(t)), callback)
+                                }
+                            }
+                        )
                     }
-                )
-            },
-            onInvalid = { t ->
-                // Password validation failed
-                WDOLogger.e("finishActivation - password validation failed : ${t.message}")
-                markCompleted(ApiError(t), callback)
-            }
-        )
+
+                    override fun onFailure(error: ApiError) { // onFailure:finishActivation
+                        // Finish activation API call failed
+                        WDOLogger.e("finishActivation failed : ${error.e}")
+                        markCompleted(error, callback)
+                    }
+                }
+            )
+        }
     }
 
     /**
-     * Validates password if required. If not required, calls onValid callback immediately.
+     * Validates password if required. If not required, calls callback immediately.
      *
      * @param required Whether the password validation is required.
      * @param password Password to validate.
-     * @param onValid Callback called when the password is valid or validation is not required.
-     * @param onInvalid Callback called when the password is invalid.
+     * @param callback Callback with the error if any.
      */
     private fun validatePasswordIfRequired(
         required: Boolean,
         password: Password,
-        onValid: () -> Unit,
-        onInvalid: (Throwable) -> Unit
+        callback: (Throwable?) -> Unit,
     ) {
-        if (required) {
+        if (!required) {
+            // Password validation not required
+            callback(null)
+        } else  {
             powerAuthSDK.validatePassword(
                 appContext,
                 password,
                 object : IValidatePasswordListener {
                     override fun onPasswordValid() {
-                        onValid()
+                        callback(null)
                     }
 
                     override fun onPasswordValidationFailed(t: Throwable) {
                         WDOLogger.i("Password validation failed.")
-                        onInvalid(t)
+                        callback(t)
                     }
                 }
             )
-        } else {
-            // Password validation not required
-            onValid()
         }
     }
 
