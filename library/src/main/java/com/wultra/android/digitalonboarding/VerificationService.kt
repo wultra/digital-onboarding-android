@@ -691,7 +691,7 @@ class VerificationService(
         if (!required) {
             // Password validation not required
             callback(null)
-        } else  {
+        } else {
             powerAuthSDK.validatePassword(
                 appContext,
                 password,
