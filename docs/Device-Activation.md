@@ -163,19 +163,42 @@ class MyUserService {
 To activate the user (activating the `PowerAuthSDK` instance), data retrieved from the process start can be used with additional `OTP`. The OTP is usually sent via SMS, email, or other channel.
 To decide if the OTP is needed, you can use the [Configuration API](Process-Configuration.md) or have it hardcoded.
 
-Use the `activate` function to create the activation.
+Use the `activate` function to create the activation. To use `activate` you will need to pass `PowerAuthActivation.Builder`.
+
+### Create PowerAuthActivation.Builder
+
+Use `createActivationBuilder` method to create a properly configured PowerAuthActivation.Builder based on the current onboarding state and provided OTP.
+
+```kotlin
+
+/**
+ * Creates a PowerAuthActivation.Builder for the current onboarding process.
+ *
+ * @param otp OTP provided by the user. Optional when not required by backend.
+ * @param activationName Name of the activation. Device name by default.
+ *
+ * @return A configured [PowerAuthActivation.Builder] instance.
+ */
+
+fun createActivationBuilder(
+    otp: String?,
+    activationName: String? = Build.MODEL
+): PowerAuthActivation.Builder
+```
+
+### Creating the activation
+
+Use `activate` to execute the activation request built in the previous step.
 
 ```kotlin
 /**
  * Activates PowerAuthSDK instance that was passed in the initializer.
  *
- * @param otp OTP code received by the user (via SMS or email). Optional when not required.
- * @param activationName Name of the activation. Device name by default.
+ * @param builder Prepared [PowerAuthActivation.Builder] instance containing all activation parameters.
  * @param callback Callback with the result.
  */
 fun activate(
-    otp: String,
-    activationName: String = Build.MODEL,
+    builder: PowerAuthActivation.Builder,
     callback: (ActivationResult<CreateActivationResult>) -> Unit
 )
 ```
@@ -187,8 +210,13 @@ class MyUserService {
     // prepared service
     private lateinit var activationService: ActivationService
 
-    fun activate(smsOTP: String) {
-        activationService.activate(smsOTP) { result ->
+    fun activate(smsOTP: String?) { // otp or null when not required by the BE
+        val builder = activationService.createActivationBuilder(
+            otp = smsOTP,
+            activationName = "Petr's iphone"
+        )
+        
+        activationService.activate(builder) { result ->
             result.onSuccess {
                 // PowerAuthSDK instance was activated.
                 // At this moment, navigate the user to
