@@ -32,7 +32,7 @@ internal class VerificationStatusNextStep(
     companion object {
         fun fromStatusResponse(response: VerificationStatusResponseData): VerificationStatusNextStep {
 
-            fun match(phase: VerificationPhase?, status: IdentityVerificationStatus) = response.phase == phase && response.status == status
+            fun match(phase: VerificationPhase?, status: IdentityVerificationStatus?) = response.phase == phase && (status == null || response.status == status)
 
             val consentRequired = response.consentRequired ?: true // fallback to consent required on native platforms if not configured on backend
 
@@ -59,6 +59,10 @@ internal class VerificationStatusNextStep(
                 match(PRESENCE_CHECK, FAILED) -> VerificationStatusNextStep(Value.FAILED)
                 match(PRESENCE_CHECK, REJECTED) -> VerificationStatusNextStep(Value.REJECTED)
                 match(OTP_VERIFICATION, VERIFICATION_PENDING) -> VerificationStatusNextStep(Value.OTP)
+                match(ACTIVATION_FINISH, null) -> VerificationStatusNextStep(Value.ACTIVATION_FINISH)
+                match(ONBOARDING_APPROVAL, REJECTED) -> VerificationStatusNextStep(Value.REJECTED)
+                match(ONBOARDING_APPROVAL, FAILED) -> VerificationStatusNextStep(Value.FAILED)
+                match(ONBOARDING_APPROVAL, null) -> VerificationStatusNextStep(Value.STATUS_CHECK, StatusCheckReason.ONBOARDING_APPROVAL)
                 match(COMPLETED, ACCEPTED) -> VerificationStatusNextStep(Value.SUCCESS)
                 match(COMPLETED, FAILED) -> VerificationStatusNextStep(Value.FAILED)
                 match(COMPLETED, REJECTED) -> VerificationStatusNextStep(Value.REJECTED)
@@ -73,6 +77,7 @@ internal class VerificationStatusNextStep(
         STATUS_CHECK,
         PRESENCE_CHECK,
         OTP,
+        ACTIVATION_FINISH,
         FAILED,
         REJECTED,
         SUCCESS
@@ -86,6 +91,7 @@ internal class VerificationStatusNextStep(
         DOCUMENTS_ACCEPTED,
         CLIENT_VERIFICATION,
         CLIENT_ACCEPTED,
+        ONBOARDING_APPROVAL,
         VERIFYING_PRESENCE
     }
 }

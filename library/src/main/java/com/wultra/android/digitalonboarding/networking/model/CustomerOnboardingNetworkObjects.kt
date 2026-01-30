@@ -70,3 +70,7 @@ internal class ProcessResponseData(
     @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus,
     @SerializedName("activationCode") val activationCode: String?
 )
+internal class FinishActivationResponse(responseObject: FinishActivationResponseData, status: Status): ObjectResponse<FinishActivationResponseData>(responseObject, status)
+internal class FinishActivationResponseData(
+    @SerializedName("activationCode") val activationCode: String
+)

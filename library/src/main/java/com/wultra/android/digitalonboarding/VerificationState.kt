@@ -31,6 +31,12 @@ enum class VerificationState {
     PRESENCE_CHECK,
     /** User should enter OTP */
     OTP,
+    /**
+     * Show "finish activation" with PIN prompt screen.
+     *
+     * The next step should be calling the `finishActivation` with user entered PIN.
+     */
+    ACTIVATION_FINISH,
     /** Verification failed and can be restarted */
     FAILED,
     /** Verification is canceled and user needs to start again with an activation */
@@ -52,13 +58,9 @@ class VerificationStateIntroData(
 ): VerificationStateData(VerificationState.INTRO)
 object VerificationStateDocumentsToScanSelectData: VerificationStateData(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
 object VerificationStatePresenceCheckData: VerificationStateData(VerificationState.PRESENCE_CHECK)
+object VerificationStateActivationFinishData: VerificationStateData(VerificationState.ACTIVATION_FINISH)
 object VerificationStateSuccessData: VerificationStateData(VerificationState.SUCCESS)
 object VerificationStateFailedData: VerificationStateData(VerificationState.FAILED)
-
-class VerificationStateConsentData(
-    /** HTML data for the `CONSENT` state */
-    val consentHtml: String
-)
 
 class VerificationStateScanDocumentData(
     /** Data for the `SCAN_DOCUMENT` state */
@@ -93,6 +95,8 @@ enum class ProcessingItem {
     DOCUMENT_CROSS_VERIFICATION,
     /** Verifying presence of the user in front of the phone (selfie verification). */
     VERIFYING_PRESENCE,
+    /** Waiting for onboarding approval. Usually waiting for manual approval in the a backoffice system, */
+    ONBOARDING_APPROVAL,
     /** Client data provided are being verified by the system. */
     CLIENT_VERIFICATION,
     /** Client data were accepted and we're waiting for a process change */
@@ -109,6 +113,7 @@ enum class ProcessingItem {
                 VerificationStatusNextStep.StatusCheckReason.CLIENT_VERIFICATION -> CLIENT_VERIFICATION
                 VerificationStatusNextStep.StatusCheckReason.CLIENT_ACCEPTED -> CLIENT_ACCEPTED
                 VerificationStatusNextStep.StatusCheckReason.VERIFYING_PRESENCE -> VERIFYING_PRESENCE
+                VerificationStatusNextStep.StatusCheckReason.ONBOARDING_APPROVAL -> ONBOARDING_APPROVAL
             }
         }
     }

@@ -60,6 +60,8 @@ internal enum class VerificationPhase {
     @SerializedName("DOCUMENT_VERIFICATION") DOCUMENT_VERIFICATION,
     @SerializedName("DOCUMENT_VERIFICATION_FINAL") DOCUMENT_VERIFICATION_FINAL,
     @SerializedName("OTP_VERIFICATION") OTP_VERIFICATION,
+    @SerializedName("ONBOARDING_APPROVAL") ONBOARDING_APPROVAL,
+    @SerializedName("ACTIVATION_FINISH") ACTIVATION_FINISH,
     @SerializedName("COMPLETED") COMPLETED
 }
 
@@ -228,3 +230,11 @@ internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKIn
         return SDKInitResponseDataAttributes(firstEntry.value.asString)
     }
 }
+
+internal class FinishActivationRequest(processId: String, userIdentification: Any?): ObjectRequest<FinishActivationRequestData>(
+    FinishActivationRequestData(processId, userIdentification)
+)
+internal class FinishActivationRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("identification") val userIdentification: Any?
+)

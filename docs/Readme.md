@@ -35,10 +35,6 @@ Given the unique characteristics of each customer system, the utilization of thi
 
 We seamlessly incorporate industry-leading solutions for document scanning, ensuring versatility and effectiveness in your operations.
 
-- iProov for genuine presence
-- Innovatrics for document scanning and genuine presence
-- ZenID for document scanning
-
 Our dedicated technical and sales representatives are available to guide you in selecting the optimal solution that aligns perfectly with your needs.
 
 ## Open Source Code
