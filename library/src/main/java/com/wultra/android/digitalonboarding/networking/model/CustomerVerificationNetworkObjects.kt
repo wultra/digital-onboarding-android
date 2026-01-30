@@ -144,8 +144,8 @@ internal class ConsentApproveRequestData(
 )
 internal class ConsentApproveResponse(status: Status): StatusResponse(status)
 
-internal class SDKInitRequest(processId: String, challenge: String): ObjectRequest<SDKInitRequestData>(
-    SDKInitRequestData(processId, SDKInitRequestDataAttributes(challenge))
+internal class SDKInitRequest(processId: String, challenge: String, origin: String): ObjectRequest<SDKInitRequestData>(
+    SDKInitRequestData(processId, SDKInitRequestDataAttributes(challenge, origin))
 )
 internal class SDKInitRequestData(
     @SerializedName("processId") val processId: String,
@@ -153,6 +153,7 @@ internal class SDKInitRequestData(
 )
 internal class SDKInitRequestDataAttributes(
     @SerializedName("sdk-init-token") val challengeToken: String,
+    @SerializedName("origin") val origin: String,
     @SerializedName("platform") val platform: String = "android"
 )
 internal class SDKInitResponse(
