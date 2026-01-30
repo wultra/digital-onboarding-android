@@ -300,7 +300,11 @@ class ActivationService(
      *
      * @return A configured [PowerAuthActivation.Builder] instance.
      */
-    fun createActivationBuilder(otp: String?, activationName: String? = Build.MODEL): PowerAuthActivation.Builder {
+    fun createActivationBuilder(otp: String?, activationName: String = Build.MODEL): PowerAuthActivation.Builder? {
+        if (processId == null) {
+            WDOLogger.e("Cannot create activation data - process not started (missing processId).")
+            return null
+        }
 
         val activationCode = processData?.activationCode
 
@@ -316,7 +320,7 @@ class ActivationService(
                 put("credentialsType", "ONBOARDING")
                 otp?.let { put("otpCode", it) }
             }
-            return PowerAuthActivation.Builder.customActivation(data)
+            return PowerAuthActivation.Builder.customActivation(data, activationName)
         }
     }
 

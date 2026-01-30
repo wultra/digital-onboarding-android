@@ -182,7 +182,7 @@ Use `createActivationBuilder` method to create a properly configured PowerAuthAc
 
 fun createActivationBuilder(
     otp: String?,
-    activationName: String? = Build.MODEL
+    activationName: String = Build.MODEL
 ): PowerAuthActivation.Builder
 ```
 
