@@ -290,15 +290,18 @@ class ActivationService(
     }
 
     /**
-     * Creates a PowerAuthActivation.Builder for the current onboarding process.
+     * Creates a [PowerAuthActivation.Builder] for the current onboarding process.
      *
-     * The returned builder can be further customized if needed and is intended to be
-     * passed to [activate] to finalize the activation.
+     * The returned builder can be further customized if needed and can be used
+     * directly with [PowerAuthSDK.createActivation] in advanced activation workflows.
+     * Calling `build()` on the builder produces a [PowerAuthActivation] instance,
+     * which is the object required by `PowerAuthSDK.createActivation(...)`.
      *
      * @param otp OTP provided by the user. Optional when not required by backend.
      * @param activationName Name of the activation. Device name by default.
      *
-     * @return A configured [PowerAuthActivation.Builder] instance.
+     * @return A configured [PowerAuthActivation.Builder] instance, or null if there
+     *         is no active onboarding process.
      */
     fun createActivationBuilder(otp: String?, activationName: String = Build.MODEL): PowerAuthActivation.Builder? {
         if (processId == null) {
@@ -327,41 +330,39 @@ class ActivationService(
     /**
      * Activates PowerAuthSDK instance that was passed in the initializer.
      *
-     * @param builder Prepared [PowerAuthActivation.Builder] instance
-     *                containing all activation parameters.
+     * @param otp OTP provided by the user. Optional when not required by backend.
+     * @param activationName Name of the activation. Device name by default.
      * @param callback Callback with the result.
      */
     fun activate(
-        builder: PowerAuthActivation.Builder,
+        otp: String?,
+        activationName: String = Build.MODEL,
         callback: (ActivationResult<CreateActivationResult>) -> Unit
     ) {
         if (!verifyCanStartProcess(callback)) return
 
-        fun handleResult(result: Result<CreateActivationResult>) {
-            result.onSuccess {
-                this.processData = null
-                WDOLogger.i("PowerAuth activation created")
-                callback(ActivationResult.success(it))
-            }.onFailure {
-                // when no longer possible to retry activation
-                // reset the processID, because we cannot recover
-                if ((it as? FailedApiException)?.allowOnboardingOtpRetry() == false) {
-                    this.processData = null
-                }
-                WDOLogger.e("PowerAuth activation failed - $it")
-                callback(ActivationResult.failure(Fail(ApiError(it))))
-            }
+        val builder = createActivationBuilder(otp, activationName)
+        if (builder == null) {
+            callback(ActivationResult.failure(Fail(ApiError(ActivationNotRunningException))))
+            return
         }
 
         powerAuthSDK.createActivation(
             builder.build(),
             object : ICreateActivationListener {
                 override fun onActivationCreateSucceed(result: CreateActivationResult) {
-                    handleResult(Result.success(result))
+                    processData = null
+                    WDOLogger.i("PowerAuth activation created")
+                    callback(ActivationResult.success(result))
                 }
 
                 override fun onActivationCreateFailed(t: Throwable) {
-                    handleResult(Result.failure(t))
+                    // When no longer possible to retry activation, reset process data.
+                    if ((t as? FailedApiException)?.allowOnboardingOtpRetry() == false) {
+                        processData = null
+                    }
+                    WDOLogger.e("PowerAuth activation failed - $t")
+                    callback(ActivationResult.failure(Fail(ApiError(t))))
                 }
             }
         )

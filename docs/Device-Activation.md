@@ -163,42 +163,20 @@ class MyUserService {
 To activate the user (activating the `PowerAuthSDK` instance), data retrieved from the process start can be used with additional `OTP`. The OTP is usually sent via SMS, email, or other channel.
 To decide if the OTP is needed, you can use the [Configuration API](Process-Configuration.md) or have it hardcoded.
 
-Use the `activate` function to create the activation. To use `activate` you will need to pass `PowerAuthActivation.Builder`.
-
-### Create PowerAuthActivation.Builder
-
-Use `createActivationBuilder` method to create a properly configured PowerAuthActivation.Builder based on the current onboarding state and provided OTP.
+Use the `activate` function to create the activation.
 
 ```kotlin
 
-/**
- * Creates a PowerAuthActivation.Builder for the current onboarding process.
- *
- * @param otp OTP provided by the user. Optional when not required by backend.
- * @param activationName Name of the activation. Device name by default.
- *
- * @return A configured [PowerAuthActivation.Builder] instance.
- */
-
-fun createActivationBuilder(
-    otp: String?,
-    activationName: String = Build.MODEL
-): PowerAuthActivation.Builder
-```
-
-### Creating the activation
-
-Use `activate` to execute the activation request built in the previous step.
-
-```kotlin
 /**
  * Activates PowerAuthSDK instance that was passed in the initializer.
  *
- * @param builder Prepared [PowerAuthActivation.Builder] instance containing all activation parameters.
+ * @param otp OTP code received by the user (via SMS or email). Optional when not required.
+ * @param activationName Name of the activation. Device name by default.
  * @param callback Callback with the result.
  */
 fun activate(
-    builder: PowerAuthActivation.Builder,
+    otp: String?,
+    activationName: String = Build.MODEL,
     callback: (ActivationResult<CreateActivationResult>) -> Unit
 )
 ```
@@ -210,13 +188,8 @@ class MyUserService {
     // prepared service
     private lateinit var activationService: ActivationService
 
-    fun activate(smsOTP: String?) { // otp or null when not required by the BE
-        val builder = activationService.createActivationBuilder(
-            otp = smsOTP,
-            activationName = "Petr's iphone"
-        )
-        
-        activationService.activate(builder) { result ->
+    fun activate(smsOTP: String) {
+        activationService.activate(smsOTP) { result ->
             result.onSuccess {
                 // PowerAuthSDK instance was activated.
                 // At this moment, navigate the user to
@@ -277,6 +250,52 @@ There are 3 custom exceptions that this service is adding:
 | `ActivationInProgressException`   | Activation is already in progress.                                           | 
 | `ActivationNotRunningException`   | Activation was not started.                                                  | 
 | `CannotActivateException`         | PowerAuth instance cannot start the activation (probably already activated). | 
+
+
+## Advanced usage
+
+For advanced activation workflows, the `ActivationService` also provides a
+`createActivationBuilder(...)` helper method that prepares a
+`PowerAuthActivation.Builder` for the current onboarding process.
+
+This builder can be further customized if needed and then passed directly to
+`PowerAuthSDK.createActivation(...)`.
+
+This approach is optional and intended only for advanced use cases.
+The standard `activate(...)` method should be sufficient for most integrations.
+
+
+```kotlin
+class MyUserService {
+    // prepared service
+    private lateinit var activationService: ActivationService
+    
+    fun activateWithCustomData(otp: String?) {
+        val builder = activationService.createActivationBuilder(
+            otp = otp,
+            activationName = "Petr's iPhone"
+        ) ?: return
+
+        // Optional: customize the activation builder
+        // e.g. add custom attributes or modify activation parameters
+        // builder.setCustomAttributes(...)
+        // builder.setExtras(...)
+
+        powerAuthSDK.createActivation(
+            builder.build(),
+            object : ICreateActivationListener {
+                override fun onActivationCreateSucceed(result: CreateActivationResult) {
+                    // PowerAuthSDK instance was activated successfully
+                }
+
+                override fun onActivationCreateFailed(t: Throwable) {
+                    // Handle activation failure
+                }
+            }
+        )
+    }
+}
+```
 
 ## Read next
 - [Verifying User With Document Scan And Genuine Presence Check](Verifying-User.md)
