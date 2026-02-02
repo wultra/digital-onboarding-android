@@ -31,11 +31,31 @@ import com.wultra.android.powerauth.networking.data.StatusResponse
 import com.wultra.android.powerauth.networking.error.ApiError
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
+import io.getlime.security.powerauth.networking.response.ICreateActivationListener
+import io.getlime.security.powerauth.sdk.PowerAuthActivation
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
 
 typealias ActivationResult<T> = WDOResult<T, ActivationService.Fail>
-typealias ProcessData = Pair<String, String?> // first = process ID, second = activation code
+data class ProcessData(
+    val processId: String,
+    val activationCode: String?
+) {
+    fun toStorageString(): String = "$processId,${activationCode.orEmpty()}"
+
+    companion object {
+        fun fromStorageString(stored: String?): ProcessData? {
+            if (stored.isNullOrBlank()) return null
+            val parts = stored.split(",", limit = 2)
+            if (parts.size != 2) return null
+
+            val processId = parts[0].trim().takeIf { it.isNotEmpty() } ?: return null
+            val activationCode = parts[1].trim().takeIf { it.isNotEmpty() }
+
+            return ProcessData(processId, activationCode)
+        }
+    }
+}
 
 /**
  * Digital Onboarding Activation Service.
@@ -105,12 +125,12 @@ class ActivationService(
     private val storage = Storage(appContext, "wdo-prefs-encrypted")
     private val keychainKey = "wdopid_${powerAuthSDK.configuration.instanceId}"
     private var processData: ProcessData?
-        get() = dataFromStorage(storage.getValue(keychainKey))
-        set(value) = storage.setValue(keychainKey, dataToStorage(value))
+        get() = ProcessData.fromStorageString(storage.getValue(keychainKey))
+        set(value) = storage.setValue(keychainKey, value?.toStorageString())
 
     // Read-only helper for processId, that is used in several places in this file.
     private val processId: String?
-        get() = processData?.first
+        get() = processData?.processId
 
     init {
         if (!canRestoreSession) {
@@ -187,7 +207,7 @@ class ActivationService(
             object : IApiCallResponseListener<StartOnboardingResponse> {
                 override fun onSuccess(result: StartOnboardingResponse) {
                     // cache result
-                    processData = result.responseObject.processId to result.responseObject.activationCode
+                    processData = ProcessData(result.responseObject.processId, result.responseObject.activationCode)
                     WDOLogger.i("Start successful")
                     callback(ActivationResult.success(Unit))
                 }
@@ -269,13 +289,42 @@ class ActivationService(
         )
     }
 
-    fun createPowerAuthActivationData(otp: String): ActivationData? {
-        val processId = processId
+    /**
+     * Creates a [PowerAuthActivation.Builder] for the current onboarding process.
+     *
+     * The returned builder can be further customized if needed and can be used
+     * directly with [PowerAuthSDK.createActivation] in advanced activation workflows.
+     * Calling `build()` on the builder produces a [PowerAuthActivation] instance,
+     * which is the object required by `PowerAuthSDK.createActivation(...)`.
+     *
+     * @param otp OTP provided by the user. Optional when not required by backend.
+     * @param activationName Name of the activation. Device name by default.
+     *
+     * @return A configured [PowerAuthActivation.Builder] instance, or null if there
+     *         is no active onboarding process.
+     */
+    fun createActivationBuilder(otp: String?, activationName: String = Build.MODEL): PowerAuthActivation.Builder? {
         if (processId == null) {
             WDOLogger.e("Cannot create activation data - process not started (missing processId).")
             return null
         }
-        return ActivationDataWithOTP(processId, otp)
+
+        val activationCode = processData?.activationCode
+
+        if (activationCode != null) {
+            return PowerAuthActivation.Builder.activation(activationCode, activationName).also {
+                if (otp != null && otp.isNotEmpty()) {
+                    it.setAdditionalActivationOtp(otp)
+                }
+            }
+        } else {
+            val data = buildMap {
+                put("processId", processId)
+                put("credentialsType", "ONBOARDING")
+                otp?.let { put("otpCode", it) }
+            }
+            return PowerAuthActivation.Builder.customActivation(data, activationName)
+        }
     }
 
     /**
@@ -290,42 +339,33 @@ class ActivationService(
         activationName: String = Build.MODEL,
         callback: (ActivationResult<CreateActivationResult>) -> Unit
     ) {
-        val processId = guardProcessId(callback) ?: return
         if (!verifyCanStartProcess(callback)) return
 
-        fun handleResult(result: Result<CreateActivationResult>) {
-            result.onSuccess {
-                this.processData = null
-                WDOLogger.i("PowerAuth activation created")
-                callback(ActivationResult.success(it))
-            }.onFailure {
-                // when no longer possible to retry activation
-                // reset the processID, because we cannot recover
-                if ((it as? FailedApiException)?.allowOnboardingOtpRetry() == false) {
-                    this.processData = null
-                }
-                WDOLogger.e("PowerAuth activation failed - $it")
-                callback(ActivationResult.failure(Fail(ApiError(it))))
-            }
+        val builder = createActivationBuilder(otp, activationName)
+        if (builder == null) {
+            callback(ActivationResult.failure(Fail(ApiError(ActivationNotRunningException))))
+            return
         }
 
-        val activationCode = processData?.second
-        // use different call in case of ActivationCode
-        if (activationCode != null) {
-            powerAuthSDK.createActivation(
-                activationCode,
-                otp,
-                activationName,
-                ::handleResult
-            )
-        } else {
-            val data = ActivationDataWithOTP(processId, otp)
-            powerAuthSDK.createActivation(
-                data,
-                activationName,
-                ::handleResult
-            )
-        }
+        powerAuthSDK.createActivation(
+            builder.build(),
+            object : ICreateActivationListener {
+                override fun onActivationCreateSucceed(result: CreateActivationResult) {
+                    processData = null
+                    WDOLogger.i("PowerAuth activation created")
+                    callback(ActivationResult.success(result))
+                }
+
+                override fun onActivationCreateFailed(t: Throwable) {
+                    // When no longer possible to retry activation, reset process data.
+                    if ((t as? FailedApiException)?.allowOnboardingOtpRetry() == false) {
+                        processData = null
+                    }
+                    WDOLogger.e("PowerAuth activation failed - $t")
+                    callback(ActivationResult.failure(Fail(ApiError(t))))
+                }
+            }
+        )
     }
 
     private fun <S>guardProcessId(callback: (ActivationResult<S>) -> Unit): String? {
@@ -381,33 +421,4 @@ class ActivationService(
     object ActivationInProgressException: Exception("Wultra Digital Onboarding activation is already in progress.")
     /** Wultra Digital Onboarding activation was not started. */
     object ActivationNotRunningException: Exception("Wultra Digital Onboarding activation was not started.")
-}
-
-private data class ActivationDataWithOTP(
-    val processId: String,
-    val otp: String?,
-): ActivationData {
-    override fun processId() = processId
-    override fun asAttributes(): Map<String, String> =
-        buildMap {
-            put("processId", processId)
-            put("credentialsType", "ONBOARDING")
-            otp?.let { put("otpCode", it) }
-        }
-}
-
-private fun dataToStorage(processData: ProcessData?): String? {
-    if (processData == null) {
-        return null
-    }
-    return "${processData.first},${processData.second.orEmpty()}"
-}
-
-private fun dataFromStorage(stored: String?): ProcessData? {
-    if (stored == null) {
-        return null
-    }
-    val parts = stored.split(",", limit = 2)
-    if (parts.size < 2) return null
-    return parts[0] to parts[1].takeIf { it.isNotEmpty() }
 }
