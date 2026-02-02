@@ -179,7 +179,7 @@ internal class CustomerVerificationApi(
      */
     fun initScanSDK(processId: String, challenge: String, listener: IApiCallResponseListener<SDKInitResponse>) {
         post(
-            SDKInitRequest(processId, challenge),
+            SDKInitRequest(processId, challenge, appContext.packageName),
             documentSdkInitEndpoint,
             PowerAuthAuthentication.possession(),
             null,
