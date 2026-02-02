@@ -15,7 +15,7 @@
 - added `ONBOARDING_APPROVAL` process type constant, which signals that the onboarding requires approval step.
 - new `ACTIVATION_FINISH` state in `VerificationState`
   -  when this status is reached, the activation needs to be finalized by calling `VerificationService.finishActivation` method.
-- added helper `createActivationBuilder` to `ActivationService`, `activate` method now accepts `PowerAuthActivation.Builder` instance instead of just otp.
+- Replaced `createPowerAuthActivationData(...)` with `createActivationBuilder(...)`, used internally by `activate(...)` and for advanced workflows.
 
 ## 1.3.0 (Oct, 2024)
 
