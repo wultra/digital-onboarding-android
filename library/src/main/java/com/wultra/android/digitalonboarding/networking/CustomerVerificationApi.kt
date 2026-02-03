@@ -22,13 +22,15 @@ import com.wultra.android.digitalonboarding.networking.model.CancelRequest
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveRequest
 import com.wultra.android.digitalonboarding.networking.model.ConsentApproveResponse
 import com.wultra.android.digitalonboarding.networking.model.ConsentRequest
-import com.wultra.android.digitalonboarding.networking.model.ConsentResponse
+import com.wultra.android.digitalonboarding.networking.model.ConsentTextResponse
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRequest
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRequestData
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitResponse
 import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusRequest
 import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.EmptyRequest
+import com.wultra.android.digitalonboarding.networking.model.FinishActivationRequest
+import com.wultra.android.digitalonboarding.networking.model.FinishActivationResponse
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
@@ -73,7 +75,7 @@ internal class CustomerVerificationApi(
         private val statusEndpoint = EndpointSignedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
         private val startEndpoint = EndpointSigned<StartRequest, StatusResponse>("api/identity/init", "/api/identity/init")
         private val cancelEndpoint = EndpointSigned<CancelRequest, StatusResponse>("api/identity/cleanup", "/api/identity/cleanup")
-        private val consentTextEndpoint = EndpointSignedWithToken<ConsentRequest, ConsentResponse>("/api/identity/consent/text", "possession_universal")
+        private val consentTextEndpoint = EndpointSignedWithToken<ConsentRequest, ConsentTextResponse>("/api/identity/consent/text", "possession_universal")
         private val consentApproveEndpoint = EndpointSigned<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
         private val docsStatusEndpoint = EndpointSignedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
         private val documentSdkInitEndpoint = EndpointSigned<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
@@ -82,6 +84,7 @@ internal class CustomerVerificationApi(
         private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
         private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val finishVerificationEndpoint = EndpointSignedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
     }
 
     /**
@@ -139,7 +142,7 @@ internal class CustomerVerificationApi(
      * @param processId ID of the process.
      * @param listener Result listener.
      */
-    fun getConsentText(processId: String, listener: IApiCallResponseListener<ConsentResponse>) {
+    fun getConsentText(processId: String, listener: IApiCallResponseListener<ConsentTextResponse>) {
         post(
             ConsentRequest(processId),
             consentTextEndpoint,
@@ -176,7 +179,7 @@ internal class CustomerVerificationApi(
      */
     fun initScanSDK(processId: String, challenge: String, listener: IApiCallResponseListener<SDKInitResponse>) {
         post(
-            SDKInitRequest(processId, challenge),
+            SDKInitRequest(processId, challenge, appContext.packageName),
             documentSdkInitEndpoint,
             PowerAuthAuthentication.possession(),
             null,
@@ -312,6 +315,23 @@ internal class CustomerVerificationApi(
         post(
             OTPDetailRequest(OTPDetailRequestData(processId, OTPDetailType.USER_VERIFICATION)),
             CustomerOnboardingApi.getOtpEndpoint,
+            null,
+            null,
+            listener
+        )
+    }
+
+    /**
+     * Retrieves OTP needed to finish Activation.
+     *
+     * @param processId ID of the Identity Onboarding process
+     * @param userIdentification Optional user identification provided by the user
+     * @param listener Result listener
+     */
+    fun finishActivation(processId: String, userIdentification: Any?, listener: IApiCallResponseListener<FinishActivationResponse>) {
+        post(
+            FinishActivationRequest(processId, userIdentification),
+            finishVerificationEndpoint,
             null,
             null,
             listener

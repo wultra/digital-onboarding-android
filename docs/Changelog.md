@@ -1,9 +1,21 @@
 # Changelog
 
-### TBA
-- `SDKInitRequestDataAttributes` now contains `platform` property (mainly to support BlinkID SDK).
+## TBA
+
+- `SDKInitRequestDataAttributes` now contains `platform` and `origin` properties (mainly to support BlinkID SDK).
 - Refactored document upload to use the new v2 API.
 - `ConfigurationService` allows to fetch Wultra Digital Onboarding configuration from the server.
+- Added support for `processType` and `activationCode` in `ActivationService`
+- Support for optional Identity Consent:
+  - `VerificationStateIntroData` contains `consentRequired` flag.
+  - `VerificationService.start` handles mandatory and optional consent (replaces `consentApprove`).
+  - `consentGet(callback:)` renamed to `getConsent(callback:)`.
+  - Removed `VerificationState.CONSENT` state (and `VerificationStateConsentData` class); consent is resolved via `start` method.
+- `getOTP` methods in `ActivationService` and `VerificationService` were moved to `DemoEndpoints` helper class.
+- added `ONBOARDING_APPROVAL` process type constant, which signals that the onboarding requires approval step.
+- new `ACTIVATION_FINISH` state in `VerificationState`
+  -  when this status is reached, the activation needs to be finalized by calling `VerificationService.finishActivation` method.
+- Replaced `createPowerAuthActivationData(...)` with `createActivationBuilder(...)`, used internally by `activate(...)` and for advanced workflows.
 
 ## 1.3.0 (Oct, 2024)
 

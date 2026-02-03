@@ -26,7 +26,8 @@ service.getConfiguration(processType) { result ->
 ## Configuration response
 
 ```kotlin
-class ConfigurationResponseData(
+/** Configuration response */
+data class ConfigurationResponseData(
     /** Is the onboarding process enabled */
     val enabled: Boolean,
     /** Is OTP required for the first part - identification/activation. */
@@ -34,21 +35,29 @@ class ConfigurationResponseData(
     /** Is OTP required for the second part - identity verification. */
     val otpForIdentityVerification: Boolean,
     /** Documents required for identity verification. */
-    val documents: ConfigurationDocumentsData
+    val documents: ConfigurationDocuments
 )
 
-class ConfigurationDocumentsData(
-    /** Number of required documents */
+/** Documents required for identity verification */
+data class ConfigurationDocuments(
+    /** Number of total required documents */
+    val totalRequiredDocumentsCount: Int,
+    /** Groups of documents */
+    val groups: List<ConfigurationDocumentGroup>
+)
+
+/** Configuration for a document */
+class ConfigurationDocumentGroup(
+    /** Number of required documents in the group */
     val requiredDocumentsCount: Int,
-    /** List of documents */
-    val items: List<ConfigurationDocumentData>
+    /** Documents in the group */
+    val items: List<ConfigurationDocument>
 )
 
-class ConfigurationDocumentData(
+/** Group of documents in the configuration */
+data class ConfigurationDocument(
     /** Type of the document */
     val type: String,
-    /** Is the document mandatory? */
-    val mandatory: Boolean,
     /** Number of sides the document has */
     val sideCount: Int
 )

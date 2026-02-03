@@ -22,10 +22,13 @@ import com.google.gson.annotations.SerializedName
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 
-internal class StartOnboardingRequest<T>(identification: T): ObjectRequest<StartOnboardingRequestData<T>>(
-    StartOnboardingRequestData(identification)
+internal class StartOnboardingRequest<T>(identification: T, processType: String?): ObjectRequest<StartOnboardingRequestData<T>>(
+    StartOnboardingRequestData(identification, processType)
 )
-internal class StartOnboardingRequestData<T>(@SerializedName("identification") val identification: T)
+internal class StartOnboardingRequestData<T>(
+    @SerializedName("identification") val identification: T,
+    @SerializedName("processType") val processType: String?
+)
 internal class StartOnboardingResponse(responseObject: ProcessResponseData, status: Status): ObjectResponse<ProcessResponseData>(responseObject, status)
 internal enum class OnboardingStatus {
     @SerializedName("ACTIVATION_IN_PROGRESS") ACTIVATION_IN_PROGRESS,
@@ -64,5 +67,10 @@ internal class GetStatusResponse(responseObject: ProcessResponseData, status: St
 internal class ProcessRequestData(@SerializedName("processId") val processId: String)
 internal class ProcessResponseData(
     @SerializedName("processId") val processId: String,
-    @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus
+    @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus,
+    @SerializedName("activationCode") val activationCode: String?
+)
+internal class FinishActivationResponse(responseObject: FinishActivationResponseData, status: Status): ObjectResponse<FinishActivationResponseData>(responseObject, status)
+internal class FinishActivationResponseData(
+    @SerializedName("activationCode") val activationCode: String
 )

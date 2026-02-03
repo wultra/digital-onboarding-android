@@ -15,47 +15,6 @@ package com.wultra.android.digitalonboarding
 
 import io.getlime.security.powerauth.core.ActivationStatus
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
-import io.getlime.security.powerauth.networking.response.CreateActivationResult
-import io.getlime.security.powerauth.networking.response.ICreateActivationListener
-import io.getlime.security.powerauth.sdk.PowerAuthActivation
-import io.getlime.security.powerauth.sdk.PowerAuthSDK
-
-/** Activation data used in PowerAuth activation process (createActivation method). */
-interface ActivationData {
-    /** Process ID retrieved from `start` call. */
-    fun processId(): String
-    /** Attributes needed for the PowerAuth activation. */
-    fun asAttributes(): Map<String, String>
-}
-
-/**
- * Creates powerauth activation based on the data in the [ActivationData] object.
- *
- * @param data Custom activation data
- * @param activationName Name of the activation
- * @param callback Result callback
- *
- * @throws PowerAuthErrorException when powerauth data cannot be constructed.
- */
-fun PowerAuthSDK.createActivation(
-    data: ActivationData,
-    activationName: String,
-    callback: (Result<CreateActivationResult>) -> Unit
-) {
-    val activation = PowerAuthActivation.Builder.customActivation(data.asAttributes(), activationName).build()
-    createActivation(
-        activation,
-        object : ICreateActivationListener {
-            override fun onActivationCreateSucceed(result: CreateActivationResult) {
-                callback(Result.success(result))
-            }
-
-            override fun onActivationCreateFailed(t: Throwable) {
-                callback(Result.failure(t))
-            }
-        }
-    )
-}
 
 fun FailedApiException.onboardingOtpRemainingAttempts(): Int? = responseJson?.get("remainingAttempts")?.asInt
 fun FailedApiException.allowOnboardingOtpRetry() = onboardingOtpRemainingAttempts()?.let { it > 0 }

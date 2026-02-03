@@ -37,6 +37,7 @@ internal class VerificationStatusResponseData(
     @SerializedName("processId") val processId: String,
     @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
     @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
+    @SerializedName("consentRequired") val consentRequired: Boolean?,
     @SerializedName("config") val config: IdentityVerificationConfig
 )
 internal class IdentityVerificationConfig(
@@ -59,6 +60,8 @@ internal enum class VerificationPhase {
     @SerializedName("DOCUMENT_VERIFICATION") DOCUMENT_VERIFICATION,
     @SerializedName("DOCUMENT_VERIFICATION_FINAL") DOCUMENT_VERIFICATION_FINAL,
     @SerializedName("OTP_VERIFICATION") OTP_VERIFICATION,
+    @SerializedName("ONBOARDING_APPROVAL") ONBOARDING_APPROVAL,
+    @SerializedName("ACTIVATION_FINISH") ACTIVATION_FINISH,
     @SerializedName("COMPLETED") COMPLETED
 }
 
@@ -119,12 +122,12 @@ internal class ConsentRequestData(
     @SerializedName("processId") val processId: String,
     @SerializedName("consentType") val consentType: String
 )
-internal class ConsentResponse(
-    responseObject: ConsentResponseData,
+internal class ConsentTextResponse(
+    responseObject: ConsentTextResponseData,
     status: Status
-): ObjectResponse<ConsentResponseData>(responseObject, status)
+): ObjectResponse<ConsentTextResponseData>(responseObject, status)
 
-internal class ConsentResponseData(
+internal class ConsentTextResponseData(
     @SerializedName("consentText") val consentText: String
 )
 
@@ -141,8 +144,8 @@ internal class ConsentApproveRequestData(
 )
 internal class ConsentApproveResponse(status: Status): StatusResponse(status)
 
-internal class SDKInitRequest(processId: String, challenge: String): ObjectRequest<SDKInitRequestData>(
-    SDKInitRequestData(processId, SDKInitRequestDataAttributes(challenge))
+internal class SDKInitRequest(processId: String, challenge: String, origin: String): ObjectRequest<SDKInitRequestData>(
+    SDKInitRequestData(processId, SDKInitRequestDataAttributes(challenge, origin))
 )
 internal class SDKInitRequestData(
     @SerializedName("processId") val processId: String,
@@ -150,6 +153,7 @@ internal class SDKInitRequestData(
 )
 internal class SDKInitRequestDataAttributes(
     @SerializedName("sdk-init-token") val challengeToken: String,
+    @SerializedName("origin") val origin: String,
     @SerializedName("platform") val platform: String = "android"
 )
 internal class SDKInitResponse(
@@ -227,3 +231,11 @@ internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKIn
         return SDKInitResponseDataAttributes(firstEntry.value.asString)
     }
 }
+
+internal class FinishActivationRequest(processId: String, userIdentification: Any?): ObjectRequest<FinishActivationRequestData>(
+    FinishActivationRequestData(processId, userIdentification)
+)
+internal class FinishActivationRequestData(
+    @SerializedName("processId") val processId: String,
+    @SerializedName("identification") val userIdentification: Any?
+)

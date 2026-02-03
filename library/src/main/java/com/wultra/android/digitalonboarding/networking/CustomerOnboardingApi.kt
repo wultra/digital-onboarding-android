@@ -68,11 +68,16 @@ internal class CustomerOnboardingApi(
      *
      * @param T Type that represents user credentials.
      * @param credentials Custom credentials object for user authentication.
+     * @param processType The process type identification. If not specified, the default process type will be used.
      * @param listener Result listener
      */
-    fun <T> start(credentials: T, listener: IApiCallResponseListener<StartOnboardingResponse>) {
+    fun <T> start(
+        credentials: T,
+        processType: String?,
+        listener: IApiCallResponseListener<StartOnboardingResponse>
+    ) {
         post(
-            StartOnboardingRequest(credentials),
+            StartOnboardingRequest(credentials, processType),
             startEndpoint(),
             null,
             null,

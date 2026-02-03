@@ -1,14 +1,16 @@
-# Verifyng user
+# Verifying the User
 
-If your PowerAuthSDK instance was activated with the `ActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
+If your `PowerAuthSDK` instance was activated with the `ActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
 
-Additional verification means that the user will need to scan his face and documents like ID and/or passport.
+Additional verification requires the user to scan their face and provide documents such as an ID card or passport.
 
 ## When is the verification needed?
 
 Verification is needed if the `activationFlags` in the `io.getlime.security.powerauth.core.ActivationStatus` contains `VERIFICATION_PENDING` or `VERIFICATION_IN_PROGRESS` value.
 
+<!-- begin box info -->
 These values can be accessed via the extension methods `verificationPending()` and `verificationInProgress()` or just simply `needVerification()` if one of them is true.
+<!-- end -->
 
 Example:
 
@@ -58,25 +60,14 @@ The service can return the state via the `status()` method or various other call
 
 ### Intro
 
-| `VerificationState` value | `VerificationStateData` class |  
-|---------------------------|-------------------------------|
-| `INTRO`                   | `VerificationStateIntroData`  | 
+| `VerificationState` value | `VerificationStateData` class                                             |  
+|---------------------------|---------------------------------------------------------------------------|
+| `INTRO`                   | `VerificationStateIntroData` with `val consentRequired: Boolean` property | 
 
 Show the verification introduction screen where the user can start the activation.
 
-The next step should be calling the `getConsentText()`.
-
-### Consent
-
-| `VerificationState` value | `VerificationStateData` class                                          |  
-|---------------------------|------------------------------------------------------------------------|
-| `CONSENT`                 | `VerificationStateConsentData` with `val consentHtml: String` property | 
-
-Show approve/cancel user consent.
-
-The content of the text (in the `consentHtml` property) depends on the server configuration and might be plain text or HTML.
-
-The next step should be calling the `consentApprove()`
+If `consentRequired` is `true`, the next step should be calling the `getConsent()`. If it is `false`, 
+you can skip the consent and call `start(ConsentResponse.NOT_REQUIRED)` to start the verification process.
 
 ### Select documents to scan
 
@@ -130,6 +121,16 @@ The next step should be calling the `presenceCheckInit` to start the check and `
 Show enter OTP screen with the resend button. `remainingAttempts` property contains a number of OTP attempts a user can try.
 
 The next step should be calling the `verifyOTP` with the user-entered OTP. The OTP is usually SMS or email.
+
+### Finish Activation
+
+| `VerificationState` | `VerificationStateData` class           |  
+|---------------------|-----------------------------------------|
+| `ACTIVATION_FINISH` | `VerificationStateActivationFinishData` | 
+
+Show "finish activation" with PIN prompt screen.
+
+The next step should be calling the `finishActivation` with user entered PIN.
 
 ### Failed
 
@@ -210,36 +211,34 @@ verification.status { result ->
 
 ## Getting the user consent text
 
-When the state is `INTRO`, the first step in the flow is to get the context text for the user to approve.
+When the state is `INTRO` and `consentRequired` is `true`, the first step in the flow is to get the context text for the user to approve.
 
 ```kotlin
 lateinit var verification: VerificationService // configured instance
-verification.consentGet { result ->
-    result.onSuccess { stateData ->
-        if (stateData.state is VerificationStateConsentData) {
-            // handle consent state
-        }
+verification.getConsent { result ->
+    result.onSuccess { consentText ->
+        // show consent text to user
     }.onFailure {
-        if (it.state != null) {
-            // show expected screen based on the state
-        } else {
-            // navigate to error screen and show the error in `it.reason`
-        }
+        // navigate to error screen and show the error in `it.reason`
     }
 }
 ```
 
-## Approving the user consent
+## Starting the verification (resolving the consent)
 
-When the state is `consent`, you should display the consent text to the user to approve or reject.
+When the state is `CONSENT`, you should display the consent text to the user to approve or reject.
 
-If the user __rejects the consent__, just return him to the intro screen, there's no API call for reject.
+If the user __rejects the consent__, call `start(ConsentResponse.DECLINED)`.
 
-If the user chooses to accept the consent, call `consentApprove` function. If successful, `DOCUMENTS_TO_SCAN_SELECT ` state will be returned.
+If the user chooses to accept the consent, call `start(ConsentResponse.APPROVED)` function. If successful, `DOCUMENTS_TO_SCAN_SELECT` state will be returned.
+
+If the `INTRO` state reported `consentRequired` as `false`, call `start(ConsentResponse.NOT_REQUIRED)`.
 
 ```kotlin
 lateinit var verification: VerificationService // configured instance
-verification.consentApprove { result ->
+
+// example when user approved the consent
+verification.start(ConsentResponse.APPROVED) { result ->
     result.onSuccess { stateData ->
         if (stateData.state is VerificationStateDocumentsToScanSelectData) {
             // handle consent state
@@ -327,7 +326,7 @@ for your implementation.
 When a document is scanned (both sides when required), it needs to be uploaded to the server.
 
 <!-- begin box warning -->
-__Images of the document should not be bigger than 1MB. Files that are too big will take longer time to upload and process on the server.__
+__Images of the document should not be bigger than hundreds of kilobytes. Files that are too big will take longer time to upload and process on the server.__
 <!-- end -->
 
 To upload a document, use `documentsSubmit` function. Each side of a document is a single `DocumentFile` instance.
@@ -338,7 +337,7 @@ Example:
 lateinit var verification: VerificationService // configured instance
 val passportToUpload = DocumentFile(
     byteArrayOf(), // raw image data from the document scanning library/photo camera
-    null, // signature onlu when supported by the backend
+    null, // signature only when supported by the backend
     DocumentType.PASSPORT,
     DocumentSide.FRONT, // passport has only front side
     null // use only when re-uploading the file (for example when first upload was rejected because of a blur)
@@ -423,7 +422,35 @@ verification.verifyOTP(userOTP) { result ->
         // React to a new state returned in the result
     }.onFailure {
         // handle error
-        // in case that the OTP cannot be filled again (too mant attempts or other), the `it.reason` will be type of `OTPFailedException`
+        // in case that the OTP cannot be filled again (too many attempts or other), the `it.reason` will be type of `OTPFailedException`
+    }
+}
+```
+
+# Finalizing the verification (optional)
+
+When the state `ACTIVATION_FINISH` is received, prompt the user for a PIN code.
+
+This PIN code is then used to activate a new `PowerAuthSDK` object that will be used for signing requests.
+
+Once the new `PowerAuthSDK` instance is activated, the verification process is finished, and the user can proceed to the main app flow *with the new `PowerAuthSDK` instance*.
+
+<!-- begin box info -->
+If the user's PIN used for the original activation should be equal to the one used for the new activation, then set the `validatePassword` parameter to `true` in the `finishActivation` call.
+<!-- end -->
+
+Example:
+
+```kotlin
+val verification: VerificationService // configured instance
+val newPaInstance: PowerAuthSDK // new PowerAuth instance to be activated and then used in the app
+val password = Password("1234") // user entered PIN code
+verification.finishActivation(newPaInstance, "my-new-activation-name", password, true, null) { result ->
+    result.onSuccess {
+        // When here, the newPaInstance is activated and ready to use (to sign requests and so on).
+        // The original PowerAuthSDK instance used for the verification will be in the `REMOVED` state and the `verification` instance can't be used anymore.
+    }.onFailure {
+        // handle error
     }
 }
 ```
