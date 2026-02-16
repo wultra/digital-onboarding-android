@@ -33,11 +33,11 @@ internal class DocumentPayloadBuilder {
 
 private fun DocumentFile.toSubmitFile() = DocumentSubmitFile(
     filename = filename(),
-    type = type.apiType(),
+    type = type,
     side = side.apiType(),
     data = dataUrlSafe(),
     originalDocumentId = originalDocumentId
 )
-private fun DocumentFile.filename() = "${type.name.lowercase()}_${side.name.lowercase()}.jpg"
+private fun DocumentFile.filename() = "${type.lowercase()}_${side.name.lowercase()}.jpg"
 private fun DocumentFile.dataUrlSafe() =
     Base64.encodeToString(data, Base64.NO_PADDING or Base64.NO_WRAP)

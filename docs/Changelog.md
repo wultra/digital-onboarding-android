@@ -16,6 +16,7 @@
 - new `ACTIVATION_FINISH` state in `VerificationState`
   -  when this status is reached, the activation needs to be finalized by calling `VerificationService.finishActivation` method.
 - Replaced `createPowerAuthActivationData(...)` with `createActivationBuilder(...)`, used internally by `activate(...)` and for advanced workflows.
+- removed `DocumentSubmitFileType` type and use `DocumentType` (which is defined as typealias of `String`) instead to better accommodate dynamic configuration of document scan.
 
 ## 1.3.0 (Oct, 2024)
 
