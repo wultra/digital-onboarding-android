@@ -218,7 +218,7 @@ internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKIn
 
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): SDKInitResponseDataAttributes {
         // This is pretty big oversimplification, but in general, we expect 1 string property with an unknown key (property name).
-        // If this doesn't fit the customer needs, we gonna need to provide this API as generic or make it provider-based for
+        // If this does not fit the customer needs, we are going to need to provide this API as generic or make it provider-based for
         // different SDK providers.
         val firstEntry = json.asJsonObject.asMap().entries.firstOrNull() ?: throw JsonParseException("No attribute in the response SDKInitResponseDataAttributes")
         WDOLogger.d("Using first SDKInitResponseDataAttributes attribute named ${firstEntry.key}")
