@@ -20,18 +20,20 @@ package com.wultra.android.digitalonboarding
 
 import com.wultra.android.digitalonboarding.networking.model.DocumentFileSide
 
+/** Type of the document.
+ * Expected values are like: `ID_CARD`, `PASSPORT`, `DRIVING_LICENSE`.
+ * All list of possible values can be found at backend implementation:
+ * https://github.com/wultra/enrollment-server/blob/develop/enrollment-server-onboarding-domain-model/src/main/java/com/wultra/app/enrollmentserver/model/enumeration/DocumentType.java
+ * Values configured on backend can be fetched using `ConfigurationService.getConfiguration()`.
+ * */
 typealias DocumentType = String
+
 class DocumentFile {
     /** Image to be uploaded. */
     var data: ByteArray
     /** Image signature. */
     var dataSignature: String?
-    /** Type of the document.
-     * Expected values like: `ID_CARD`, `PASSPORT`, `DRIVING_LICENSE`.
-     * All possible values can be found at backend implementation:
-     * https://github.com/wultra/enrollment-server/blob/develop/enrollment-server-onboarding-domain-model/src/main/java/com/wultra/app/enrollmentserver/model/enumeration/DocumentType.java
-     * Expected/possible values can be obtained from `WDOConfigurationService.getConfiguration()`.
-     * */
+    /** Type of the document. */
     val type: DocumentType
     /** Side of the document (null if the document is one-sided or only one side is expected) */
     val side: DocumentSide

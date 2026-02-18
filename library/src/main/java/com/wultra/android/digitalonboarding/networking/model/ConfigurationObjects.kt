@@ -17,6 +17,7 @@
 package com.wultra.android.digitalonboarding.networking.model
 
 import com.google.gson.annotations.SerializedName
+import com.wultra.android.digitalonboarding.DocumentType
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 
@@ -70,13 +71,8 @@ class ConfigurationDocumentGroup(
 
 /** Group of documents in the configuration */
 data class ConfigurationDocument(
-    /** Type of the document.
-     * Expected values like: `ID_CARD`, `PASSPORT`, `DRIVING_LICENSE`.
-     * All possible values can be found at backend implementation:
-     * https://github.com/wultra/enrollment-server/blob/develop/enrollment-server-onboarding-domain-model/src/main/java/com/wultra/app/enrollmentserver/model/enumeration/DocumentType.java
-     * Expected/possible values can be obtained from `WDOConfigurationService.getConfiguration()`.
-     * */
-    @SerializedName("type") val type: String,
+    /** Type of the document. */
+    @SerializedName("type") val type: DocumentType,
     /** Number of sides the document has */
     @SerializedName("sideCount") val sideCount: Int
 )
