@@ -47,16 +47,16 @@ class VerificationScanProcess {
             throw Exception("Cannot create scan process from cache - unknown cache version")
         }
 
-        documents = split[1].split(",").map { ScannedDocument(DocumentType.valueOf(it)) }
+        documents = split[1].split(",").map { ScannedDocument(it) }
     }
 
     internal fun feed(serverData: List<Document>) {
         serverData.groupBy { it.type }.forEach { group ->
-            documents.firstOrNull { it.type.apiType() == group.key }?.serverResult = group.value
+            documents.firstOrNull { it.type == group.key }?.serverResult = group.value
         }
     }
 
-    internal fun dataForCache() = "${CacheVersion.V1.name}:${documents.joinToString(",") { it.type.name }}"
+    internal fun dataForCache() = "${CacheVersion.V1.name}:${documents.joinToString(",") { it.type }}"
 
     internal enum class CacheVersion {
         V1

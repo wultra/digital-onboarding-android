@@ -19,14 +19,21 @@
 package com.wultra.android.digitalonboarding
 
 import com.wultra.android.digitalonboarding.networking.model.DocumentFileSide
-import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitFileType
+
+/** Type of the document.
+ * Expected values are like: `ID_CARD`, `PASSPORT`, `DRIVING_LICENSE`.
+ * All list of possible values can be found at backend implementation:
+ * https://github.com/wultra/enrollment-server/blob/develop/enrollment-server-onboarding-domain-model/src/main/java/com/wultra/app/enrollmentserver/model/enumeration/DocumentType.java
+ * Values configured on backend can be fetched using `ConfigurationService.getConfiguration()`.
+ * */
+typealias DocumentType = String
 
 class DocumentFile {
     /** Image to be uploaded. */
     var data: ByteArray
     /** Image signature. */
     var dataSignature: String?
-    /**Type of the document */
+    /** Type of the document. */
     val type: DocumentType
     /** Side of the document (null if the document is one-sided or only one side is expected) */
     val side: DocumentSide
@@ -34,7 +41,7 @@ class DocumentFile {
     val originalDocumentId: String?
 
     /**
-     * Image that can be send to the backend for Identity Verification
+     * Image that can be sent to the backend for Identity Verification
      *
      * @param scannedDocument Document which we're uploading
      * @param data: Image raw data
@@ -50,7 +57,7 @@ class DocumentFile {
     }
 
     /**
-     * Image that can be send to the backend for Identity Verification
+     * Image that can be sent to the backend for Identity Verification
      *
      * @param data: Image data to be uploaded.
      * @param dataSignature: Image signature
@@ -68,7 +75,7 @@ class DocumentFile {
 }
 
 /**
- * Creates image that can be send to the backend for Identity Verification
+ * Creates image that can be sent to the backend for Identity Verification
  *
  * @param side: Side of the document which the image captures
  * @param data: Image raw data
@@ -79,38 +86,11 @@ fun ScannedDocument.createFileForUpload(side: DocumentSide, data: ByteArray, dat
     return DocumentFile(this, data, dataSignature, side)
 }
 
-/** Type of the document */
-enum class DocumentType {
-    /** National ID card */
-    ID_CARD,
-    /** Passport */
-    PASSPORT,
-    /** Driving license */
-    DRIVERS_LICENSE;
-
-    /** Available sides of the document */
-    fun sides(): List<DocumentSide> {
-        return when (this) {
-            ID_CARD -> listOf(DocumentSide.FRONT, DocumentSide.BACK)
-            PASSPORT -> listOf(DocumentSide.FRONT)
-            DRIVERS_LICENSE -> listOf(DocumentSide.FRONT)
-        }
-    }
-
-    internal fun apiType(): DocumentSubmitFileType {
-        return when (this) {
-            ID_CARD -> DocumentSubmitFileType.ID_CARD
-            PASSPORT -> DocumentSubmitFileType.PASSPORT
-            DRIVERS_LICENSE -> DocumentSubmitFileType.DRIVING_LICENSE
-        }
-    }
-}
-
 /** Side of the document */
 enum class DocumentSide {
-    /** Front side of an document. Usually the one with the picture. */
+    /** Front side of the document. Usually the one with the picture. */
     FRONT,
-    /** Back side of an document */
+    /** Back side of the document */
     BACK;
 
     internal fun apiType(): DocumentFileSide {

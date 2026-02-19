@@ -354,7 +354,7 @@ class VerificationService(
         // TODO: We should verify that we're in the expected state here
         val process = VerificationScanProcess(types)
         cachedProcess = process
-        WDOLogger.i("Setting documents to scan: ${types.joinToString(",") { it.name }}")
+        WDOLogger.i("Setting documents to scan: ${types.joinToString(",") { it }}")
         markCompleted(VerificationStateScanDocumentData(process), callback)
     }
 

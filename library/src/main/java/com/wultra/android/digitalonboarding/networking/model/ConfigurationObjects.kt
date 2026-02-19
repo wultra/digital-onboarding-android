@@ -17,6 +17,7 @@
 package com.wultra.android.digitalonboarding.networking.model
 
 import com.google.gson.annotations.SerializedName
+import com.wultra.android.digitalonboarding.DocumentType
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 
@@ -70,8 +71,8 @@ class ConfigurationDocumentGroup(
 
 /** Group of documents in the configuration */
 data class ConfigurationDocument(
-    /** Type of the document */
-    @SerializedName("type") val type: String,
+    /** Type of the document. */
+    @SerializedName("type") val type: DocumentType,
     /** Number of sides the document has */
     @SerializedName("sideCount") val sideCount: Int
 )
