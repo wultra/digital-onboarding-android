@@ -17,6 +17,8 @@
   -  when this status is reached, the activation needs to be finalized by calling `VerificationService.finishActivation` method.
 - Replaced `createPowerAuthActivationData(...)` with `createActivationBuilder(...)`, used internally by `activate(...)` and for advanced workflows.
 - `DocumentType` changed from an enum to a typealias of `String` to better accommodate dynamic configuration of scanned documents.
+- updated `ConfigurationObjects`, which now includes the `useTemporaryActivation` flag and the `country` of origin in the scanned document
+- added `processType` to VerificationStatusResponseData to better distinguish between configured onboarding processes
 
 ## 1.3.0 (Oct, 2024)
 
