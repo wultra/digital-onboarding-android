@@ -131,6 +131,15 @@ class VerificationService(
     }
 
     /**
+     * Type of the process.
+     *
+     * The value is available after a successful status call.
+     */
+    fun processType(): String? {
+        return lastStatus?.responseObject?.processType
+    }
+
+    /**
      * Status of the verification.
      *
      * @param callback Callback with the result.
