@@ -36,6 +36,7 @@ internal object EmptyRequestData
 internal class VerificationStatusResponse(responseObject: VerificationStatusResponseData, status: Status): ObjectResponse<VerificationStatusResponseData>(responseObject, status)
 internal class VerificationStatusResponseData(
     @SerializedName("processId") val processId: String,
+    @SerializedName("processType") val processType: String,
     @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
     @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
     @SerializedName("consentRequired") val consentRequired: Boolean?,
