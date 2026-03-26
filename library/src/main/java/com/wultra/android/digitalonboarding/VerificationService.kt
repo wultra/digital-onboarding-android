@@ -131,6 +131,15 @@ class VerificationService(
     }
 
     /**
+     * Type of the process.
+     *
+     * The value is available after a successful status call.
+     */
+    fun processType(): String? {
+        return lastStatus?.responseObject?.processType
+    }
+
+    /**
      * Status of the verification.
      *
      * @param callback Callback with the result.
@@ -354,7 +363,7 @@ class VerificationService(
         // TODO: We should verify that we're in the expected state here
         val process = VerificationScanProcess(types)
         cachedProcess = process
-        WDOLogger.i("Setting documents to scan: ${types.joinToString(",") { it.name }}")
+        WDOLogger.i("Setting documents to scan: ${types.joinToString(",") { it }}")
         markCompleted(VerificationStateScanDocumentData(process), callback)
     }
 

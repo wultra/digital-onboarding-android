@@ -17,6 +17,7 @@
 package com.wultra.android.digitalonboarding.networking.model
 
 import com.google.gson.annotations.SerializedName
+import com.wultra.android.digitalonboarding.DocumentType
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
 
@@ -48,6 +49,8 @@ data class ConfigurationResponseData(
     @SerializedName("otpForIdentification") val otpForIdentification: Boolean,
     /** Is OTP required for the second part - identity verification. */
     @SerializedName("otpForIdentityVerification") val otpForIdentityVerification: Boolean,
+    /** Is the onboarding process configured with temporary activation that should be exchanged for the permanent one. */
+    @SerializedName("useTemporaryActivation") val useTemporaryActivation: Boolean,
     /** Documents required for identity verification. */
     @SerializedName("documents") val documents: ConfigurationDocuments
 )
@@ -70,8 +73,10 @@ class ConfigurationDocumentGroup(
 
 /** Group of documents in the configuration */
 data class ConfigurationDocument(
-    /** Type of the document */
-    @SerializedName("type") val type: String,
+    /** Type of the document. */
+    @SerializedName("type") val type: DocumentType,
     /** Number of sides the document has */
-    @SerializedName("sideCount") val sideCount: Int
+    @SerializedName("sideCount") val sideCount: Int,
+    /** Country of origin of the document as ISO 3166-1 alpha-3 code */
+    @SerializedName("country") val country: String?
 )

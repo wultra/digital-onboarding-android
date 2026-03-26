@@ -23,6 +23,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
 import com.google.gson.annotations.SerializedName
+import com.wultra.android.digitalonboarding.DocumentType
 import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.powerauth.networking.data.ObjectRequest
 import com.wultra.android.powerauth.networking.data.ObjectResponse
@@ -35,6 +36,7 @@ internal object EmptyRequestData
 internal class VerificationStatusResponse(responseObject: VerificationStatusResponseData, status: Status): ObjectResponse<VerificationStatusResponseData>(responseObject, status)
 internal class VerificationStatusResponseData(
     @SerializedName("processId") val processId: String,
+    @SerializedName("processType") val processType: String,
     @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
     @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
     @SerializedName("consentRequired") val consentRequired: Boolean?,
@@ -77,7 +79,7 @@ internal class DocumentsStatusResponseData(
 internal class Document(
     @SerializedName("filename") val filename: String,
     @SerializedName("id") val id: String,
-    @SerializedName("type") val type: DocumentSubmitFileType,
+    @SerializedName("type") val type: DocumentType,
     @SerializedName("side") val side: DocumentFileSide?,
     @SerializedName("status") val status: DocumentStatus,
     @SerializedName("errors") val errors: List<String>?
@@ -91,13 +93,6 @@ internal enum class DocumentStatus {
     @SerializedName("VERIFICATION_IN_PROGRESS") VERIFICATION_IN_PROGRESS,
     @SerializedName("REJECTED") REJECTED,
     @SerializedName("FAILED") FAILED
-}
-
-internal enum class DocumentSubmitFileType {
-    @SerializedName("ID_CARD") ID_CARD,
-    @SerializedName("PASSPORT") PASSPORT,
-    @SerializedName("DRIVING_LICENSE") DRIVING_LICENSE,
-    @SerializedName("SELFIE_PHOTO") SELFIE_PHOTO
 }
 
 internal enum class DocumentFileSide {
@@ -176,7 +171,7 @@ internal class DocumentSubmitRequestData(
 
 internal data class DocumentSubmitFile(
     @SerializedName("filename") val filename: String,
-    @SerializedName("type") val type: DocumentSubmitFileType,
+    @SerializedName("type") val type: DocumentType,
     @SerializedName("side") val side: DocumentFileSide?,
     @SerializedName("originalDocumentId") val originalDocumentId: String?,
     @SerializedName("data") val data: String
@@ -224,7 +219,7 @@ internal class SDKInitResponseDataAttributesDeserializer: JsonDeserializer<SDKIn
 
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): SDKInitResponseDataAttributes {
         // This is pretty big oversimplification, but in general, we expect 1 string property with an unknown key (property name).
-        // If this wont fit the customer needs, we gonna need to provide this API as generic or make it provider-based for
+        // If this does not fit the customer needs, we are going to need to provide this API as generic or make it provider-based for
         // different SDK providers.
         val firstEntry = json.asJsonObject.asMap().entries.firstOrNull() ?: throw JsonParseException("No attribute in the response SDKInitResponseDataAttributes")
         WDOLogger.d("Using first SDKInitResponseDataAttributes attribute named ${firstEntry.key}")
