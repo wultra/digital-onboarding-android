@@ -62,7 +62,7 @@ data class ProcessData(
  *
  * Service that can activate PowerAuthSDK instance by user weak credentials (like his login and birthdate) + OTP.
  *
- * This service operations against `enrollment-onboarding-server` and you need to configure a networking service with URL of this service.
+ * This service operates against `enrollment-onboarding-server` and you need to configure a networking service with URL of this service.
  *
  * @property powerAuthSDK Configured PowerAuthSDK instance. This instance needs to be without valid activation otherwise you'll get errors.
  * @constructor Creates service instance.

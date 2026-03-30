@@ -185,7 +185,7 @@ class VerificationService(
                                         if (documents.any { it.action() == DocumentAction.ERROR } || documents.any { !it.errors.isNullOrEmpty() }) {
                                             WDOLogger.i("There is an document error - returning.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
-                                        } else if (documents.all { it.action() == DocumentAction.PROCEED }) {
+                                        } else if (documents.isNotEmpty() && documents.all { it.action() == DocumentAction.PROCEED }) {
                                             if (cachedProcess.nextDocumentToScan() != null) {
                                                 WDOLogger.d("All documents accepted, but we are expecting more documents to scan")
                                                 markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
