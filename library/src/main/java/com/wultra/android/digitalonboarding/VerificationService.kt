@@ -85,11 +85,11 @@ class VerificationService(
 ) {
     /**
      * Accept language for the outgoing requests headers.
-     * Default value is "en".
+     * The default value is "en".
      *
      * Standard RFC "Accept-Language" https://tools.ietf.org/html/rfc7231#section-5.3.5
-     * Response texts are based on this setting. For example when "de" is set, server
-     * will return error texts and other in german (if available).
+     * Response texts are based on this setting. For example, when "de" is set, server
+     * will return error texts and other in German (if available).
      */
     var acceptLanguage: String
         set(value) { api.acceptLanguage = value }
@@ -186,8 +186,15 @@ class VerificationService(
                                             WDOLogger.i("There is an document error - returning.")
                                             markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
                                         } else if (documents.all { it.action() == DocumentAction.PROCEED }) {
-                                            WDOLogger.i("Document is waiting - continue scanning.")
-                                            markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
+                                            if (cachedProcess.nextDocumentToScan() != null) {
+                                                WDOLogger.d("All documents accepted, but we are expecting more documents to scan")
+                                                markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
+                                            } else {
+                                                // Corner case: verification status returns DOCUMENT_UPLOAD, but all documents are already accepted
+                                                // (the change happens between the two API calls)
+                                                WDOLogger.d("All documents accepted, proceeding")
+                                                markCompleted(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION), callback)
+                                            }
                                         } else if (documents.any { it.action() == DocumentAction.WAIT }) {
                                             // TODO: really verification?
                                             WDOLogger.i("Document is processing - wait..")
@@ -251,7 +258,7 @@ class VerificationService(
     }
 
     /**
-     * Returns consent text for user to approve.
+     * Returns consent text for the user to approve.
      *
      * @param callback Callback with the result.
      */
@@ -578,7 +585,7 @@ class VerificationService(
     }
 
     /**
-     * Finishes verification by creating a new PowerAuth activation on given `newPowerAuthInstance`.
+     * Finishes verification by creating a new PowerAuth activation on a given `newPowerAuthInstance`.
      *
      * Needs to be called when `ACTIVATION_FINISH` next step is returned from the `status()` call.
      *
