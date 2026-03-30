@@ -62,7 +62,7 @@ data class ProcessData(
  *
  * Service that can activate PowerAuthSDK instance by user weak credentials (like his login and birthdate) + OTP.
  *
- * This service operations against `enrollment-onboarding-server` and you need to configure networking service with URL of this service.
+ * This service operates against `enrollment-onboarding-server` and you need to configure a networking service with URL of this service.
  *
  * @property powerAuthSDK Configured PowerAuthSDK instance. This instance needs to be without valid activation otherwise you'll get errors.
  * @constructor Creates service instance.
@@ -109,11 +109,11 @@ class ActivationService(
 
     /**
      * Accept language for the outgoing requests headers.
-     * Default value is "en".
+     * The default value is "en".
      *
      * Standard RFC "Accept-Language" https://tools.ietf.org/html/rfc7231#section-5.3.5
-     * Response texts are based on this setting. For example when "de" is set, server
-     * will return error texts and other in german (if available).
+     * Response texts are based on this setting. For example, when "de" is set, server
+     * will return error texts and other in German (if available).
      */
     var acceptLanguage: String
         set(value) { api.acceptLanguage = value }
