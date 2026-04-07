@@ -494,7 +494,8 @@ class VerificationService(
                     WDOLogger.i("restartVerification success")
                     status { statusResult ->
                         statusResult
-                            .onSuccess { markCompleted(it.state, callback) }
+                            // do not call markCompleted here, it will be called in the onSuccess of the status() call
+                            .onSuccess { callback(WDOResult.success(Success(it.state))) }
                             .onFailure { markCompleted(it, callback) }
                     }
                 }
