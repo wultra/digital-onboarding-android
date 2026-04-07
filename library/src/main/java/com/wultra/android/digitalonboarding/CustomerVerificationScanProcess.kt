@@ -63,8 +63,7 @@ class VerificationScanProcess {
                             serverId = side.serverId,
                             uploadState = when (side.uploadState) {
                                 ScannedDocument.UploadState.ACCEPTED -> CacheV2.CachedSide.UploadState.ACCEPTED
-                                ScannedDocument.UploadState.REJECTED -> CacheV2.CachedSide.UploadState.REJECTED
-                                ScannedDocument.UploadState.NOT_UPLOADED -> CacheV2.CachedSide.UploadState.REJECTED
+                                else -> CacheV2.CachedSide.UploadState.REJECTED
                             },
                         )
                     },
