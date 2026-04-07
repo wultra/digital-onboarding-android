@@ -104,17 +104,20 @@ class VerificationService(
     private val api = CustomerVerificationApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
     private val onboardingApi = CustomerOnboardingApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
     private val storage = Storage(appContext, "wdo-verif-encrypted")
-    private val storageCacheKey = "wdocp_${powerAuthSDK.configuration.instanceId}"
+    private val storageCacheKey: String?
+        get() = lastStatus?.responseObject?.processId?.let { "wdocp_${it}" }
     private var cachedProcess: VerificationScanProcess?
-        get() = storage.getValue(storageCacheKey)?.let { VerificationScanProcess(it) }
-        set(value) = storage.setValue(storageCacheKey, value?.dataForCache())
-
-    init {
-        if (!powerAuthSDK.hasValidActivation()) {
-            WDOLogger.d("PowerAuth has not a valid activation - clearing cache.")
-            cachedProcess = null
+        get() {
+            val key = storageCacheKey ?: return null
+            val cacheData = storage.getValue(key) ?: return null
+            return runCatching { VerificationScanProcess(cacheData) }
+                .onFailure { WDOLogger.e("Failed to decode scan process cache: ${it}") }
+                .getOrNull()
         }
-    }
+        set(value) {
+            val key = storageCacheKey ?: return
+            storage.setValue(key, value?.dataForCache())
+        }
 
     /**
      * Type of the process.
@@ -133,6 +136,8 @@ class VerificationService(
     fun status(callback: (VerificationStatusResult) -> Unit) {
         api.getStatus(object: IApiCallResponseListener<VerificationStatusResponse> {
             override fun onSuccess(result: VerificationStatusResponse) {
+                lastStatus = result
+
                 when (result.responseObject.status) {
                     IdentityVerificationStatus.FAILED, IdentityVerificationStatus.REJECTED, IdentityVerificationStatus.NOT_INITIALIZED, IdentityVerificationStatus.ACCEPTED -> {
                         WDOLogger.d("We reached endstate, clearing cache")
@@ -142,8 +147,6 @@ class VerificationService(
                         // nothing
                     }
                 }
-
-                lastStatus = result
 
                 val makeResult = { state: VerificationStateData ->
                     StatusResult(
@@ -181,6 +184,7 @@ class VerificationService(
                                     if (cachedProcess != null) {
                                         WDOLogger.d("Cached process obtained, processing retrieved documents")
                                         cachedProcess.feed(documents)
+                                        this@VerificationService.cachedProcess = cachedProcess
                                         if (documents.any { it.action() == DocumentAction.ERROR } || documents.any { !it.errors.isNullOrEmpty() }) {
                                             WDOLogger.i("There is an document error - returning.")
                                             completeWithState(VerificationStateScanDocumentData(cachedProcess))
@@ -264,7 +268,6 @@ class VerificationService(
 
             override fun onFailure(error: ApiError) {
                 WDOLogger.e("Status failed : ${error.e}")
-                lastStatus = null
                 markCompleted(error, callback)
             }
         })
@@ -397,10 +400,37 @@ class VerificationService(
     fun documentsSubmit(files: List<DocumentFile>, progressCallback: (Double) -> Unit, callback: (VerificationResult) -> Unit) {
 
         val processId = guardProcessId(callback) ?: return
+        val resolvedFiles = cachedProcess?.let { cached ->
+            files.map { file ->
+                if (file.originalDocumentId != null) {
+                    file // if the file already has originalDocumentId, we can use it as is
+                } else {
+                    val serverId = cached.documents
+                        .firstOrNull { it.type == file.type }
+                        ?.originalDocumentIdFor(file.side)
+
+                    // In this case, the originalDocumentId is not available in the file object, but we can find it in the cached process by matching the document type and side.
+                    // This allows us to reuse the scanned document without forcing the user to scan it again.
+                    if (serverId != null) {
+                        WDOLogger.d("Document ${file.type} is missing originalDocumentId, using cached ID $serverId.")
+                        DocumentFile(
+                            data = file.data,
+                            dataSignature = file.dataSignature,
+                            type = file.type,
+                            side = file.side,
+                            originalDocumentId = serverId,
+                        )
+                    } else {
+                        // The file is not cached, we have to upload it as a new
+                        file
+                    }
+                }
+            }
+        } ?: files
 
         // TODO: progress callback
         try {
-            val requestData = DocumentPayloadBuilder.build(processId, files)
+            val requestData = DocumentPayloadBuilder.build(processId, resolvedFiles)
             api.submitDocuments(
                 requestData,
                 object : IApiCallResponseListener<DocumentSubmitResponse> {
@@ -522,6 +552,7 @@ class VerificationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     WDOLogger.i("cancelWholeProcess success")
+                    cachedProcess = null
                     callback(WDOResult.success(Unit))
                 }
 
@@ -831,6 +862,7 @@ class VerificationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     WDOLogger.i("Verification process start success")
+                    cachedProcess = null
                     markCompleted(VerificationStateDocumentsToScanSelectData, callback)
                 }
                 override fun onFailure(error: ApiError) {
