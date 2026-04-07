@@ -51,9 +51,9 @@ import io.getlime.security.powerauth.networking.response.IValidatePasswordListen
 import io.getlime.security.powerauth.sdk.PowerAuthActivation
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
-import java.time.Duration
 
 typealias VerificationResult = WDOResult<VerificationService.Success, VerificationService.Fail>
+typealias VerificationStatusResult = WDOResult<VerificationService.StatusResult, VerificationService.Fail>
 
 /**
  * User response for the consent.
@@ -116,20 +116,6 @@ class VerificationService(
         }
     }
 
-    /** Time in seconds that user needs to wait between OTP resend calls */
-    fun otpResendPeriodInSeconds(): Long? {
-        val period = lastStatus?.responseObject?.config?.otpResendPeriod
-        if (period == null) {
-            WDOLogger.w("OTP resend period can be provided only when there was at least 1 status call made")
-            return null
-        }
-        return try {
-            Duration.parse(period).seconds
-        } catch (t: Throwable) {
-            null
-        }
-    }
-
     /**
      * Type of the process.
      *
@@ -144,7 +130,7 @@ class VerificationService(
      *
      * @param callback Callback with the result.
      */
-    fun status(callback: (VerificationResult) -> Unit) {
+    fun status(callback: (VerificationStatusResult) -> Unit) {
         api.getStatus(object: IApiCallResponseListener<VerificationStatusResponse> {
             override fun onSuccess(result: VerificationStatusResponse) {
                 when (result.responseObject.status) {
@@ -159,13 +145,26 @@ class VerificationService(
 
                 lastStatus = result
 
+                val makeResult = { state: VerificationStateData ->
+                    StatusResult(
+                        state = state,
+                        serverData = ProcessServerData(
+                            processId = result.responseObject.processId,
+                            processType = result.responseObject.processType,
+                        )
+                    )
+                }
+                val completeWithState = { state: VerificationStateData ->
+                    markCompleted(makeResult(state), callback)
+                }
+
                 val nextStep = VerificationStatusNextStep.fromStatusResponse(result.responseObject)
 
                 WDOLogger.i("Response status: ${result.responseObject.status.name}:${result.responseObject.phase?.name}. NextStep: ${nextStep.value.name}")
 
                 when (nextStep.value) {
                     Value.INTRO -> {
-                        markCompleted(VerificationStateIntroData(nextStep.consentRequired), callback)
+                        completeWithState(VerificationStateIntroData(nextStep.consentRequired))
                     }
                     Value.DOCUMENT_SCAN -> {
                         WDOLogger.d("Asking for a document status.")
@@ -184,36 +183,36 @@ class VerificationService(
                                         cachedProcess.feed(documents)
                                         if (documents.any { it.action() == DocumentAction.ERROR } || documents.any { !it.errors.isNullOrEmpty() }) {
                                             WDOLogger.i("There is an document error - returning.")
-                                            markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
+                                            completeWithState(VerificationStateScanDocumentData(cachedProcess))
                                         } else if (documents.isNotEmpty() && documents.all { it.action() == DocumentAction.PROCEED }) {
                                             if (cachedProcess.nextDocumentToScan() != null) {
                                                 WDOLogger.d("All documents accepted, but we are expecting more documents to scan")
-                                                markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
+                                                completeWithState(VerificationStateScanDocumentData(cachedProcess))
                                             } else {
                                                 // Corner case: verification status returns DOCUMENT_UPLOAD, but all documents are already accepted
                                                 // (the change happens between the two API calls)
                                                 WDOLogger.d("All documents accepted, proceeding")
-                                                markCompleted(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION), callback)
+                                                completeWithState(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION))
                                             }
                                         } else if (documents.any { it.action() == DocumentAction.WAIT }) {
                                             // TODO: really verification?
                                             WDOLogger.i("Document is processing - wait..")
-                                            markCompleted(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION), callback)
+                                            completeWithState(VerificationStateProcessingData(ProcessingItem.DOCUMENT_VERIFICATION))
                                         } else if (documents.isEmpty()) {
                                             WDOLogger.i("There are no document - scan first.")
-                                            markCompleted(VerificationStateScanDocumentData(cachedProcess), callback)
+                                            completeWithState(VerificationStateScanDocumentData(cachedProcess))
                                         } else {
                                             // TODO: is this ok?
                                             WDOLogger.w("Unexpected document state - configuration error.")
-                                            markCompleted(VerificationStateFailedData, callback)
+                                            completeWithState(VerificationStateFailedData)
                                         }
                                     } else {
                                         if (documents.isEmpty()) {
                                             WDOLogger.i("No documents scanned - start scanning")
-                                            markCompleted(VerificationStateDocumentsToScanSelectData, callback)
+                                            completeWithState(VerificationStateDocumentsToScanSelectData)
                                         } else {
                                             WDOLogger.w("Unexpected document state - configuration/cache error.")
-                                            markCompleted(VerificationStateFailedData, callback)
+                                            completeWithState(VerificationStateFailedData)
                                         }
                                     }
                                 }
@@ -226,25 +225,39 @@ class VerificationService(
                         )
                     }
                     Value.PRESENCE_CHECK -> {
-                        markCompleted(VerificationStatePresenceCheckData, callback)
+                        completeWithState(VerificationStatePresenceCheckData)
                     }
                     Value.STATUS_CHECK -> {
-                        markCompleted(VerificationStateProcessingData(ProcessingItem.from(nextStep.statusCheckReason ?: VerificationStatusNextStep.StatusCheckReason.UNKNOWN)), callback)
+                        completeWithState(
+                            VerificationStateProcessingData(
+                                ProcessingItem.from(nextStep.statusCheckReason ?: VerificationStatusNextStep.StatusCheckReason.UNKNOWN)
+                            )
+                        )
                     }
                     Value.OTP -> {
-                        markCompleted(VerificationStateOtpData(null), callback)
+                        completeWithState(
+                            VerificationStateOtpData(
+                                remainingAttempts = null,
+                                otpResendPeriodInSeconds = this@VerificationService.lastStatus?.responseObject?.config?.otpResendPeriodSeconds,
+                            )
+                        )
                     }
                     Value.ACTIVATION_FINISH -> {
-                        markCompleted(VerificationStateActivationFinishData, callback)
+                        completeWithState(VerificationStateActivationFinishData)
                     }
                     Value.FAILED -> {
-                        markCompleted(VerificationStateFailedData, callback)
+                        completeWithState(VerificationStateFailedData)
                     }
                     Value.REJECTED -> {
-                        markCompleted(VerificationStateEndstateData(EndstateReason.REJECTED), callback)
+                        completeWithState(
+                            VerificationStateEndstateData(
+                                endstateReason = EndstateReason.REJECTED,
+                                rejectReason = result.responseObject.rejectReason,
+                            )
+                        )
                     }
                     Value.SUCCESS -> {
-                        markCompleted(VerificationStateSuccessData, callback)
+                        completeWithState(VerificationStateSuccessData)
                     }
                 }
             }
@@ -479,7 +492,11 @@ class VerificationService(
             object : IApiCallResponseListener<StatusResponse> {
                 override fun onSuccess(result: StatusResponse) {
                     WDOLogger.i("restartVerification success")
-                    status(callback)
+                    status { statusResult ->
+                        statusResult
+                            .onSuccess { markCompleted(it.state, callback) }
+                            .onFailure { markCompleted(it, callback) }
+                    }
                 }
 
                 override fun onFailure(error: ApiError) {
@@ -541,7 +558,10 @@ class VerificationService(
                         if (result.responseObject.remainingAttempts > 0 && !result.responseObject.expired) {
                             WDOLogger.i("There are remaining OTP attempts, returning the OTP Status")
                             markCompleted(
-                                VerificationStateOtpData(result.responseObject.remainingAttempts),
+                                VerificationStateOtpData(
+                                    remainingAttempts = result.responseObject.remainingAttempts,
+                                    otpResendPeriodInSeconds = this@VerificationService.lastStatus?.responseObject?.config?.otpResendPeriodSeconds,
+                                ),
                                 callback,
                             )
                         } else {
@@ -759,6 +779,22 @@ class VerificationService(
      */
     data class Success(val state: VerificationStateData)
 
+    /** Server-side process data returned alongside the verification state. */
+    data class ProcessServerData(
+        /** Unique identifier of the verification process. */
+        val processId: String,
+        /** Configured type of the verification process. */
+        val processType: String,
+    )
+
+    /** Result of the `status` call with current state and server process data. */
+    data class StatusResult(
+        /** State of the verification for app to display. */
+        val state: VerificationStateData,
+        /** Server-side data associated with this verification process. */
+        val serverData: ProcessServerData,
+    )
+
     /**
      * Error result with cause of the error and state that should be presented (optional).
      *
@@ -771,9 +807,9 @@ class VerificationService(
     class Fail(val reason: ApiError): Exception() {
         /** State of the verification for app to display */
         val state: VerificationStateData? = when (reason.error) {
-            ApiErrorCode.ONBOARDING_FAILED -> VerificationStateEndstateData(EndstateReason.OTHER)
+            ApiErrorCode.ONBOARDING_FAILED -> VerificationStateEndstateData(EndstateReason.OTHER, rejectReason = null)
             ApiErrorCode.IDENTITY_VERIFICATION_FAILED -> VerificationStateFailedData
-            ApiErrorCode.ONBOARDING_PROCESS_LIMIT_REACHED -> VerificationStateEndstateData(EndstateReason.LIMIT_REACHED)
+            ApiErrorCode.ONBOARDING_PROCESS_LIMIT_REACHED -> VerificationStateEndstateData(EndstateReason.LIMIT_REACHED, rejectReason = null)
             ApiErrorCode.IDENTITY_PRESENCE_CHECK_LIMIT_REACHED, ApiErrorCode.IDENTITY_VERIFICATION_LIMIT_REACHED -> VerificationStateFailedData
             else -> null
         }
@@ -843,7 +879,12 @@ class VerificationService(
     }
 
     private fun <T>markCompleted(result: T, callback: (WDOResult<T, Fail>) -> Unit) {
-        callback(VerificationResult.success(result))
+        callback(WDOResult.success(result))
+    }
+
+    private fun markCompleted(result: StatusResult, callback: (VerificationStatusResult) -> Unit) {
+        listener?.verificationStatusChanged(this, result.state)
+        callback(VerificationStatusResult.success(result))
     }
 
     private fun markCompleted(state: VerificationStateData, callback: (VerificationResult) -> Unit) {
@@ -857,7 +898,7 @@ class VerificationService(
             listener?.verificationStatusChanged(this, fail.state)
         }
 
-        callback(VerificationResult.failure(fail))
+        callback(WDOResult.failure(fail))
     }
 }
 

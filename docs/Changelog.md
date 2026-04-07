@@ -20,6 +20,9 @@
 - `DocumentType` changed from an enum to a typealias of `String` to better accommodate dynamic configuration of scanned documents.
 - updated `ConfigurationObjects`, which now includes the `useTemporaryActivation` flag and the `country` of origin in the scanned document
 - added `processType` to VerificationStatusResponseData to better distinguish between configured onboarding processes and expose it from `VerificationService`
+- `VerificationStateOtpData` now carries `otpResendPeriodInSeconds` alongside `remainingAttempts`.
+- `VerificationStateEndstateData` now carries optional `rejectReason` with server-provided rejection details.
+- `VerificationService.status` now returns `VerificationService.StatusResult` containing `state` and `serverData` (`processId`, `processType`).
 
 ## 1.3.0 (Oct, 2024)
 

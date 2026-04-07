@@ -37,13 +37,14 @@ internal class VerificationStatusResponse(responseObject: VerificationStatusResp
 internal class VerificationStatusResponseData(
     @SerializedName("processId") val processId: String,
     @SerializedName("processType") val processType: String,
+    @SerializedName("rejectReason") val rejectReason: String?,
     @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
     @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
     @SerializedName("consentRequired") val consentRequired: Boolean?,
     @SerializedName("config") val config: IdentityVerificationConfig
 )
 internal class IdentityVerificationConfig(
-    @SerializedName("otpResendPeriod") val otpResendPeriod: String
+    @SerializedName("otpResendPeriodSeconds") val otpResendPeriodSeconds: Int
 )
 
 internal enum class IdentityVerificationStatus {

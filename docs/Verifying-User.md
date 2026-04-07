@@ -116,9 +116,9 @@ The next step should be calling the `presenceCheckInit` to start the check and `
 
 | `VerificationState` | `VerificationStateData` class                                          |  
 |---------------------|------------------------------------------------------------------------|
-| `OTP`               | `VerificationStateOtpData` with `val remainingAttempts: Int?` property | 
+| `OTP`               | `VerificationStateOtpData` with `val remainingAttempts: Int?` and `val otpResendPeriodInSeconds: Int?` properties | 
 
-Show enter OTP screen with the resend button. `remainingAttempts` property contains a number of OTP attempts a user can try.
+Show enter OTP screen with the resend button. `remainingAttempts` contains the number of OTP attempts a user can still try and `otpResendPeriodInSeconds` contains resend cooldown in seconds.
 
 The next step should be calling the `verifyOTP` with the user-entered OTP. The OTP is usually SMS or email.
 
@@ -146,9 +146,11 @@ The next step should be calling the `restartVerification` or `cancelWholeProcess
 
 | `VerificationState` | `VerificationStateData` class                                                      |  
 |---------------------|------------------------------------------------------------------------------------|
-| `ENDSTATE`          | `VerificationStateEndstateData` with `val endstateReason: EndstateReason` property | 
+| `ENDSTATE`          | `VerificationStateEndstateData` with `val endstateReason: EndstateReason` and `val rejectReason: String?` properties | 
 
 Verification is canceled and the user needs to start again with a new PowerAuth activation. To explain why that happened, you can show additional information to the user based on the `endstateReason` property.
+
+When `endstateReason` is `REJECTED`, the `rejectReason` field may contain server-provided rejection details.
 
 The next step should be calling the `PowerAuthSDK.removeActivationLocal()` and starting activation from scratch.
 
@@ -197,8 +199,10 @@ Getting the state directly:
 ```kotlin
 lateinit var verification: VerificationService // configured instance
 verification.status { result ->
-    result.onSuccess { stateData ->
-        // handle `VerificationService.Success` state and navigate to the expected screen
+    result.onSuccess { statusResult ->
+        // statusResult.state: VerificationStateData - navigate to the expected screen
+        // statusResult.serverData.processId: String - unique ID of this verification process
+        // statusResult.serverData.processType: String - configured type of this verification process
     }.onFailure { 
         if (it.state != null) {
             // show expected screen based on the state
