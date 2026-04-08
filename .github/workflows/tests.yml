@@ -22,7 +22,6 @@ jobs:
           cache: gradle
       - name: Run unit tests
         run: ./scripts/test.sh -type unit
-
   integration-tests:
     name: Integration tests
     runs-on: ubuntu-latest
