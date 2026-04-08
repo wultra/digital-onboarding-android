@@ -30,9 +30,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.BufferedReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
 import java.net.URL
 
 @RunWith(AndroidJUnit4::class)
@@ -144,7 +141,10 @@ class IntegrationTests {
 
             fun waitForNonProcessingStatus(): VerificationService.StatusResult {
                 var statusResult = helper.verification.awaitStatus()
-                while (statusResult.state.state == VerificationState.PROCESSING) {
+                var attempts = 0
+                val sleepDuration = 3_000L
+                val maxAttempts = 10 // Wait up to 30 seconds for processing to complete, with manual approval if needed.
+                while (statusResult.state.state == VerificationState.PROCESSING && attempts < maxAttempts) {
                     // Handle manual onboarding approval when processing waits for backoffice action.
                     val processing = statusResult.state as? VerificationStateProcessingData
                     if (processing?.processingItem == ProcessingItem.ONBOARDING_APPROVAL) {
@@ -153,8 +153,12 @@ class IntegrationTests {
                             approveOnboarding(env, statusResult.serverData.processId, userId)
                         }
                     }
-                    Thread.sleep(3_000)
+                    Thread.sleep(sleepDuration)
+                    attempts += 1
                     statusResult = helper.verification.awaitStatus()
+                }
+                if (statusResult.state.state == VerificationState.PROCESSING) {
+                    throw SimpleError("Timed out waiting for non-processing verification state after ${maxAttempts * sleepDuration / 1000} seconds")
                 }
                 return statusResult
             }
@@ -214,7 +218,7 @@ class IntegrationTests {
 
             // OTP verification.
             if (state.state == VerificationState.OTP) {
-                val otp = helper.getVerificationOtp(statusResult.serverData.processId)
+                val otp = helper.getVerificationOtp()
                 val otpResult = helper.verification.awaitVerifyOtp(otp)
                 state = otpResult.state
                 if (state.state == VerificationState.PROCESSING) {
@@ -328,7 +332,7 @@ class IntegrationTests {
         val baseUrl = environment.esoUrl.trimEnd('/')
 
         // Step 1: fetch identity verification ID for the process.
-        val verificationIdsUrl = URL("$baseUrl/api/private/test/process/$processId/identityVerifications")
+        val verificationIdsUrl = URL("${baseUrl}/api/private/test/process/${processId}/identityVerifications")
         val verificationIdsResponse = executeHttp(
             url = verificationIdsUrl,
             method = "GET",
@@ -336,20 +340,20 @@ class IntegrationTests {
             body = null,
         )
         val verificationId = parseFirstJsonArrayValue(verificationIdsResponse)
-            ?: return
+            ?: throw SimpleError("Failed to parse identity verification ID from response: ${verificationIdsResponse}")
 
         // Step 2: approve the verification.
         val approveBody = """
             {
-              "processId": "$processId",
-              "identityVerificationId": "$verificationId",
-              "userId": "$userId",
+              "processId": "${processId}",
+              "identityVerificationId": "${verificationId}",
+              "userId": "${userId}",
               "approvalResult": "OK",
               "approvalResultReason": ""
             }
         """.trimIndent()
 
-        val approveUrl = URL("$baseUrl/api/private/client/approve")
+        val approveUrl = URL("${baseUrl}/api/private/client/approve")
         executeHttp(
             url = approveUrl,
             method = "POST",
@@ -358,49 +362,26 @@ class IntegrationTests {
         )
     }
 
-    private fun executeHttp(url: URL, method: String, authorization: String, body: String?): String {
-        val connection = url.openConnection() as HttpURLConnection
-        connection.requestMethod = method
-        connection.connectTimeout = 60_000
-        connection.readTimeout = 60_000
-        connection.setRequestProperty("Content-Type", "application/json")
-        connection.setRequestProperty("Authorization", "Basic $authorization")
-
-        if (body != null) {
-            connection.doOutput = true
-            OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(body) }
-        }
-
-        val code = connection.responseCode
-        if (code !in 200..299) {
-            val error = connection.errorStream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
-            connection.disconnect()
-            throw SimpleError("HTTP $method $url failed with code $code: $error")
-        }
-
-        val response = connection.inputStream.bufferedReader().use(BufferedReader::readText)
-        connection.disconnect()
-        return response
-    }
-
     private fun parseFirstJsonArrayValue(jsonArrayRaw: String): String? {
         val cleaned = jsonArrayRaw.trim()
-        if (!cleaned.startsWith("[") || !cleaned.endsWith("]")) {
-            return null
-        }
 
-        val content = cleaned.removePrefix("[").removeSuffix("]").trim()
-        if (content.isBlank()) {
-            return null
+        return try {
+            val parsed = com.google.gson.JsonParser.parseString(cleaned)
+            if (!parsed.isJsonArray) {
+                return null
+            }
+            val firstElement = parsed.asJsonArray.firstOrNull() ?: return null
+            if (firstElement.isJsonNull) {
+                return null
+            }
+            if (firstElement.isJsonPrimitive && firstElement.asJsonPrimitive.isString) {
+                firstElement.asString
+            } else {
+                firstElement.toString()
+            }
+        } catch (_: Exception) {
+            null
         }
-
-        return content
-            .split(',')
-            .firstOrNull()
-            ?.trim()
-            ?.removePrefix("\"")
-            ?.removeSuffix("\"")
-            ?.takeIf { it.isNotBlank() }
     }
 
     companion object {

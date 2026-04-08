@@ -21,10 +21,6 @@ import com.wultra.android.digitalonboarding.Utils
 import com.wultra.android.digitalonboarding.networking.model.CancelOnboardingRequest
 import com.wultra.android.digitalonboarding.networking.model.GetStatusRequest
 import com.wultra.android.digitalonboarding.networking.model.GetStatusResponse
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailType
 import com.wultra.android.digitalonboarding.networking.model.ResendOtpRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
@@ -53,12 +49,13 @@ internal class CustomerOnboardingApi(
     appContext: Context
 ) : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
+    internal val baseURL = identityServerUrl
+
     companion object {
         private fun <T> startEndpoint() = EndpointBasic<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", E2EEConfiguration.APPLICATION_SCOPE)
         private val cancelEndpoint = EndpointBasic<CancelOnboardingRequest, StatusResponse>("api/onboarding/cleanup", E2EEConfiguration.APPLICATION_SCOPE)
         private val statusEndpoint = EndpointBasic<GetStatusRequest, GetStatusResponse>("api/onboarding/status", E2EEConfiguration.APPLICATION_SCOPE)
         private val resendOtpEndpoint = EndpointBasic<ResendOtpRequest, StatusResponse>("api/onboarding/otp/resend", E2EEConfiguration.APPLICATION_SCOPE)
-        val getOtpEndpoint = EndpointBasic<OTPDetailRequest, OTPDetailResponse>("api/onboarding/otp/detail", E2EEConfiguration.APPLICATION_SCOPE)
     }
 
     /**
@@ -142,23 +139,4 @@ internal class CustomerOnboardingApi(
         )
     }
 
-    /**
-     * Retrieves OTP needed for Onboarding Process.
-     *
-     * **Note that this method is available only in demo Wultra implementation.**
-     *
-     * Encrypted with the ECIES activation scope.
-     *
-     * @param processId ID of the Identity Onboarding process
-     * @param listener Result listener
-     */
-    fun getOtp(processId: String, listener: IApiCallResponseListener<OTPDetailResponse>) {
-        post(
-            OTPDetailRequest(OTPDetailRequestData(processId, OTPDetailType.ACTIVATION)),
-            getOtpEndpoint,
-            null,
-            null,
-            listener
-        )
-    }
 }

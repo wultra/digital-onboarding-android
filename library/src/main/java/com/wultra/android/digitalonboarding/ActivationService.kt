@@ -23,7 +23,6 @@ import android.os.Build
 import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.CustomerOnboardingApi
 import com.wultra.android.digitalonboarding.networking.model.GetStatusResponse
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
 import com.wultra.android.digitalonboarding.networking.model.OnboardingStatus
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
 import com.wultra.android.powerauth.networking.IApiCallResponseListener
@@ -73,7 +72,7 @@ data class ProcessData(
  * @param canRestoreSession If the activation session can be restored (when app restarts). `true` by default
  */
 class ActivationService(
-    identityServerUrl: String,
+    internal val identityServerUrl: String,
     appContext: Context,
     okHttpClient: OkHttpClient,
     private val powerAuthSDK: PowerAuthSDK,
@@ -121,7 +120,7 @@ class ActivationService(
 
     /** PRIVATE PROPERTIES & CLASSES */
 
-    private val api = CustomerOnboardingApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
+    internal val api = CustomerOnboardingApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
     private val storage = Storage(appContext, "wdo-prefs-encrypted")
     private val keychainKey = "wdopid_${powerAuthSDK.configuration.instanceId}"
     private var processData: ProcessData?
@@ -129,7 +128,7 @@ class ActivationService(
         set(value) = storage.setValue(keychainKey, value?.toStorageString())
 
     // Read-only helper for processId, that is used in several places in this file.
-    private val processId: String?
+    internal val processId: String?
         get() = processData?.processId
 
     init {
@@ -388,31 +387,6 @@ class ActivationService(
             return false
         }
         return true
-    }
-
-    /**
-     * Demo endpoint available only in Wultra Demo systems
-     *
-     * @param callback Result callback.
-     */
-    internal fun getOTP(callback: (ActivationResult<String>) -> Unit) {
-
-        val processId = guardProcessId(callback) ?: return
-
-        api.getOtp(
-            processId,
-            object : IApiCallResponseListener<OTPDetailResponse> {
-                override fun onSuccess(result: OTPDetailResponse) {
-                    WDOLogger.i("Get OTP successful")
-                    callback(ActivationResult.success(result.responseObject.otpCode))
-                }
-
-                override fun onFailure(error: ApiError) {
-                    WDOLogger.e(error)
-                    callback(ActivationResult.failure(Fail(error)))
-                }
-            }
-        )
     }
 
     /** Exception when PowerAuth instance cannot start new activation. */
