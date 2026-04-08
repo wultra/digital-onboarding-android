@@ -80,6 +80,9 @@ dependencies {
     // Dependencies
     compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.9.6")
 
+    // Unit tests
+    testImplementation("junit:junit:4.13.2")
+
     // Instrumentation tests
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
