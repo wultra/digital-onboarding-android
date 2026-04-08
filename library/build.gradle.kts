@@ -32,6 +32,7 @@ android {
 
     defaultConfig {
         minSdk = Constants.Android.minSdkVersion
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // since Android Gradle Plugin 4.1.0
         // VERSION_CODE and VERSION_NAME are not generated for libraries
@@ -77,5 +78,11 @@ dependencies {
     implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
 
     // Dependencies
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.9.2")
+    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.9.6")
+
+    // Instrumentation tests
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:core-ktx:1.6.1")
+    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:1.9.6")
 }

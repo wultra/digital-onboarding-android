@@ -17,6 +17,9 @@ ktlint
 # configurations
 configs
 
+# test config
+/library/src/androidTest/assets/config.json
+
 # temp data
 /tmp-*
 *.txt
