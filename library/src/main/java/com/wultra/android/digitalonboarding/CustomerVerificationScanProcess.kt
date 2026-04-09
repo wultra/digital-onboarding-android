@@ -110,7 +110,7 @@ class VerificationScanProcess {
             runCatching {
                 val cache = Gson().fromJson(cacheData, CacheV2::class.java)
                 if (cache != null && cache.v == 2) {
-                    return@parseDocumentsFromCache cache.documents.map { cachedDocument ->
+                    return cache.documents.map { cachedDocument ->
                         ScannedDocument(
                             type = cachedDocument.type,
                             sides = cachedDocument.sides.map { cachedSide ->
@@ -161,7 +161,7 @@ class ScannedDocument(val type: DocumentType) {
         REJECTED
     }
 
-    var sides: List<Side> = emptyList()
+    internal var sides: List<Side> = emptyList()
         private set
 
     internal constructor(type: DocumentType, sides: List<Side>) : this(type) {
@@ -202,7 +202,7 @@ class ScannedDocument(val type: DocumentType) {
         }
     }
 
-    data class Side(
+    internal data class Side(
         val type: DocumentSide,
         val serverId: String,
         val uploadState: UploadState,
