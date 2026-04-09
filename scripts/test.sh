@@ -53,7 +53,7 @@ fi
 pushd "${SCRIPT_FOLDER}/.."
 
 if [ -n "${CONFIG_JSON}" ]; then
-    echo "${CONFIG_JSON}" > "library/src/androidTest/assets/config.json"
+    printf '%s' "${CONFIG_JSON}" > "library/src/androidTest/assets/config.json"
     echo "Config written to library/src/androidTest/assets/config.json"
 fi
 
