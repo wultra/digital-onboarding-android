@@ -31,10 +31,6 @@ import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusResp
 import com.wultra.android.digitalonboarding.networking.model.EmptyRequest
 import com.wultra.android.digitalonboarding.networking.model.FinishActivationRequest
 import com.wultra.android.digitalonboarding.networking.model.FinishActivationResponse
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailType
 import com.wultra.android.digitalonboarding.networking.model.PresenceCheckRequest
 import com.wultra.android.digitalonboarding.networking.model.PresenceCheckResponse
 import com.wultra.android.digitalonboarding.networking.model.PresenceCheckSubmitRequest
@@ -295,26 +291,6 @@ internal class CustomerVerificationApi(
         post(
             VerifyOtpRequest(processId, otp),
             otpVerifyEndpoint,
-            null,
-            null,
-            listener
-        )
-    }
-
-    /**
-     * Retrieves OTP needed for Onboarding Process.
-     *
-     * **Note that this method is available only in demo Wultra implementation.**
-     *
-     * Encrypted with the ECIES activation scope.
-     *
-     * @param processId ID of the Identity Onboarding process
-     * @param listener Result listener
-     */
-    fun getOtp(processId: String, listener: IApiCallResponseListener<OTPDetailResponse>) {
-        post(
-            OTPDetailRequest(OTPDetailRequestData(processId, OTPDetailType.USER_VERIFICATION)),
-            CustomerOnboardingApi.getOtpEndpoint,
             null,
             null,
             listener

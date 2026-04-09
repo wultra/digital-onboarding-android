@@ -31,7 +31,6 @@ import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitRespo
 import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.FinishActivationResponse
 import com.wultra.android.digitalonboarding.networking.model.IdentityVerificationStatus
-import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
 import com.wultra.android.digitalonboarding.networking.model.PresenceCheckResponse
 import com.wultra.android.digitalonboarding.networking.model.ResendOtpResponse
 import com.wultra.android.digitalonboarding.networking.model.SDKInitResponse
@@ -78,7 +77,7 @@ enum class ConsentResponse {
  * @param okHttpClient HTTP client for server communication.
  */
 class VerificationService(
-    identityServerUrl: String,
+    internal val identityServerUrl: String,
     okHttpClient: OkHttpClient,
     private val appContext: Context,
     private val powerAuthSDK: PowerAuthSDK
@@ -101,7 +100,9 @@ class VerificationService(
     /** PRIVATE PROPERTIES & CLASSES */
 
     private var lastStatus: VerificationStatusResponse? = null
-    private val api = CustomerVerificationApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
+    internal val processId: String?
+        get() = lastStatus?.responseObject?.processId
+    internal val api = CustomerVerificationApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
     private val onboardingApi = CustomerOnboardingApi(identityServerUrl, okHttpClient, powerAuthSDK, appContext)
     private val storage = Storage(appContext, "wdo-verif-encrypted")
     private val storageCacheKey: String?
@@ -777,31 +778,6 @@ class VerificationService(
         }
     }
 
-    /**
-     * Demo endpoint available only in Wultra Demo systems.
-     *
-     * @param callback Callback with the result.
-     */
-    internal fun getOTP(callback: (WDOResult<String, Fail>) -> Unit) {
-
-        val processId = guardProcessId(callback) ?: return
-
-        api.getOtp(
-            processId,
-            object : IApiCallResponseListener<OTPDetailResponse> {
-                override fun onSuccess(result: OTPDetailResponse) {
-                    WDOLogger.i("getOTP success")
-                    callback(WDOResult.success(result.responseObject.otpCode))
-                }
-
-                override fun onFailure(error: ApiError) {
-                    WDOLogger.e("verifyOTP failed : ${error.e}")
-                    callback(WDOResult.failure(Fail(error)))
-                }
-            }
-        )
-    }
-
     // Public Helper Classes
 
     /**
@@ -875,7 +851,7 @@ class VerificationService(
 
     private fun <T>guardProcessId(callback: (WDOResult<T, Fail>) -> Unit): String? {
 
-        val processId = lastStatus?.responseObject?.processId
+        val processId = this.processId
         if (processId == null) {
             WDOLogger.e("ProcessId is required for the requested method but not available. This mean that the process was not started or status was not fetched yet.")
             markCompleted(Fail(ApiError(ActivationMissingStatusException)), callback)

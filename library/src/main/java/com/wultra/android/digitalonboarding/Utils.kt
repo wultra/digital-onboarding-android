@@ -20,7 +20,6 @@ import com.google.gson.GsonBuilder
 import com.wultra.android.digitalonboarding.networking.model.SDKInitResponseDataAttributes
 import com.wultra.android.digitalonboarding.networking.model.SDKInitResponseDataAttributesDeserializer
 import com.wultra.android.powerauth.networking.error.ApiError
-import com.wultra.android.powerauth.networking.error.ApiErrorException
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.UnknownHostException
@@ -35,48 +34,11 @@ internal class Utils {
     companion object {
         fun defaultGsonBuilder(): GsonBuilder {
             val builder = GsonBuilder()
-            builder.registerTypeAdapter(SDKInitResponseDataAttributes::class.java, SDKInitResponseDataAttributesDeserializer())
+            builder.registerTypeAdapter(
+                SDKInitResponseDataAttributes::class.java,
+                SDKInitResponseDataAttributesDeserializer()
+            )
             return builder
-        }
-    }
-}
-
-/**
- * Demo endpoints available only in Wultra Demo systems.
- */
-object DemoEndpoints {
-
-    /**
-     * Demo endpoint available only in Wultra Demo systems
-     *
-     * @param service Activation service instance.
-     * @param callback Result callback.
-     */
-    fun getOTP(service: ActivationService, callback: (WDOResult<String, Throwable>) -> Unit) {
-        service.getOTP { result ->
-            result
-                .onSuccess { success ->
-                    callback(WDOResult.success(success))
-                }.onFailure { error ->
-                    callback(WDOResult.failure(ApiErrorException(error.cause)))
-                }
-        }
-    }
-
-    /**
-     * Demo endpoint available only in Wultra Demo systems
-     *
-     * @param service Verification service instance.
-     * @param callback Result callback.
-     */
-    fun getOTP(service: VerificationService, callback: (WDOResult<String, Throwable>) -> Unit) {
-        service.getOTP { result ->
-            result
-                .onSuccess { success ->
-                    callback(WDOResult.success(success))
-                }.onFailure { exception ->
-                    callback(WDOResult.failure(exception))
-                }
         }
     }
 }
