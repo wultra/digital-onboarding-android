@@ -24,9 +24,9 @@ val powerAuth = PowerAuthSDK
     .build(appContext)
             
 val activationService = ActivationService(
-    "https://sever.my/path/", // identityserver URL
+    "https://server.my/path/", // identityserver URL
     appContext, // application context
-    OkHttpClient.Builder(), // okhttp client that performs networking
+    OkHttpClient.Builder().build(), // okhttp client that performs networking
     powerAuth
 )
 ```
@@ -42,7 +42,7 @@ To figure out if the activation process has already started and what is the stat
  * Note that when the result is `true` it can be already discontinued on the server.
  * Calling `status` in such case is recommended.
  */
-fun hasActiveProcess(): Bool
+fun hasActiveProcess(): Boolean
 ```
 
 If the process was started, you can verify its status by calling the `status` function. You can show an appropriate UI to the user based on this status.
@@ -128,7 +128,7 @@ To start the activation, use the `start` function.
  * @param processType The process type identification. If not specified, the default process type will be used.
  * @param callback Callback with the result.
  */
-fun <T> start(credentials: T, processType: String?, callback: (ActivationResult<Unit>) -> Unit)
+fun <T> start(credentials: T, processType: String? = null, callback: (ActivationResult<Unit>) -> Unit)
 ```
 
 ### Example
@@ -142,7 +142,7 @@ data class UserData(
 class MyUserService {
     // prepared service
     private lateinit var activationService: ActivationService
-    private lateinit var processType: String = "ONBOARDING"
+    private val processType: String = "ONBOARDING"
     
     fun startActivation(id: String, bday: String) {
         val data = UserData(id, bday)
@@ -188,8 +188,8 @@ class MyUserService {
     // prepared service
     private lateinit var activationService: ActivationService
 
-    fun activate(smsOTP: String) {
-        activationService.activate(smsOTP) { result ->
+    fun activate(smsOTP: String?) {
+        activationService.activate(otp = smsOTP) { result ->
             result.onSuccess {
                 // PowerAuthSDK instance was activated.
                 // At this moment, navigate the user to

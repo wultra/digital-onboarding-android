@@ -35,7 +35,7 @@ class DocumentFile {
     var dataSignature: String?
     /** Type of the document. */
     val type: DocumentType
-    /** Side of the document (null if the document is one-sided or only one side is expected) */
+    /** Side of the document. Use `DocumentSide.FRONT` for one-sided documents. */
     val side: DocumentSide
     /** In case of re-upload */
     val originalDocumentId: String?
@@ -44,9 +44,9 @@ class DocumentFile {
      * Image that can be sent to the backend for Identity Verification
      *
      * @param scannedDocument Document which we're uploading
-     * @param data: Image raw data
-     * @param dataSignature: Signature of the image data. Optional, `null` by default
-     * @param side: Side of the document which the image captures
+     * @param data Image raw data
+     * @param dataSignature Signature of the image data. Optional, `null` by default
+     * @param side Side of the document which the image captures
      */
     constructor(scannedDocument: ScannedDocument, data: ByteArray, dataSignature: String? = null, side: DocumentSide) {
         this.originalDocumentId = scannedDocument.originalDocumentIdFor(side)
@@ -59,11 +59,11 @@ class DocumentFile {
     /**
      * Image that can be sent to the backend for Identity Verification
      *
-     * @param data: Image data to be uploaded.
-     * @param dataSignature: Image signature
-     * @param type: Type of the document
-     * @param side: Side of the document (nil if the document is one-sided or only one side is expected)
-     * @param originalDocumentId: Original document ID In case of a re-upload
+     * @param data Image data to be uploaded.
+     * @param dataSignature Image signature.
+     * @param type Type of the document.
+     * @param side Side of the document. Use `DocumentSide.FRONT` for one-sided documents.
+     * @param originalDocumentId Original document ID in case of a re-upload.
      */
     constructor(data: ByteArray, dataSignature: String? = null, type: DocumentType, side: DocumentSide, originalDocumentId: String? = null) {
         this.data = data
@@ -77,9 +77,9 @@ class DocumentFile {
 /**
  * Creates image that can be sent to the backend for Identity Verification
  *
- * @param side: Side of the document which the image captures
- * @param data: Image raw data
- * @param dataSignature: Signature of the image data. Optional, `null` by default
+ * @param side Side of the document which the image captures
+ * @param data Image raw data
+ * @param dataSignature Signature of the image data. Optional, `null` by default
  * @return Document file for upload
  */
 fun ScannedDocument.createFileForUpload(side: DocumentSide, data: ByteArray, dataSignature: String? = null): DocumentFile {

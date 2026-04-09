@@ -4,6 +4,7 @@
 
 - __Android 9__ (API level 28)+
 - [PowerAuth Mobile SDK](https://github.com/wultra/powerauth-mobile-sdk) needs to be available in your project
+- Enrollment onboarding server `2.1.0`+
 
 ## Maven Central
 
@@ -20,7 +21,7 @@ repositories {
 Then add a dependency
 
 ```kotlin
-implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:1.1.1")
+implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:1.3.0")
 ```
 
 ## Guaranteed PowerAuth Compatibility

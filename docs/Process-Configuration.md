@@ -3,6 +3,8 @@
 With `ConfigurationService` you can retrieve the configuration of the onboarding process from the server.
 The configuration contains information about which steps are required to be performed during the onboarding process and which document types are supported or required for scanning.
 
+Use returned document `type` values in `VerificationService.documentsSetSelectedTypes(...)`.
+
 ## Retrieving the configuration
 
 To retrieve the configuration, create an instance of `ConfigurationService` and call the `getConfiguration` method with the process type identifier.
@@ -34,6 +36,8 @@ data class ConfigurationResponseData(
     val otpForIdentification: Boolean,
     /** Is OTP required for the second part - identity verification. */
     val otpForIdentityVerification: Boolean,
+    /** Is the onboarding process configured with temporary activation that should be exchanged for the permanent one. */
+    val useTemporaryActivation: Boolean,
     /** Documents required for identity verification. */
     val documents: ConfigurationDocuments
 )
@@ -59,10 +63,14 @@ data class ConfigurationDocument(
     /** Type of the document */
     val type: String,
     /** Number of sides the document has */
-    val sideCount: Int
+    val sideCount: Int,
+    /** Country of origin of the document as ISO 3166-1 alpha-3 code */
+    val country: String?
 )
 
 ```
+
+`type` is a backend-defined string such as `ID_CARD` or `PASSPORT`.
 
 ## Read next
 - [Device Activation](Device-Activation.md)

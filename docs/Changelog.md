@@ -2,28 +2,31 @@
 
 ## TBA
 
+- This release requires enrollment onboarding server version `2.1.0` or higher.
 - Fixed: Document scan flow no longer proceeds to processing when additional documents are still selected locally.
 - `SDKInitRequestDataAttributes` now contains `platform` and `origin` properties (mainly to support BlinkID SDK).
 - Refactored document upload to use the new v2 API.
 - `ConfigurationService` allows to fetch Wultra Digital Onboarding configuration from the server.
-- Added support for `processType` and `activationCode` in `ActivationService`
+- Added support for `processType` and `activationCode` in `ActivationService`.
+- `ActivationService.activate(...)` now accepts optional OTP.
 - Support for optional Identity Consent:
   - `VerificationStateIntroData` contains `consentRequired` flag.
   - `VerificationService.start` handles mandatory and optional consent (replaces `consentApprove`).
-  - `consentGet(callback:)` renamed to `getConsent(callback:)`.
+  - `consentGet(...)` renamed to `getConsent(...)`.
   - Removed `VerificationState.CONSENT` state (and `VerificationStateConsentData` class); consent is resolved via `start` method.
 - `getOTP` methods in `ActivationService` and `VerificationService` were moved to `DemoEndpoints` helper class.
-- added `ONBOARDING_APPROVAL` process type constant, which signals that the onboarding requires approval step.
-- new `ACTIVATION_FINISH` state in `VerificationState`
-  -  when this status is reached, the activation needs to be finalized by calling `VerificationService.finishActivation` method.
+- Added `ProcessingItem.ONBOARDING_APPROVAL`, which signals onboarding approval wait state.
+- Added `ACTIVATION_FINISH` state in `VerificationState`.
+  - When this status is reached, activation should be finalized by calling `VerificationService.finishActivation(...)`.
 - Replaced `createPowerAuthActivationData(...)` with `createActivationBuilder(...)`, used internally by `activate(...)` and for advanced workflows.
 - `DocumentType` changed from an enum to a typealias of `String` to better accommodate dynamic configuration of scanned documents.
-- updated `ConfigurationObjects`, which now includes the `useTemporaryActivation` flag and the `country` of origin in the scanned document
-- added `processType` to VerificationStatusResponseData to better distinguish between configured onboarding processes and expose it from `VerificationService`
+- Updated configuration response objects with `useTemporaryActivation` and document `country`.
+- Added `processType` to verification status response data and exposed it from `VerificationService`.
 - `VerificationStateOtpData` now carries `otpResendPeriodInSeconds` alongside `remainingAttempts`.
 - `VerificationStateEndstateData` now carries optional `rejectReason` with server-provided rejection details.
 - `VerificationService.status` now returns `VerificationService.StatusResult` containing `state` and `serverData` (`processId`, `processType`).
 - `VerificationService.documentsSubmit` now automatically resolves missing `originalDocumentId` values from cached scan process data (temporary workaround until backend auto-resolution is available).
+- Demo `getOTP(...)` now accepts endpoint strategy via `GetOTPEndpointStrategy`.
 
 ## 1.3.0 (Oct, 2024)
 

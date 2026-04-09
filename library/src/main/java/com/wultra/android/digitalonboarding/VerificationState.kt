@@ -89,17 +89,17 @@ class VerificationStateEndstateData(
 enum class ProcessingItem {
     /** Reason cannot be specified */
     OTHER,
-    /** Documents are being uploaded to a internal systems */
+    /** Documents are being uploaded to internal systems. */
     DOCUMENT_UPLOAD,
     /** Documents are being verified */
     DOCUMENT_VERIFICATION,
     /** Documents were accepted and we're waiting for a process change */
     DOCUMENT_ACCEPTED,
-    /** Uploaded are being cross-checked if there are issues for the same person. */
+    /** Uploaded documents are being cross-checked for duplicate or conflicting identity data. */
     DOCUMENT_CROSS_VERIFICATION,
     /** Verifying presence of the user in front of the phone (selfie verification). */
     VERIFYING_PRESENCE,
-    /** Waiting for onboarding approval. Usually waiting for manual approval in the a backoffice system, */
+    /** Waiting for onboarding approval, usually manual approval in a backoffice system. */
     ONBOARDING_APPROVAL,
     /** Client data provided are being verified by the system. */
     CLIENT_VERIFICATION,
