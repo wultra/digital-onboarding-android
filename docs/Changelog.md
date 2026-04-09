@@ -23,6 +23,7 @@
 - `VerificationStateOtpData` now carries `otpResendPeriodInSeconds` alongside `remainingAttempts`.
 - `VerificationStateEndstateData` now carries optional `rejectReason` with server-provided rejection details.
 - `VerificationService.status` now returns `VerificationService.StatusResult` containing `state` and `serverData` (`processId`, `processType`).
+- `VerificationService.documentsSubmit` now automatically resolves missing `originalDocumentId` values from cached scan process data (temporary workaround until backend auto-resolution is available).
 
 ## 1.3.0 (Oct, 2024)
 

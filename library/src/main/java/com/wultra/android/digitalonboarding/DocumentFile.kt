@@ -49,7 +49,7 @@ class DocumentFile {
      * @param side: Side of the document which the image captures
      */
     constructor(scannedDocument: ScannedDocument, data: ByteArray, dataSignature: String? = null, side: DocumentSide) {
-        this.originalDocumentId = scannedDocument.serverResult?.first { it.side == side.apiType() }?.id
+        this.originalDocumentId = scannedDocument.originalDocumentIdFor(side)
         this.data = data
         this.dataSignature = dataSignature
         this.type = scannedDocument.type
