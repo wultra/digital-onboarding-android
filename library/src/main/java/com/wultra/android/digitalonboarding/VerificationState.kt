@@ -74,12 +74,16 @@ class VerificationStateProcessingData(
 
 class VerificationStateOtpData(
     /** Remaining attempts for the `OTP` state */
-    val remainingAttempts: Int?
+    val remainingAttempts: Int?,
+    /** Time in seconds user needs to wait between OTP resend calls. */
+    val otpResendPeriodInSeconds: Int?
 ): VerificationStateData(VerificationState.OTP)
 
 class VerificationStateEndstateData(
     /** Endstate reason for the `ENDSTATE` state. */
-    val endstateReason: EndstateReason
+    val endstateReason: EndstateReason,
+    /** Reject reason provided by server when `endstateReason` is `REJECTED`. */
+    val rejectReason: String?
 ): VerificationStateData(VerificationState.ENDSTATE)
 
 enum class ProcessingItem {
