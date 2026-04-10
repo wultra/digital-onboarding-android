@@ -2,7 +2,7 @@
 
 ## TBA
 
-- This release requires enrollment onboarding server version `2.1.0` or higher.
+- This release requires `enrollment-onboarding-server` version `2.1.0` or higher.
 - Fixed: Document scan flow no longer proceeds to processing when additional documents are still selected locally.
 - `SDKInitRequestDataAttributes` now contains `platform` and `origin` properties (mainly to support BlinkID SDK).
 - Refactored document upload to use the new v2 API.

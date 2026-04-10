@@ -2,7 +2,7 @@
 
 This guide covers public API changes between `1.3.x` and `2.0.x`.
 
-This SDK now requires enrollment onboarding server `2.1.0+`.
+SDK `2.0.x` requires `enrollment-onboarding-server` `2.1.0+`.
 
 ## Breaking Changes
 

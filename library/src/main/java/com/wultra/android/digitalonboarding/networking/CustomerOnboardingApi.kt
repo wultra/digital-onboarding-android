@@ -49,8 +49,6 @@ internal class CustomerOnboardingApi(
     appContext: Context
 ) : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
-    internal val baseURL = identityServerUrl
-
     companion object {
         private fun <T> startEndpoint() = EndpointBasic<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", E2EEConfiguration.APPLICATION_SCOPE)
         private val cancelEndpoint = EndpointBasic<CancelOnboardingRequest, StatusResponse>("api/onboarding/cleanup", E2EEConfiguration.APPLICATION_SCOPE)
