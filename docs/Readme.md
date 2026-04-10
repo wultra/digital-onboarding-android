@@ -51,6 +51,7 @@ The code of the library is open source and you can freely browse it in our GitHu
 - [Language Configuration](Language-Configuration.md)
 - [Logging](Logging.md)
 - [Changelog](Changelog.md)
+- [Migration Guides](Migration-Guides.md)
 
 _* or similar weak identification like userID or phone number_
 <!-- end -->

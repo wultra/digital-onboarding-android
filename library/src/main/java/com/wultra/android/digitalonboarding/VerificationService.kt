@@ -642,7 +642,7 @@ class VerificationService(
      *
      * Needs to be called when `ACTIVATION_FINISH` next step is returned from the `status()` call.
      *
-     * The method verifies that the provided `password` is the same as used in the original activation
+     * The method verifies that the provided `newPassword` is the same as used in the original activation
      * (if `validatePassword` is set to `true`), then it calls the server API to finish
      * the verification and obtain the activation code for the new activation. Finally, it creates
      * a new activation on the `newPowerAuthInstance` using the obtained activation code and persists it

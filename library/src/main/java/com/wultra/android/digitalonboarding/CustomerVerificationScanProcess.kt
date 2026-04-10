@@ -22,13 +22,13 @@ import com.google.gson.Gson
 import com.wultra.android.digitalonboarding.networking.model.Document
 import com.wultra.android.digitalonboarding.networking.model.DocumentFileSide
 
-/** Verification Scan Process that describes which documents needs to be scanned and uploaded */
+/** Verification scan process that describes which documents need to be scanned and uploaded. */
 class VerificationScanProcess {
 
-    /** Documents that needs to be scanned */
+    /** Documents that need to be scanned. */
     val documents: List<ScannedDocument>
 
-    /** Which document should be scanned next. `nil` when all documents are uploaded and accepted */
+    /** Which document should be scanned next. `null` when all documents are uploaded and accepted. */
     fun nextDocumentToScan() = documents.firstOrNull { it.uploadState() != ScannedDocument.UploadState.ACCEPTED }
 
     constructor(types: List<DocumentType>) {
@@ -146,7 +146,7 @@ class VerificationScanProcess {
 }
 
 /**
- * Document that needs to be scanned during process
+ * Document that needs to be scanned during process.
  *
  * @property type Type of the document
  */

@@ -1,0 +1,9 @@
+# Migration Instructions
+
+This page contains Wultra Digital Onboarding SDK migration instructions.
+
+<!-- begin box warning -->
+When updating across multiple versions, apply all migration steps additively.
+<!-- end -->
+
+- [Migration from version `1.3.x` to `2.0.x`](Migration-2.0.md)

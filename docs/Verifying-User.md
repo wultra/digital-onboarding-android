@@ -17,7 +17,7 @@ Example:
 ```kotlin
 val powerAuth: PowerAuthSDK // configured and activated PowerAuth instance
 
-powerAuthSDK.fetchActivationStatusWithCallback(
+powerAuth.fetchActivationStatusWithCallback(
     appContext,
     object : IActivationStatusListener {
         override fun onActivationStatusSucceed(status: ActivationStatus) {
@@ -110,7 +110,8 @@ The user should be presented with a presence check.
 
 Presence check is handled by third-party SDK based on the project setup.  
 
-The next step should be calling the `presenceCheckInit` to start the check and `presenceCheckSubmit` to mark it finished  Note that these methods won't change the status and it's up to the app to handle the process of the presence check.
+The next step should be calling the `presenceCheckInit` to start the check and `presenceCheckSubmit` to mark it finished.
+Note that these methods won't change the status and it's up to the app to handle the process of the presence check.
 
 ### OTP
 
@@ -179,9 +180,9 @@ val powerAuth = PowerAuthSDK
     .build(appContext)
             
 val verificationService = VerificationService(
-    "https://sever.my/path/", // identityserver URL
+    "https://server.my/path/", // identityserver URL
+    OkHttpClient.Builder().build(), // okhttp client that performs networking
     appContext, // application context
-    OkHttpClient.Builder(), // okhttp client that performs networking
     powerAuth
 )
 ```
@@ -230,7 +231,7 @@ verification.getConsent { result ->
 
 ## Starting the verification (resolving the consent)
 
-When the state is `CONSENT`, you should display the consent text to the user to approve or reject.
+When `status()` returns `INTRO` and `consentRequired` is `true`, display the consent text to the user and let the user approve or reject it.
 
 If the user __rejects the consent__, call `start(ConsentResponse.DECLINED)`.
 
@@ -265,7 +266,7 @@ For example, your system might require a national ID and one additional document
 
 ```kotlin
 lateinit var verification: VerificationService // configured instance
-val list = listOf(DocumentType.ID_CARD,DocumentType.PASSPORT) // selected by user from UI or hardcoded
+val list = listOf("ID_CARD", "PASSPORT") // selected by user from UI or hardcoded
 verification.documentsSetSelectedTypes(list) { result ->
     result.onSuccess { stateData ->
         if (stateData.state is VerificationStateScanDocumentData) {
@@ -342,7 +343,7 @@ lateinit var verification: VerificationService // configured instance
 val passportToUpload = DocumentFile(
     byteArrayOf(), // raw image data from the document scanning library/photo camera
     null, // signature only when supported by the backend
-    DocumentType.PASSPORT,
+    "PASSPORT",
     DocumentSide.FRONT, // passport has only front side
     null // use only when re-uploading the file (for example when first upload was rejected because of a blur)
 )
@@ -364,31 +365,31 @@ class DocumentFile {
     var data: ByteArray
     /** Image signature. */
     var dataSignature: String?
-    /**Type of the document */
+    /** Type of the document. */
     val type: DocumentType
-    /** Side of the document (null if the document is one-sided or only one side is expected) */
+    /** Side of the document. Use `DocumentSide.FRONT` for one-sided documents. */
     val side: DocumentSide
     /** In case of re-upload */
     val originalDocumentId: String?
 
     /**
-     * Image that can be send to the backend for Identity Verification
+     * Image that can be sent to the backend for Identity Verification
      *
-     * @param scannedDocument Document which we're uploading
-     * @param data: Image raw data
-     * @param dataSignature: Signature of the image data. Optional, `null` by default
-     * @param side: Side of the document which the image captures
+     * @param scannedDocument Document which we're uploading.
+     * @param data Image raw data.
+     * @param dataSignature Signature of the image data. Optional, `null` by default.
+     * @param side Side of the document which the image captures.
      */
     constructor(scannedDocument: ScannedDocument, data: ByteArray, dataSignature: String? = null, side: DocumentSide)
 
     /**
-     * Image that can be send to the backend for Identity Verification
+     * Image that can be sent to the backend for Identity Verification
      *
-     * @param data: Image data to be uploaded.
-     * @param dataSignature: Image signature
-     * @param type: Type of the document
-     * @param side: Side of the document (nil if the document is one-sided or only one side is expected)
-     * @param originalDocumentId: Original document ID In case of a re-upload
+     * @param data Image data to be uploaded.
+     * @param dataSignature Image signature.
+     * @param type Type of the document.
+     * @param side Side of the document. Use `DocumentSide.FRONT` for one-sided documents.
+     * @param originalDocumentId Original document ID in case of a re-upload.
      */
     constructor(data: ByteArray, dataSignature: String? = null, type: DocumentType, side: DocumentSide, originalDocumentId: String? = null)
 }
@@ -431,7 +432,7 @@ verification.verifyOTP(userOTP) { result ->
 }
 ```
 
-# Finalizing the verification (optional)
+## Finalizing the verification (optional)
 
 When the state `ACTIVATION_FINISH` is received, prompt the user for a PIN code.
 

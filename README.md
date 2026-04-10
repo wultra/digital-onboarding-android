@@ -3,7 +3,7 @@
 <!-- begin remove -->
 <p align="center"><img src="docs/images/intro.jpg" alt="Wultra Digital Onboarding for Android" width="100%" /></p>
 
-[![Lint](https://github.com/wultra/digital-onboarding-android/actions/workflows/lint.yml/badge.svg)](https://github.com/wultra/digital-onboarding-android/actions/workflows/lint.yml) [![build](https://github.com/wultra/digital-onboarding-android/actions/workflows/build.yml/badge.svg)](https://github.com/wultra/digital-onboarding-android/actions/workflows/build.yml) 
+[![Lint](https://github.com/wultra/digital-onboarding-android/actions/workflows/lint.yml/badge.svg)](https://github.com/wultra/digital-onboarding-android/actions/workflows/lint.yml) [![build](https://github.com/wultra/digital-onboarding-android/actions/workflows/build.yml/badge.svg)](https://github.com/wultra/digital-onboarding-android/actions/workflows/build.yml) [![tests](https://github.com/wultra/digital-onboarding-android/actions/workflows/tests.yml/badge.svg)](https://github.com/wultra/digital-onboarding-android/actions/workflows/tests.yml)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/wultra/digital-onboarding-android)
 ![date](https://img.shields.io/github/release-date/wultra/digital-onboarding-android) 
 [![mavenCentral](https://img.shields.io/maven-central/v/com.wultra.android.digitalonboarding/wultra-digital-onboarding)](https://mvnrepository.com/artifact/com.wultra.android.digitalonboarding/wultra-digital-onboarding)

@@ -189,7 +189,7 @@ internal class CustomerVerificationApi(
      *
      * Encrypted with the ECIES activation scope.
      *
-     * @param data Data to be send.
+     * @param data Data to be sent.
      *             You can use `WDODocumentPayloadBuilder.build` for easier use.
      * @param listener Result listener.
      */
