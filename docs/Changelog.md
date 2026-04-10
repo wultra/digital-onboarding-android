@@ -1,6 +1,6 @@
 # Changelog
 
-## TBA
+## 2.0.0 (Apr, 2026)
 
 - This release requires `enrollment-onboarding-server` version `2.1.0` or higher.
 - Fixed: Document scan flow no longer proceeds to processing when additional documents are still selected locally.
