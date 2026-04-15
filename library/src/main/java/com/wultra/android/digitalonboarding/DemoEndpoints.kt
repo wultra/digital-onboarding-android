@@ -17,6 +17,7 @@
 package com.wultra.android.digitalonboarding
 
 import com.google.gson.Gson
+import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailResponse
@@ -88,7 +89,7 @@ object DemoEndpoints {
         otpType: OTPDetailType,
         callback: (WDOResult<String, ApiError>) -> Unit
     ) {
-        val processId = processId ?: run {
+        val resolvedProcessId = processId ?: run {
             callback(WDOResult.failure(ApiError(IllegalStateException("Process ID is not available"))))
             return
         }
@@ -96,7 +97,7 @@ object DemoEndpoints {
         when (strategy) {
             GetOTPEndpointStrategy.Eso -> {
                 esoApi.getOtp(
-                    processId = processId,
+                    processId = resolvedProcessId,
                     otpType = otpType,
                     listener = object : IApiCallResponseListener<OTPDetailResponse> {
                         override fun onSuccess(result: OTPDetailResponse) {
@@ -119,7 +120,7 @@ object DemoEndpoints {
                     return
                 }
 
-                OtpEndpointNetworking.fetchOtpFromMockEndpoint(mockUrl, processId, otpType.name) { result ->
+                OtpEndpointNetworking.fetchOtpFromMockEndpoint(mockUrl, resolvedProcessId, otpType.name) { result ->
                     result
                         .onSuccess { otp ->
                             callback(WDOResult.success(otp))
@@ -130,7 +131,7 @@ object DemoEndpoints {
                 }
             }
             is GetOTPEndpointStrategy.Custom -> {
-                OtpEndpointNetworking.fetchOtpFromMockEndpoint(strategy.url, processId, otpType.name) { result ->
+                OtpEndpointNetworking.fetchOtpFromMockEndpoint(strategy.url, resolvedProcessId, otpType.name) { result ->
                     result
                         .onSuccess { otp ->
                             callback(WDOResult.success(otp))
@@ -204,6 +205,7 @@ internal class OtpEndpointNetworking {
                         connection.doOutput = true
 
                         val body = "{\"processId\":\"${escapeJson(processId)}\",\"otpType\":\"${otpType}\"}"
+                        WDOLogger.d { "Requesting OTP from a mock service with ${body} json body" }
                         OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(body) }
 
                         val code = connection.responseCode

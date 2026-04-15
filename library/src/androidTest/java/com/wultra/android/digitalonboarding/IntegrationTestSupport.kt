@@ -165,7 +165,7 @@ internal class TestHelper(
     }
 
     // Runs the start + activate bootstrap flow and returns config with consent requirement flag.
-    fun startAndActivate(credentials: SampleCredentials = SampleCredentials.demo()): Pair<ConfigurationResponseData, Boolean>? {
+    fun startAndActivate(credentials: SampleCredentials = SampleCredentials.demo()): Pair<ConfigurationResponseData, Boolean> {
         lastCredentials = credentials
         val config = getConfig()
         start(credentials)
@@ -230,6 +230,26 @@ internal fun ConfigurationResponseData.getDocumentsToScan(): List<ConfigurationD
 // Normalizes historical typo in document type naming used by backend configuration.
 internal fun ConfigurationDocument.patchedType(): DocumentType {
     return if (type == "DRIVING_LICENCE") "DRIVING_LICENSE" else type
+}
+
+// Returns mock document-upload data expected by demo/mock scan providers used in integration tests.
+internal fun ConfigurationDocument.getMockDocumentToUpload(side: DocumentSide): DocumentFile {
+    val mockType = when (patchedType()) {
+        "DRIVING_LICENSE" -> "Dl"
+        "ID_CARD" -> "Id"
+        "PASSPORT" -> "Passport"
+        else -> throw SimpleError("Unsupported ${patchedType()} document type for testing")
+    }
+
+    val json = "{\"type\": \"${mockType}\", \"isoAlpha3CountryCode\": \"${country ?: "CZE"}\"}"
+    val data = json.toByteArray(Charsets.UTF_8)
+
+    return DocumentFile(
+        data = data,
+        type = patchedType(),
+        side = side,
+        originalDocumentId = null,
+    )
 }
 
 // Detects whether API error maps to known PowerAuth transport/runtime error families.
