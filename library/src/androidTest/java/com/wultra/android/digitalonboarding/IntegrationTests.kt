@@ -16,7 +16,7 @@
 
 package com.wultra.android.digitalonboarding
 
-import android.util.Base64
+import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wultra.android.digitalonboarding.log.WDOLogger
@@ -31,6 +31,12 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
+
+// NOTE TO THE TESTS:
+// These tests expect to run against enrollment-onboarding-server connected to
+// mock providers for document scan and presence check.
+// Real documents are not uploaded to the mock server. Instead, tests send JSON
+// instructions describing the mocked document payload.
 
 @RunWith(AndroidJUnit4::class)
 class IntegrationTests {
@@ -95,6 +101,8 @@ class IntegrationTests {
         // We test as far as we can until we hit environment mocking limits.
         runForAllEnvironments { env, helper ->
 
+            Log.i("IntegrationTests", "Starting test for environment '${env.name}' and process type '${helper.processType}'")
+
             // Expect default language.
             assertEquals("en", helper.verification.acceptLanguage)
 
@@ -102,7 +110,7 @@ class IntegrationTests {
             helper.verification.acceptLanguage = "cs"
             assertEquals("cs", helper.verification.acceptLanguage)
 
-            val started = helper.startAndActivate() ?: return@runForAllEnvironments
+            val started = helper.startAndActivate()
             val config = started.first
             val consentRequired = started.second
 
@@ -181,14 +189,11 @@ class IntegrationTests {
                 )
             }
 
-            // Empty jpeg used for document uploads.
-            val dummyJpeg = Base64.decode(DUMMY_JPEG_BASE64, Base64.DEFAULT)
-
             if (!env.servicesMock) {
                 // If services are not mocked, we cannot continue past document upload.
                 // We still test re-upload and originalDocumentId auto-resolution.
                 for (document in documentsToScan) {
-                    val files = documentUploadFiles(document, dummyJpeg)
+                    val files = documentUploadFiles(document)
                     helper.verification.awaitDocumentsSubmit(files)
                     waitForNonProcessingStatus()
                     helper.verification.awaitDocumentsSubmit(files)
@@ -202,7 +207,7 @@ class IntegrationTests {
             // Handle document re-scan when documents are rejected.
             if (state.state == VerificationState.SCAN_DOCUMENT) {
                 for (document in documentsToScan) {
-                    helper.verification.awaitDocumentsSubmit(documentUploadFiles(document, dummyJpeg))
+                    helper.verification.awaitDocumentsSubmit(documentUploadFiles(document))
                     statusResult = waitForNonProcessingStatus()
                     state = statusResult.state
                 }
@@ -263,7 +268,7 @@ class IntegrationTests {
     fun cancelVerification() {
         runForAllEnvironments { _, helper ->
             // Start valid onboarding.
-            helper.startAndActivate() ?: return@runForAllEnvironments
+            helper.startAndActivate()
 
             helper.verification.awaitStart(ConsentResponse.NOT_REQUIRED)
             helper.assertVerificationState(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
@@ -305,22 +310,12 @@ class IntegrationTests {
         }
     }
 
-    private fun documentUploadFiles(document: com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument, jpegData: ByteArray): List<DocumentFile> {
+    private fun documentUploadFiles(document: com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument): List<DocumentFile> {
         val files = mutableListOf(
-            DocumentFile(
-                data = jpegData,
-                type = document.patchedType(),
-                side = DocumentSide.FRONT,
-                originalDocumentId = null,
-            ),
+            document.getMockDocumentToUpload(DocumentSide.FRONT),
         )
         if (document.sideCount == 2) {
-            files += DocumentFile(
-                data = jpegData,
-                type = document.patchedType(),
-                side = DocumentSide.BACK,
-                originalDocumentId = null,
-            )
+            files += document.getMockDocumentToUpload(DocumentSide.BACK)
         }
         return files
     }
@@ -382,10 +377,5 @@ class IntegrationTests {
         } catch (_: Exception) {
             null
         }
-    }
-
-    companion object {
-        private const val DUMMY_JPEG_BASE64 =
-            "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABkAGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//2Q=="
     }
 }
