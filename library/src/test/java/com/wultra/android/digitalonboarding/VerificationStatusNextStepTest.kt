@@ -16,7 +16,6 @@
 
 package com.wultra.android.digitalonboarding
 
-import com.wultra.android.digitalonboarding.networking.model.IdentityVerificationConfig
 import com.wultra.android.digitalonboarding.networking.model.IdentityVerificationStatus
 import com.wultra.android.digitalonboarding.networking.model.VerificationPhase
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponseData
@@ -116,7 +115,6 @@ class VerificationStatusNextStepTest {
             status = status,
             phase = phase,
             consentRequired = consentRequired,
-            config = IdentityVerificationConfig(otpResendPeriodSeconds = 30),
         )
     }
 }

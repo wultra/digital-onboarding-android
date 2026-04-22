@@ -243,7 +243,6 @@ class VerificationService(
                         completeWithState(
                             VerificationStateOtpData(
                                 remainingAttempts = null,
-                                otpResendPeriodInSeconds = this@VerificationService.lastStatus?.responseObject?.config?.otpResendPeriodSeconds,
                             )
                         )
                     }
@@ -593,7 +592,6 @@ class VerificationService(
                             markCompleted(
                                 VerificationStateOtpData(
                                     remainingAttempts = result.responseObject.remainingAttempts,
-                                    otpResendPeriodInSeconds = this@VerificationService.lastStatus?.responseObject?.config?.otpResendPeriodSeconds,
                                 ),
                                 callback,
                             )

@@ -18,7 +18,7 @@ val processType = "PROCESS_TYPE_IDENTIFIER"
 service.getConfiguration(processType) { result ->
     result.onSuccess { data ->
         // Access configuration data using responseObject
-        // e.g.: data.responseObject.otpForIdentification
+        // e.g.: data.responseObject.otpResendPeriodSeconds
     }.onFailure { error ->
         // Handle failure
     }
@@ -38,6 +38,8 @@ data class ConfigurationResponseData(
     val otpForIdentityVerification: Boolean,
     /** Is the onboarding process configured with temporary activation that should be exchanged for the permanent one. */
     val useTemporaryActivation: Boolean,
+    /** Time in seconds user needs to wait between OTP resend calls. Null when backend doesn't provide the value. */
+    val otpResendPeriodSeconds: Int?,
     /** Documents required for identity verification. */
     val documents: ConfigurationDocuments
 )
@@ -71,6 +73,8 @@ data class ConfigurationDocument(
 ```
 
 `type` is a backend-defined string such as `ID_CARD` or `PASSPORT`.
+
+Use `otpResendPeriodSeconds` to drive the cooldown for OTP resend in activation or verification UI.
 
 ## Read next
 - [Device Activation](Device-Activation.md)

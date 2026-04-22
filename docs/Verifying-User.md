@@ -117,9 +117,9 @@ Note that these methods won't change the status and it's up to the app to handle
 
 | `VerificationState` | `VerificationStateData` class                                          |  
 |---------------------|------------------------------------------------------------------------|
-| `OTP`               | `VerificationStateOtpData` with `val remainingAttempts: Int?` and `val otpResendPeriodInSeconds: Int?` properties | 
+| `OTP`               | `VerificationStateOtpData` with `val remainingAttempts: Int?` property | 
 
-Show enter OTP screen with the resend button. `remainingAttempts` contains the number of OTP attempts a user can still try and `otpResendPeriodInSeconds` contains resend cooldown in seconds.
+Show enter OTP screen with the resend button. `remainingAttempts` contains the number of OTP attempts a user can still try. Read the resend cooldown from `ConfigurationResponseData.otpResendPeriodSeconds`, returned by `ConfigurationService.getConfiguration(processType)`.
 
 The next step should be calling the `verifyOTP` with the user-entered OTP. The OTP is usually SMS or email.
 
