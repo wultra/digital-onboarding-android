@@ -33,8 +33,6 @@ import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
 import java.io.BufferedInputStream
 import java.io.BufferedReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
@@ -66,7 +64,6 @@ internal data class ServerEnvironment(
     val mobileConfig: String,
     val otpMock: String,
     val servicesMock: Boolean,
-    val authorization: String?,
 )
 
 internal data class ServerEnvironmentData(
@@ -110,10 +107,6 @@ internal class TestHelper(
     val activation = ActivationService(environment.esoUrl, appContext, OkHttpClient(), powerAuth)
     val verification = VerificationService(environment.esoUrl, OkHttpClient(), appContext, powerAuth)
     val configuration = ConfigurationService(environment.esoUrl, appContext, OkHttpClient(), powerAuth)
-
-    // Credentials used for activation (set after startAndActivate).
-    var lastCredentials: SampleCredentials? = null
-        private set
 
     // Creates a fresh PowerAuth instance bound to the current environment.
     fun createNewPowerAuth(): PowerAuthSDK = newPowerAuth(appContext, environment)
@@ -166,7 +159,6 @@ internal class TestHelper(
 
     // Runs the start + activate bootstrap flow and returns config with consent requirement flag.
     fun startAndActivate(credentials: SampleCredentials = SampleCredentials.demo()): Pair<ConfigurationResponseData, Boolean> {
-        lastCredentials = credentials
         val config = getConfig()
         start(credentials)
 
@@ -274,34 +266,6 @@ internal fun newPowerAuth(appContext: Context, environment: ServerEnvironment): 
         environment.mobileConfig,
     ).build()
     return PowerAuthSDK.Builder(configuration).build(appContext)
-}
-
-// Executes a synchronous JSON HTTP request and returns response body on 2xx status.
-internal fun executeHttp(url: URL, method: String, authorization: String? = null, body: String? = null): String {
-    val connection = url.openConnection() as HttpURLConnection
-    connection.requestMethod = method
-    connection.connectTimeout = 60_000
-    connection.readTimeout = 60_000
-    connection.setRequestProperty("Content-Type", "application/json")
-    if (authorization != null) {
-        connection.setRequestProperty("Authorization", "Basic ${authorization}")
-    }
-
-    if (body != null) {
-        connection.doOutput = true
-        OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(body) }
-    }
-
-    val code = connection.responseCode
-    if (code !in 200..299) {
-        val error = connection.errorStream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
-        connection.disconnect()
-        throw SimpleError("HTTP ${method} ${url} failed with code ${code}: ${error}")
-    }
-
-    val response = connection.inputStream.bufferedReader().use(BufferedReader::readText)
-    connection.disconnect()
-    return response
 }
 
 // Await wrappers below convert async callback-based service APIs into blocking calls used by tests.
