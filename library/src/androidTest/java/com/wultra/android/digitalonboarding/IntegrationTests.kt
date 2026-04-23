@@ -30,7 +30,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.URL
 
 // NOTE TO THE TESTS:
 // These tests expect to run against enrollment-onboarding-server connected to
@@ -60,13 +59,14 @@ class IntegrationTests {
     @Test
     fun testStatusBeforeStart() {
         runForAllEnvironments { _, helper ->
+            val label = processLabel(helper)
             val result = helper.activation.awaitStatusResult()
             if (result.failure == null) {
-                fail("Expected status() to fail before start()")
+                fail("${label} Expected status() to fail before start()")
             }
             val failure = result.failure!!
             assertTrue(
-                "Expected ActivationNotRunningException but got ${failure.cause.e}",
+                "${label} Expected ActivationNotRunningException but got ${failure.cause.e}",
                 failure.cause.e == ActivationService.ActivationNotRunningException,
             )
         }
@@ -75,22 +75,24 @@ class IntegrationTests {
     @Test
     fun activationFail() {
         runForAllEnvironments { _, helper ->
+            val label = processLabel(helper)
             val config = helper.getConfig()
             if (!config.otpForIdentification) {
                 // There is a backend bug where OTP can be ignored when not required,
                 // so this failure scenario cannot be simulated reliably.
                 // https://github.com/wultra/powerauth-server/issues/2249
+                Log.i("IntegrationTests", "${label} Skipping test as OTP is not required")
                 return@runForAllEnvironments
             }
 
             helper.start()
             val result = helper.activation.awaitActivateResult(otp = null)
             if (result.failure == null) {
-                fail("Activation should fail when OTP is missing")
+                fail("${label} Activation should fail when OTP is missing")
             }
             val failure = result.failure!!
             assertTrue(
-                "Expected PowerAuth-related error, got: ${failure.cause.e}",
+                "${label} Expected PowerAuth-related error, got: ${failure.cause.e}",
                 failure.cause.isPowerAuthError(),
             )
         }
@@ -100,8 +102,9 @@ class IntegrationTests {
     fun fullOnboardingFlow() {
         // We test as far as we can until we hit environment mocking limits.
         runForAllEnvironments { env, helper ->
+            val label = processLabel(helper)
 
-            Log.i("IntegrationTests", "Starting test for environment '${env.name}' and process type '${helper.processType}'")
+            Log.i("IntegrationTests", "${label} Starting test for environment '${env.name}'")
 
             // Expect default language.
             assertEquals("en", helper.verification.acceptLanguage)
@@ -142,7 +145,7 @@ class IntegrationTests {
                 ?: throw AssertionError("Expected SCAN_DOCUMENT result with process payload")
             for (document in documentsToScan) {
                 assertTrue(
-                    "Selected document ${document.patchedType()} must be present in scan process",
+                    "${label} Selected document ${document.patchedType()} must be present in scan process",
                     selectedProcess.documents.any { it.type == document.patchedType() },
                 )
             }
@@ -151,22 +154,17 @@ class IntegrationTests {
                 var statusResult = helper.verification.awaitStatus()
                 var attempts = 0
                 val sleepDuration = 3_000L
-                val maxAttempts = 10 // Wait up to 30 seconds for processing to complete, with manual approval if needed.
+                val maxAttempts = 10
                 while (statusResult.state.state == VerificationState.PROCESSING && attempts < maxAttempts) {
-                    // Handle manual onboarding approval when processing waits for backoffice action.
-                    val processing = statusResult.state as? VerificationStateProcessingData
-                    if (processing?.processingItem == ProcessingItem.ONBOARDING_APPROVAL) {
-                        val userId = helper.lastCredentials?.let { "mockuser_${it.clientNumber}" }
-                        if (userId != null) {
-                            approveOnboarding(env, statusResult.serverData.processId, userId)
-                        }
-                    }
                     Thread.sleep(sleepDuration)
                     attempts += 1
                     statusResult = helper.verification.awaitStatus()
                 }
                 if (statusResult.state.state == VerificationState.PROCESSING) {
-                    throw SimpleError("Timed out waiting for non-processing verification state after ${maxAttempts * sleepDuration / 1000} seconds")
+                    throw SimpleError(
+                        "${label} Timed out waiting for non-processing verification state " +
+                            "after ${maxAttempts * sleepDuration / 1000} seconds",
+                    )
                 }
                 return statusResult
             }
@@ -181,10 +179,10 @@ class IntegrationTests {
             )
             val recreatedStatus = recreated.verification.awaitStatus()
             val recreatedProcess = (recreatedStatus.state as? VerificationStateScanDocumentData)?.scanDocumentProcess
-                ?: throw AssertionError("Expected SCAN_DOCUMENT after service recreation")
+                ?: throw AssertionError("${label} Expected SCAN_DOCUMENT after service recreation")
             for (document in documentsToScan) {
                 assertTrue(
-                    "Recreated scan process should contain ${document.patchedType()}",
+                    "${label} Recreated scan process should contain ${document.patchedType()}",
                     recreatedProcess.documents.any { it.type == document.patchedType() },
                 )
             }
@@ -192,6 +190,10 @@ class IntegrationTests {
             if (!env.servicesMock) {
                 // If services are not mocked, we cannot continue past document upload.
                 // We still test re-upload and originalDocumentId auto-resolution.
+                Log.i(
+                    "IntegrationTests",
+                    "${label} Skipping rest of onboarding flow — servicesMock is disabled for '${env.name}'",
+                )
                 for (document in documentsToScan) {
                     val files = documentUploadFiles(document)
                     helper.verification.awaitDocumentsSubmit(files)
@@ -255,11 +257,11 @@ class IntegrationTests {
             // At this point we should be in success or explicit terminal failure state.
             when (state.state) {
                 VerificationState.SUCCESS -> {
-                    // success
+                    Log.i("IntegrationTests", "${label} Full onboarding flow completed successfully")
                 }
-                VerificationState.FAILED -> fail("Verification ended in FAILED state")
-                VerificationState.ENDSTATE -> fail("Verification ended in ENDSTATE unexpectedly")
-                else -> fail("Unexpected final state: ${state.state}")
+                VerificationState.FAILED -> fail("${label} Verification ended in FAILED state")
+                VerificationState.ENDSTATE -> fail("${label} Verification ended in ENDSTATE unexpectedly")
+                else -> fail("${label} Unexpected final state: ${state.state}")
             }
         }
     }
@@ -268,9 +270,11 @@ class IntegrationTests {
     fun cancelVerification() {
         runForAllEnvironments { _, helper ->
             // Start valid onboarding.
-            helper.startAndActivate()
+            val (_, consentRequired) = helper.startAndActivate()
 
-            helper.verification.awaitStart(ConsentResponse.NOT_REQUIRED)
+            helper.verification.awaitStart(
+                if (consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
+            )
             helper.assertVerificationState(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
 
             // Restart and verify intro.
@@ -279,7 +283,9 @@ class IntegrationTests {
             helper.assertVerificationState(VerificationState.INTRO)
 
             // Start again and verify state.
-            helper.verification.awaitStart(ConsentResponse.NOT_REQUIRED)
+            helper.verification.awaitStart(
+                if (consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
+            )
             helper.assertVerificationState(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
 
             // Cancel whole process.
@@ -320,62 +326,7 @@ class IntegrationTests {
         return files
     }
 
-    private fun approveOnboarding(environment: ServerEnvironment, processId: String, userId: String) {
-        val authorization = environment.authorization
-            ?: throw SimpleError("Missing authorization for environment '${environment.name}'")
-
-        val baseUrl = environment.esoUrl.trimEnd('/')
-
-        // Step 1: fetch identity verification ID for the process.
-        val verificationIdsUrl = URL("${baseUrl}/api/private/test/process/${processId}/identityVerifications")
-        val verificationIdsResponse = executeHttp(
-            url = verificationIdsUrl,
-            method = "GET",
-            authorization = authorization,
-            body = null,
-        )
-        val verificationId = parseFirstJsonArrayValue(verificationIdsResponse)
-            ?: throw SimpleError("Failed to parse identity verification ID from response: ${verificationIdsResponse}")
-
-        // Step 2: approve the verification.
-        val approveBody = """
-            {
-              "processId": "${processId}",
-              "identityVerificationId": "${verificationId}",
-              "userId": "${userId}",
-              "approvalResult": "OK",
-              "approvalResultReason": ""
-            }
-        """.trimIndent()
-
-        val approveUrl = URL("${baseUrl}/api/private/client/approve")
-        executeHttp(
-            url = approveUrl,
-            method = "POST",
-            authorization = authorization,
-            body = approveBody,
-        )
-    }
-
-    private fun parseFirstJsonArrayValue(jsonArrayRaw: String): String? {
-        val cleaned = jsonArrayRaw.trim()
-
-        return try {
-            val parsed = com.google.gson.JsonParser.parseString(cleaned)
-            if (!parsed.isJsonArray) {
-                return null
-            }
-            val firstElement = parsed.asJsonArray.firstOrNull() ?: return null
-            if (firstElement.isJsonNull) {
-                return null
-            }
-            if (firstElement.isJsonPrimitive && firstElement.asJsonPrimitive.isString) {
-                firstElement.asString
-            } else {
-                firstElement.toString()
-            }
-        } catch (_: Exception) {
-            null
-        }
+    private fun processLabel(helper: TestHelper): String {
+        return "[${helper.processType}]"
     }
 }
