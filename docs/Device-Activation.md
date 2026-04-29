@@ -224,21 +224,23 @@ fun cancel(forceCancel: Boolean = true, callback: (ActivationResult<Unit>) -> Un
 
 ## OTP resend
 
-In some cases, you need to resent the OTP:  
- - OTP was not received by the user (for example when the email ends in the spam folder).  
- - OTP expired. 
+In some cases, you need to resend the OTP:
+- OTP was not received by the user (for example when the email ends in the spam folder).
+- OTP expired.
 
- For such cases, use the `resendOTP` function.
- 
- ```kotlin
+For such cases, use the `resendOtp` function.
+
+Use `ConfigurationService.getConfiguration(processType)` and `ConfigurationResponseData.otpResendPeriodSeconds` to drive the resend cooldown in your activation UI.
+
+```kotlin
 /**
  * Requests OTP resend.
  *
  * @param callback Callback with the result.
  */
 fun resendOtp(callback: (ActivationResult<Unit>) -> Unit)
- ```
- 
+```
+
 ## Errors
 
 All functions that can return an exception are of type `ActivationService.Fail` that contains `cause: ApiError` - more about these `ApiError` errors can be found in [the networking library documentation](https://github.com/wultra/networking-android).

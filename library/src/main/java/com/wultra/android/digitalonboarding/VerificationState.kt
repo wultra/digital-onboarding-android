@@ -75,8 +75,6 @@ class VerificationStateProcessingData(
 class VerificationStateOtpData(
     /** Remaining attempts for the `OTP` state */
     val remainingAttempts: Int?,
-    /** Time in seconds user needs to wait between OTP resend calls. */
-    val otpResendPeriodInSeconds: Int?
 ): VerificationStateData(VerificationState.OTP)
 
 class VerificationStateEndstateData(

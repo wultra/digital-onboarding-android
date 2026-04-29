@@ -41,10 +41,6 @@ internal class VerificationStatusResponseData(
     @SerializedName("identityVerificationStatus") val status: IdentityVerificationStatus,
     @SerializedName("identityVerificationPhase") val phase: VerificationPhase?,
     @SerializedName("consentRequired") val consentRequired: Boolean?,
-    @SerializedName("config") val config: IdentityVerificationConfig
-)
-internal class IdentityVerificationConfig(
-    @SerializedName("otpResendPeriodSeconds") val otpResendPeriodSeconds: Int
 )
 
 internal enum class IdentityVerificationStatus {

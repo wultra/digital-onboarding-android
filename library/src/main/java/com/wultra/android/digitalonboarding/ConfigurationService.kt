@@ -32,7 +32,8 @@ typealias ConfigurationResult<T> = WDOResult<T, ApiError>
  *
  * Service can retrieve the configuration of the onboarding process from the server.
  * The configuration contains information about which steps are required to be performed during
- * the onboarding process and which document types are supported or required for scanning.
+ * the onboarding process, which document types are supported or required for scanning,
+ * and the OTP resend cooldown for activation and verification.
  *
  * @property powerAuthSDK Configured PowerAuthSDK instance. Activation is not required for configuration retrieval.
  *

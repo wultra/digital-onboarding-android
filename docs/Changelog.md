@@ -1,6 +1,11 @@
 # Changelog
 
-## TBA
+## 3.0.0 (TBA)
+
+- **⚠️ BREAKING**: `VerificationStateOtpData` now carries only `remainingAttempts`.
+- `ConfigurationResponseData` now includes optional `otpResendPeriodSeconds` (`null` on older backends that do not provide the field yet).
+
+## 2.0.0 (Apr, 2026)
 
 - This release requires `enrollment-onboarding-server` version `2.1.0` or higher.
 - Fixed: Document scan flow no longer proceeds to processing when additional documents are still selected locally.
