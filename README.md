@@ -43,7 +43,7 @@ Before initiating the integration, it's essential to ensure that your server env
 
 Given the unique characteristics of each customer system, the utilization of this SDK may vary. To accurately outline the user verification process, we recommend consulting with our technical team for tailored guidance.
 
-## Document ORC and face verification
+## Document OCR and face verification
 
 We seamlessly incorporate industry-leading solutions for document scanning, ensuring versatility and effectiveness in your operations.
 
