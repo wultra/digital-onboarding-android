@@ -19,6 +19,7 @@
 package com.wultra.android.digitalonboarding
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.wultra.android.digitalonboarding.networking.model.Document
 import com.wultra.android.digitalonboarding.networking.model.DocumentFileSide
 
@@ -77,27 +78,27 @@ class VerificationScanProcess {
     }
 
     private data class CacheV2(
-        val v: Int,
-        val documents: List<CachedDocument>,
+        @SerializedName("v") val v: Int,
+        @SerializedName("documents") val documents: List<CachedDocument>,
     ) {
         data class CachedDocument(
-            val type: String,
-            val sides: List<CachedSide>,
+            @SerializedName("type") val type: String,
+            @SerializedName("sides") val sides: List<CachedSide>,
         )
 
         data class CachedSide(
-            val side: Side,
-            val serverId: String,
-            val uploadState: UploadState,
+            @SerializedName("side") val side: Side,
+            @SerializedName("serverId") val serverId: String,
+            @SerializedName("uploadState") val uploadState: UploadState,
         ) {
             enum class Side {
-                FRONT,
-                BACK,
+                @SerializedName("FRONT") FRONT,
+                @SerializedName("BACK") BACK,
             }
 
             enum class UploadState {
-                ACCEPTED,
-                REJECTED,
+                @SerializedName("ACCEPTED") ACCEPTED,
+                @SerializedName("REJECTED") REJECTED,
             }
         }
     }
