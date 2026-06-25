@@ -17,6 +17,7 @@
 package com.wultra.android.digitalonboarding
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.wultra.android.digitalonboarding.log.WDOLogger
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequest
 import com.wultra.android.digitalonboarding.networking.model.OTPDetailRequestData
@@ -231,7 +232,7 @@ internal class OtpEndpointNetworking {
         }
 
         private data class OtpCodeResponse(
-            val otpCode: String?,
+            @SerializedName("otpCode") val otpCode: String?,
         )
 
         private fun escapeJson(value: String): String {
