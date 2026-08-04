@@ -479,12 +479,17 @@ internal fun PowerAuthSDK.awaitPersistActivation(appContext: Context, password: 
         appContext,
         password,
         object : IPersistActivationListener {
-            override fun onPersistActivationCompleted() {
+            override fun onPersistActivationSucceeded() {
                 latch.countDown()
             }
 
             override fun onPersistActivationFailed(t: Throwable) {
                 errorRef.set(t)
+                latch.countDown()
+            }
+
+            override fun onPersistActivationCancelled(userCancel: Boolean) {
+                errorRef.set(SimpleError("persistActivationWithPassword cancelled by user"))
                 latch.countDown()
             }
         },
