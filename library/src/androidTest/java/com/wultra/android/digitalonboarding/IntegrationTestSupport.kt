@@ -22,12 +22,13 @@ import com.google.gson.Gson
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationResponseData
 import com.wultra.android.powerauth.networking.error.ApiError
-import io.getlime.security.powerauth.core.ActivationStatus
 import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
 import io.getlime.security.powerauth.exception.PowerAuthErrorException
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
+import io.getlime.security.powerauth.sdk.PowerAuthActivationState
+import io.getlime.security.powerauth.sdk.PowerAuthActivationStatus
 import io.getlime.security.powerauth.sdk.PowerAuthConfiguration
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
@@ -152,7 +153,7 @@ internal class TestHelper(
         if (!paStatus.needVerification()) {
             throw SimpleError("Expected activation status to require verification")
         }
-        if (paStatus.state != ActivationStatus.State_Active) {
+        if (paStatus.state != PowerAuthActivationState.ACTIVE) {
             throw SimpleError("Expected activation state ACTIVE, got: ${paStatus.state}")
         }
     }
@@ -439,16 +440,16 @@ internal fun VerificationService.awaitFinishActivation(
 }
 
 // Loads current PowerAuth activation status using callback API and timeout protection.
-internal fun PowerAuthSDK.awaitActivationStatus(appContext: Context): ActivationStatus {
+internal fun PowerAuthSDK.awaitActivationStatus(appContext: Context): PowerAuthActivationStatus {
     val latch = CountDownLatch(1)
-    val statusRef = AtomicReference<ActivationStatus?>(null)
+    val statusRef = AtomicReference<PowerAuthActivationStatus?>(null)
     val errorRef = AtomicReference<Throwable?>(null)
 
     fetchActivationStatusWithCallback(
         appContext,
         object : IActivationStatusListener {
             // Stores successful activation status from callback.
-            override fun onActivationStatusSucceed(status: ActivationStatus?) {
+            override fun onActivationStatusSucceed(status: PowerAuthActivationStatus) {
                 statusRef.set(status)
                 latch.countDown()
             }

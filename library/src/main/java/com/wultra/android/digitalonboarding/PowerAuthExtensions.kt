@@ -13,13 +13,13 @@
 
 package com.wultra.android.digitalonboarding
 
-import io.getlime.security.powerauth.core.ActivationStatus
+import io.getlime.security.powerauth.sdk.PowerAuthActivationStatus
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 
 fun FailedApiException.onboardingOtpRemainingAttempts(): Int? = responseJson?.get("remainingAttempts")?.asInt
 fun FailedApiException.allowOnboardingOtpRetry() = onboardingOtpRemainingAttempts()?.let { it > 0 }
 
-private fun ActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
-fun ActivationStatus.verificationPending() = activationFlags().contains("VERIFICATION_PENDING")
-fun ActivationStatus.verificationInProgress() = activationFlags().contains("VERIFICATION_IN_PROGRESS")
-fun ActivationStatus.needVerification() = verificationPending() || verificationInProgress()
+private fun PowerAuthActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
+fun PowerAuthActivationStatus.verificationPending() = activationFlags().contains("VERIFICATION_PENDING")
+fun PowerAuthActivationStatus.verificationInProgress() = activationFlags().contains("VERIFICATION_IN_PROGRESS")
+fun PowerAuthActivationStatus.needVerification() = verificationPending() || verificationInProgress()
