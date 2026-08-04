@@ -46,6 +46,7 @@ import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
 import io.getlime.security.powerauth.networking.response.ICreateActivationListener
+import io.getlime.security.powerauth.networking.response.IPersistActivationListener
 import io.getlime.security.powerauth.networking.response.IValidatePasswordListener
 import io.getlime.security.powerauth.sdk.PowerAuthActivation
 import io.getlime.security.powerauth.sdk.PowerAuthActivationState
@@ -717,16 +718,31 @@ class VerificationService(
 
                                 override fun onActivationCreateSucceed(result: CreateActivationResult) {
                                     // New activation created, now persist it with the provided password
-                                    val persistResult = newPowerAuthInstance.persistActivationWithPassword(appContext, newPassword)
-                                    if (persistResult == PowerAuthErrorCodes.SUCCEED) {
-                                        // New activation persisted
-                                        markCompleted(VerificationStateSuccessData, callback)
-                                    } else {
-                                        // Failed to persist new activation, clean up
-                                        clearPaInstanceIfNeeded()
-                                        WDOLogger.e("Failed to persist PowerAuth activation. Code: $persistResult")
-                                        markCompleted(Fail(ApiError(Exception("Failed to persist PowerAuth activation. Code: $persistResult"))), callback)
-                                    }
+                                    newPowerAuthInstance.persistActivationWithPassword(
+                                        appContext,
+                                        newPassword,
+                                        object : IPersistActivationListener {
+                                            override fun onPersistActivationSucceeded() {
+                                                // New activation persisted
+                                                markCompleted(VerificationStateSuccessData, callback)
+                                            }
+
+                                            override fun onPersistActivationFailed(t: Throwable) {
+                                                // Failed to persist new activation, clean up
+                                                clearPaInstanceIfNeeded()
+                                                WDOLogger.e("Failed to persist PowerAuth activation. $t")
+                                                markCompleted(Fail(ApiError(t)), callback)
+                                            }
+
+                                            override fun onPersistActivationCancelled(userCancel: Boolean) {
+                                                // Failed to persist new activation, clean up
+                                                clearPaInstanceIfNeeded()
+                                                val error = Exception("Failed to persist PowerAuth activation: cancelled by user: $userCancel")
+                                                WDOLogger.e(error.message ?: "Failed to persist PowerAuth activation")
+                                                markCompleted(Fail(ApiError(error)), callback)
+                                            }
+                                        }
+                                    )
                                 }
 
                                 override fun onActivationCreateFailed(t: Throwable) {
