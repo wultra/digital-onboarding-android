@@ -1,4 +1,5 @@
 @file:Suppress("UnstableApiUsage")
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 /*
  * Copyright 2023 Wultra s.r.o.
@@ -50,10 +51,11 @@ android {
     compileOptions {
         sourceCompatibility = Constants.Java.sourceCompatibility
         targetCompatibility = Constants.Java.targetCompatibility
-        //noinspection WrongGradleMethod
-        kotlinOptions {
-            jvmTarget = Constants.Java.kotlinJvmTarget
-            suppressWarnings = false
+        kotlin {
+            compilerOptions {
+                jvmTarget.set(JvmTarget.fromTarget(Constants.Java.kotlinJvmTarget))
+                suppressWarnings.set(false)
+            }
         }
     }
 
@@ -71,7 +73,7 @@ android {
 
 dependencies {
     // Bundled
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${Constants.BuildScript.kotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Constants.BuildScript.kotlinVersion}")
     implementation("androidx.annotation:annotation:1.10.0")
     implementation("com.google.code.gson:gson:2.14.0")
     implementation("com.wultra.android.powerauth:powerauth-networking:2.0.0-SNAPSHOT")
