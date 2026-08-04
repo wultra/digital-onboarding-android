@@ -43,7 +43,7 @@ class ConfigurationResponse(
 
 /** Configuration response */
 data class ConfigurationResponseData(
-    /** Is the onboarding process enabled */
+    /** Is the onboarding process enabled? */
     @SerializedName("enabled") val enabled: Boolean,
     /** Is OTP required for the first part - identification/activation. */
     @SerializedName("otpForIdentification") val otpForIdentification: Boolean,
@@ -51,7 +51,7 @@ data class ConfigurationResponseData(
     @SerializedName("otpForIdentityVerification") val otpForIdentityVerification: Boolean,
     /** Is the onboarding process configured with temporary activation that should be exchanged for the permanent one. */
     @SerializedName("useTemporaryActivation") val useTemporaryActivation: Boolean,
-    /** Time in seconds user needs to wait between OTP resend calls. Null when backend doesn't provide the value. */
+    /** Time in seconds user needs to wait between OTP resend calls. Null when the backend doesn't provide the value. */
     @SerializedName("otpResendPeriodSeconds") val otpResendPeriodSeconds: Int?,
     /** Documents required for identity verification. */
     @SerializedName("documents") val documents: ConfigurationDocuments
