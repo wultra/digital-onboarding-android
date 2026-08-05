@@ -51,11 +51,12 @@ android {
     compileOptions {
         sourceCompatibility = Constants.Java.sourceCompatibility
         targetCompatibility = Constants.Java.targetCompatibility
-        kotlin {
-            compilerOptions {
-                jvmTarget.set(JvmTarget.fromTarget(Constants.Java.kotlinJvmTarget))
-                suppressWarnings.set(false)
-            }
+    }
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.fromTarget(Constants.Java.kotlinJvmTarget))
+            suppressWarnings.set(false)
         }
     }
 
