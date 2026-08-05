@@ -42,13 +42,11 @@ import com.wultra.android.powerauth.networking.error.ApiError
 import com.wultra.android.powerauth.networking.error.ApiErrorCode
 import io.getlime.security.powerauth.sdk.PowerAuthActivationStatus
 import io.getlime.security.powerauth.core.Password
-import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
 import io.getlime.security.powerauth.networking.response.IBeginPasswordChangeListener
 import io.getlime.security.powerauth.networking.response.ICreateActivationListener
 import io.getlime.security.powerauth.networking.response.IPersistActivationListener
-import io.getlime.security.powerauth.networking.response.IValidatePasswordListener
 import io.getlime.security.powerauth.sdk.PowerAuthActivation
 import io.getlime.security.powerauth.sdk.PowerAuthActivationState
 import io.getlime.security.powerauth.sdk.PowerAuthPasswordChangeData

@@ -22,7 +22,6 @@ import com.google.gson.Gson
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationResponseData
 import com.wultra.android.powerauth.networking.error.ApiError
-import io.getlime.security.powerauth.exception.PowerAuthErrorException
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
@@ -244,7 +243,7 @@ internal fun ConfigurationDocument.getMockDocumentToUpload(side: DocumentSide): 
 
 // Detects whether API error maps to known PowerAuth transport/runtime error families.
 internal fun ApiError.isPowerAuthError(): Boolean {
-    return e is FailedApiException || e is PowerAuthErrorException
+    return e is FailedApiException
 }
 
 // Resolves OTP retrieval strategy from environment configuration.
