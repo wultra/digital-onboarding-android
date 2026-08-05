@@ -83,7 +83,7 @@ class ActivationService(
 
     /** Status of the Onboarding Activation */
     enum class Status {
-        /** Activation is in the progress */
+        /** Activation is in progress */
         ACTIVATION_IN_PROGRESS,
         /** Activation was already finished, not waiting for the verification */
         VERIFICATION_IN_PROGRESS,
@@ -111,8 +111,8 @@ class ActivationService(
      * The default value is "en".
      *
      * Standard RFC "Accept-Language" https://tools.ietf.org/html/rfc7231#section-5.3.5
-     * Response texts are based on this setting. For example, when "de" is set, server
-     * will return error texts and other in German (if available).
+     * Response texts are based on this setting. For example, when "de" is set,
+     * the server will return error texts and other in German (if available).
      */
     var acceptLanguage: String
         set(value) { api.acceptLanguage = value }
@@ -144,7 +144,7 @@ class ActivationService(
      * If the activation process is in progress.
      *
      * Note that when the result is `true` it can be already discontinued on the server.
-     * Calling `status` in such case is recommended.
+     * Calling `status` in such a case is recommended.
      */
     fun hasActiveProcess() = processId != null
 

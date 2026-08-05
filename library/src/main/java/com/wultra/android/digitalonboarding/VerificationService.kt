@@ -45,11 +45,13 @@ import io.getlime.security.powerauth.core.Password
 import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
+import io.getlime.security.powerauth.networking.response.IBeginPasswordChangeListener
 import io.getlime.security.powerauth.networking.response.ICreateActivationListener
 import io.getlime.security.powerauth.networking.response.IPersistActivationListener
 import io.getlime.security.powerauth.networking.response.IValidatePasswordListener
 import io.getlime.security.powerauth.sdk.PowerAuthActivation
 import io.getlime.security.powerauth.sdk.PowerAuthActivationState
+import io.getlime.security.powerauth.sdk.PowerAuthPasswordChangeData
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
 
@@ -657,7 +659,7 @@ class VerificationService(
      *
      * @param newPowerAuthInstance PowerAuth instance where to create new activation. This instance must not have an existing activation.
      * @param newActivationName Name of the new activation to be created on `newPowerAuthInstance`.
-     * @param newPassword Password to protect the new activation. In case `validatePassword` is `true`, this password must match the password of the original activation.
+     * @param newPassword Password to protect the new activation.
      * @param validatePassword If set to `true`, the method verifies that the provided `newPassword` matches the password of the original activation.
      * @param userIdentification Optional user identification object to be sent to the server during the finish activation process.
      */
@@ -770,7 +772,7 @@ class VerificationService(
      *
      * @param required Whether the password validation is required.
      * @param password Password to validate.
-     * @param callback Callback with the error if any.
+     * @param callback Callback with the error, if any.
      */
     private fun validatePasswordIfRequired(
         required: Boolean,
@@ -781,15 +783,16 @@ class VerificationService(
             // Password validation isn't required
             callback(null)
         } else {
-            powerAuthSDK.validatePassword(
+            // TODO: Since PowerAuth SDK 2.0 the `validatePassword` method is removed, we are using `beginPasswordChange` instead.
+            // This is a workaround to validate the password without changing it. Backend should implement new endpoint for password validation.
+            powerAuthSDK.beginPasswordChange(
                 appContext,
                 password,
-                object : IValidatePasswordListener {
-                    override fun onPasswordValid() {
+                object : IBeginPasswordChangeListener {
+                    override fun onBeginPasswordChangeSucceed(passwordChangeData: PowerAuthPasswordChangeData) {
                         callback(null)
                     }
-
-                    override fun onPasswordValidationFailed(t: Throwable) {
+                    override fun onBeginPasswordChangeFailed(t: Throwable) {
                         WDOLogger.i("Password validation failed.")
                         callback(t)
                     }
