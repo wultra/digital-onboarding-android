@@ -15,13 +15,13 @@
     },
     {
       "description": "SDK integration tutorial.",
-      "path": "docs/SDK-integration.md",
+      "path": "docs/SDK-Integration.md",
       "type": "version_replace",
       "match": "wultra-digital-onboarding:%VERSION%"
     },
     {
       "description": "SDK integration tutorial.",
-      "path": "docs/SDK-integration.md",
+      "path": "docs/SDK-Integration.md",
       "type": "versionstream_verify",
       "match": "`%VERSION_STREAM%`"
     },
