@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0 (Aug, 2026)
+## 3.0.0-SNAPSHOT (Aug, 2026)
 
 - **⚠️ BREAKING**: `VerificationStateOtpData` now carries only `remainingAttempts`.
 - `ConfigurationResponseData` now includes optional `otpResendPeriodSeconds` (`null` on older backends that do not provide the field yet).
