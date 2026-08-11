@@ -29,22 +29,35 @@ verify_android_instrumentation_results() {
         exit 1
     fi
 
-    # shellcheck disable=SC2012
-    local report_files
-    report_files=$(ls "${report_dir}"/*.xml 2>/dev/null || true)
-    if [ -z "${report_files}" ]; then
+    local report_files=()
+    while IFS= read -r xml; do
+        report_files+=("${xml}")
+    done < <(find "${report_dir}" -type f -name "*.xml" | sort)
+
+    if [ "${#report_files[@]}" -eq 0 ]; then
         echo "ERROR: Android test reports were not generated in ${report_dir}"
         exit 1
     fi
 
-    while IFS= read -r xml; do
+    for xml in "${report_files[@]}"; do
         local tests
         local skipped
-        tests=$(grep -oE 'tests="[0-9]+"' "${xml}" | head -n 1 | grep -oE '[0-9]+' || echo "0")
-        skipped=$(grep -oE 'skipped="[0-9]+"' "${xml}" | head -n 1 | grep -oE '[0-9]+' || echo "0")
+
+        tests=$(grep -c '<testcase ' "${xml}" || echo "0")
+        skipped=$(grep -c '<skipped' "${xml}" || echo "0")
+
+        if [ "${tests}" -eq 0 ]; then
+            tests=$(grep -oE 'tests="[0-9]+"' "${xml}" | head -n 1 | grep -oE '[0-9]+' || echo "0")
+        fi
+        if [ "${skipped}" -eq 0 ]; then
+            skipped=$(grep -oE 'skipped="[0-9]+"' "${xml}" | head -n 1 | grep -oE '[0-9]+' || echo "0")
+        fi
+
         total_tests=$((total_tests + tests))
         skipped_tests=$((skipped_tests + skipped))
-    done <<< "${report_files}"
+    done
+
+    echo "Android instrumentation results: total=${total_tests}, skipped=${skipped_tests}, reportFiles=${#report_files[@]}"
 
     if [ "${total_tests}" -eq 0 ] || [ "${total_tests}" -eq "${skipped_tests}" ]; then
         echo "ERROR: Android instrumentation tests were not executed successfully (total=${total_tests}, skipped=${skipped_tests})."
