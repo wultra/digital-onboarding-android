@@ -203,15 +203,23 @@ class IntegrationTests {
                 return@runForAllEnvironments
             }
 
-            var statusResult = waitForNonProcessingStatus()
-            var state = statusResult.state
+            var state: VerificationStateData
+            for (document in documentsToScan) {
+                val uploadResult = helper.verification.awaitDocumentsSubmit(documentUploadFiles(document))
+                state = uploadResult.state
+                if (state.state == VerificationState.PROCESSING) {
+                    state = waitForNonProcessingStatus().state
+                }
+            }
 
             // Handle document re-scan when documents are rejected.
             if (state.state == VerificationState.SCAN_DOCUMENT) {
                 for (document in documentsToScan) {
-                    helper.verification.awaitDocumentsSubmit(documentUploadFiles(document))
-                    statusResult = waitForNonProcessingStatus()
-                    state = statusResult.state
+                    val uploadResult = helper.verification.awaitDocumentsSubmit(documentUploadFiles(document))
+                    state = uploadResult.state
+                    if (state.state == VerificationState.PROCESSING) {
+                        state = waitForNonProcessingStatus().state
+                    }
                 }
             }
 
