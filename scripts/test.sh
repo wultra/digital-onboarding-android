@@ -169,10 +169,12 @@ main() {
     parse_arguments "$@"
     validate_arguments
 
+    trap 'popd >/dev/null' EXIT
     pushd "${SCRIPT_FOLDER}/.." >/dev/null
     write_android_test_config_if_provided
     run_tests
     popd >/dev/null
+    trap - EXIT
 }
 
 main "$@"
