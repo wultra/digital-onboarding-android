@@ -57,5 +57,5 @@ jobs:
           profile: pixel
           disable-animations: true
           emulator-boot-timeout: 900
-          emulator-options: -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
+          emulator-options: -no-snapshot -noaudio -no-boot-anim -no-window -gpu off
           script: ./scripts/test.sh -type android -config "${TESTS_CONFIG}"
