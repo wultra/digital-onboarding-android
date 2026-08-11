@@ -41,8 +41,19 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Verify integration test config is present
+        run: |
+          if [ -z "${TESTS_CONFIG}" ]; then
+            echo "ERROR: TESTS_CONFIG secret is not set. Integration tests would be skipped."
+            exit 1
+          fi
       - name: Run integration tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
+          arch: x86_64
+          profile: pixel
+          disable-animations: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
           script: ./scripts/test.sh -type android -config "${TESTS_CONFIG}"
