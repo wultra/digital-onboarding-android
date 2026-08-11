@@ -89,11 +89,21 @@ while [[ $# -gt 0 ]]
 do
     case "$1" in
         -type)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: -type requires a value (unit or android)"
+                print_usage
+                exit 1
+            fi
             TYPE="$2"
             shift
             shift
             ;;
         -config)
+            if [ $# -lt 2 ]; then
+                echo "ERROR: -config requires a value (JSON content)"
+                print_usage
+                exit 1
+            fi
             CONFIG_JSON="$2"
             shift
             shift
@@ -116,6 +126,7 @@ if [ -z "${TYPE}" ]; then
     exit 1
 fi
 
+trap 'popd 2>/dev/null || true' EXIT
 pushd "${SCRIPT_FOLDER}/.."
 
 if [ -n "${CONFIG_JSON}" ]; then
