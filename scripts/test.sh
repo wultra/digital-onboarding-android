@@ -5,6 +5,7 @@ set -u # stop when undefined variable is used
 #set -x # print all execution (good for debugging)
 
 SCRIPT_FOLDER=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+ANDROID_TEST_RESULTS_DIR="library/build/outputs/androidTest-results/connected"
 
 TYPE=""
 CONFIG_JSON=""
@@ -16,6 +17,39 @@ print_usage() {
     echo "            android Runs Android instrumentation tests (:library:connectedDebugAndroidTest)"
     echo "  -config   Optional JSON content that will be written to"
     echo "            library/src/androidTest/assets/config.json"
+}
+
+verify_android_instrumentation_results() {
+    local report_dir="${ANDROID_TEST_RESULTS_DIR}"
+    local total_tests=0
+    local skipped_tests=0
+
+    if [ ! -d "${report_dir}" ]; then
+        echo "ERROR: Android test report directory was not generated: ${report_dir}"
+        exit 1
+    fi
+
+    # shellcheck disable=SC2012
+    local report_files
+    report_files=$(ls "${report_dir}"/*.xml 2>/dev/null || true)
+    if [ -z "${report_files}" ]; then
+        echo "ERROR: Android test reports were not generated in ${report_dir}"
+        exit 1
+    fi
+
+    while IFS= read -r xml; do
+        local tests
+        local skipped
+        tests=$(grep -oE 'tests="[0-9]+"' "${xml}" | head -n 1 | grep -oE '[0-9]+' || echo "0")
+        skipped=$(grep -oE 'skipped="[0-9]+"' "${xml}" | head -n 1 | grep -oE '[0-9]+' || echo "0")
+        total_tests=$((total_tests + tests))
+        skipped_tests=$((skipped_tests + skipped))
+    done <<< "${report_files}"
+
+    if [ "${total_tests}" -eq 0 ] || [ "${total_tests}" -eq "${skipped_tests}" ]; then
+        echo "ERROR: Android instrumentation tests were not executed successfully (total=${total_tests}, skipped=${skipped_tests})."
+        exit 1
+    fi
 }
 
 # Parse parameters of this script
@@ -61,6 +95,7 @@ if [ "${TYPE}" == "unit" ] ; then
     ./gradlew :library:testDebugUnitTest
 elif [ "${TYPE}" == "android" ] ; then
     ./gradlew :library:connectedDebugAndroidTest
+    verify_android_instrumentation_results
 else
     echo "Invalid -type value '${TYPE}'. Expected 'unit' or 'android'."
     print_usage
