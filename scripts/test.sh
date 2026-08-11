@@ -52,6 +52,25 @@ verify_android_instrumentation_results() {
     fi
 }
 
+select_running_emulator_serial() {
+    local serials
+    serials=$(adb devices | awk '/^emulator-[0-9]+[[:space:]]+device$/ { print $1 }')
+
+    if [ -z "${serials}" ]; then
+        echo "ERROR: No running Android emulator in 'device' state found via adb."
+        echo "adb devices output:"
+        adb devices
+        exit 1
+    fi
+
+    local selected
+    selected=$(printf '%s\n' "${serials}" | head -n 1)
+    echo "Detected emulator serial(s):"
+    printf '%s\n' "${serials}"
+    echo "Using emulator serial: ${selected}"
+    export ANDROID_SERIAL="${selected}"
+}
+
 # Parse parameters of this script
 while [[ $# -gt 0 ]]
 do
@@ -94,6 +113,7 @@ fi
 if [ "${TYPE}" == "unit" ] ; then
     ./gradlew :library:testDebugUnitTest
 elif [ "${TYPE}" == "android" ] ; then
+    select_running_emulator_serial
     ./gradlew :library:connectedDebugAndroidTest
     verify_android_instrumentation_results
 else
