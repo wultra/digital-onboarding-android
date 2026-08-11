@@ -29,12 +29,12 @@ parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -type)
-                [ $# -ge 2 ] || die "Missing value for -type."
+                [ $# -ge 2 ] && [[ "$2" != -* ]] || die "Missing value for -type."
                 TYPE="$2"
                 shift 2
                 ;;
             -config)
-                [ $# -ge 2 ] || die "Missing value for -config."
+                [ $# -ge 2 ] && [[ "$2" != -* ]] || die "Missing value for -config."
                 CONFIG_JSON="$2"
                 shift 2
                 ;;
@@ -169,10 +169,12 @@ main() {
     parse_arguments "$@"
     validate_arguments
 
+    trap 'popd 2>/dev/null || true' EXIT
     pushd "${SCRIPT_FOLDER}/.." >/dev/null
     write_android_test_config_if_provided
     run_tests
     popd >/dev/null
+    trap - EXIT
 }
 
 main "$@"
