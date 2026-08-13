@@ -17,12 +17,14 @@
 package com.wultra.android.digitalonboarding
 
 import android.content.Context
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.gson.Gson
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationResponseData
 import com.wultra.android.powerauth.networking.error.ApiError
 import io.getlime.security.powerauth.core.ActivationStatus
+import io.getlime.security.powerauth.core.Password
 import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
 import io.getlime.security.powerauth.exception.PowerAuthErrorException
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
@@ -59,7 +61,7 @@ internal data class SampleCredentials(
 internal data class ServerEnvironment(
     val name: String,
     val processTypes: List<String>,
-    val reKycProcessType: String?,
+    val reKycProcessType: String,
     val esUrl: String,
     val esoUrl: String,
     val mobileConfig: String,
@@ -178,6 +180,94 @@ internal class TestHelper(
         return config to intro.consentRequired
     }
 
+    // Runs startAndActivate() and then completes the whole verification flow
+    fun startAndActivateAndVerify(credentials: SampleCredentials = SampleCredentials.demo()): PowerAuthSDK? {
+        val (config, consentRequired) = startAndActivate(credentials)
+
+        val startedVerification = verification.awaitStart(
+            if (consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
+        )
+        if (startedVerification.state.state != VerificationState.DOCUMENTS_TO_SCAN_SELECT) {
+            throw SimpleError("Expected DOCUMENTS_TO_SCAN_SELECT after start(), got: ${startedVerification.state.state}")
+        }
+
+        val documentsToScan = config.getDocumentsToScan()
+        verification.awaitDocumentsSetSelectedTypes(documentsToScan.map { it.patchedType() })
+
+        if (!environment.servicesMock) {
+            Log.i("IntegrationTestSupport", "[$processType] Cannot complete verification to SUCCESS — servicesMock is disabled for '${environment.name}'")
+            return null
+        }
+
+        fun waitForNonProcessingStatus(): VerificationService.StatusResult {
+            var statusResult = verification.awaitStatus()
+            var attempts = 0
+            val sleepDuration = 3_000L
+            val maxAttempts = 10
+            while (statusResult.state.state == VerificationState.PROCESSING && attempts < maxAttempts) {
+                Thread.sleep(sleepDuration)
+                attempts += 1
+                statusResult = verification.awaitStatus()
+            }
+            if (statusResult.state.state == VerificationState.PROCESSING) {
+                throw SimpleError(
+                    "[$processType] Timed out waiting for non-processing verification state " +
+                        "after ${maxAttempts * sleepDuration / 1000} seconds",
+                )
+            }
+            return statusResult
+        }
+
+        var statusResult = waitForNonProcessingStatus()
+        var state = statusResult.state
+
+        if (state.state == VerificationState.SCAN_DOCUMENT) {
+            for (document in documentsToScan) {
+                verification.awaitDocumentsSubmit(document.uploadFiles())
+                statusResult = waitForNonProcessingStatus()
+                state = statusResult.state
+            }
+        }
+
+        if (state.state == VerificationState.PRESENCE_CHECK) {
+            verification.awaitPresenceCheckInit()
+            verification.awaitPresenceCheckSubmit()
+            statusResult = waitForNonProcessingStatus()
+            state = statusResult.state
+        }
+
+        if (state.state == VerificationState.OTP) {
+            val otp = getVerificationOtp()
+            val otpResult = verification.awaitVerifyOtp(otp)
+            state = otpResult.state
+            if (state.state == VerificationState.PROCESSING) {
+                statusResult = waitForNonProcessingStatus()
+                state = statusResult.state
+            }
+        }
+
+        var activePowerAuth = powerAuth
+
+        if (state.state == VerificationState.ACTIVATION_FINISH) {
+            val newPowerAuth = createNewPowerAuth()
+            val finishResult = verification.awaitFinishActivation(
+                newPowerAuthInstance = newPowerAuth,
+                newActivationName = "Android Integration Test",
+                newPassword = Password("1234"),
+                validatePassword = false,
+                userIdentification = null,
+            )
+            state = finishResult.state
+            activePowerAuth = newPowerAuth
+        }
+
+        if (state.state != VerificationState.SUCCESS) {
+            throw SimpleError("[$processType] Expected SUCCESS after completing verification, got: ${state.state}")
+        }
+
+        return activePowerAuth
+    }
+
     // Asserts that current verification state equals expected state.
     fun assertVerificationState(expected: VerificationState) {
         val status = verification.awaitStatus()
@@ -243,6 +333,15 @@ internal fun ConfigurationDocument.getMockDocumentToUpload(side: DocumentSide): 
         side = side,
         originalDocumentId = null,
     )
+}
+
+// Builds the mock file(s) for a document upload, covering both sides when the document requires it.
+internal fun ConfigurationDocument.uploadFiles(): List<DocumentFile> {
+    val files = mutableListOf(getMockDocumentToUpload(DocumentSide.FRONT))
+    if (sideCount == 2) {
+        files += getMockDocumentToUpload(DocumentSide.BACK)
+    }
+    return files
 }
 
 // Detects whether API error maps to known PowerAuth transport/runtime error families.
