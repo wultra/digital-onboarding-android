@@ -27,6 +27,7 @@ import com.wultra.android.digitalonboarding.networking.CustomerOnboardingApi
 import com.wultra.android.digitalonboarding.networking.CustomerVerificationApi
 import com.wultra.android.digitalonboarding.networking.model.Document
 import com.wultra.android.digitalonboarding.networking.model.DocumentStatus
+import com.wultra.android.digitalonboarding.networking.model.DefaultReVerificationData
 import com.wultra.android.digitalonboarding.networking.model.DocumentSubmitResponse
 import com.wultra.android.digitalonboarding.networking.model.DocumentsStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.FinishActivationResponse
@@ -34,6 +35,7 @@ import com.wultra.android.digitalonboarding.networking.model.IdentityVerificatio
 import com.wultra.android.digitalonboarding.networking.model.PresenceCheckResponse
 import com.wultra.android.digitalonboarding.networking.model.ResendOtpResponse
 import com.wultra.android.digitalonboarding.networking.model.SDKInitResponse
+import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.VerifyOtpResponse
 import com.wultra.android.powerauth.networking.IApiCallResponseListener
@@ -271,6 +273,50 @@ class VerificationService(
                 markCompleted(error, callback)
             }
         })
+    }
+
+    /**
+     * Starts a Re-KYC (re-verification) process for an already active PowerAuth instance, signed with a
+     * PowerAuth POSSESSION (1FA) signature instead of user-provided credentials. Unlike `ActivationService.start`,
+     * this does not create a new PowerAuth activation - it reuses the current one.
+     *
+     * This automatically fetches the verification status after a successful start, same as `status()` would,
+     * so the returned result can be used directly to display the next state (usually `INTRO`).
+     *
+     * @param T Type that represents the custom additional data payload.
+     * @param additionalData Custom additional data object passed to the server together with the Re-KYC start
+     *                        request (analogous to `credentials` in `ActivationService.start`).
+     * @param processType The process type identification. If not specified, the default process type will be used.
+     * @param callback Callback with the verification status result.
+     */
+    fun <T> startReVerification(additionalData: T, processType: String? = null, callback: (VerificationStatusResult) -> Unit) {
+        WDOLogger.d("Starting re-verification, processType: ${processType ?: "default"}")
+        api.startReVerification(
+            additionalData,
+            processType,
+            object : IApiCallResponseListener<StartOnboardingResponse> {
+                override fun onSuccess(result: StartOnboardingResponse) {
+                    WDOLogger.i("Re-verification started successfully.")
+                    WDOLogger.d(" - processId: ${result.responseObject.processId}")
+                    status(callback)
+                }
+                override fun onFailure(error: ApiError) {
+                    WDOLogger.e("Re-verification start failed : ${error.e}")
+                    markCompleted(error, callback)
+                }
+            }
+        )
+    }
+
+    /**
+     * Starts a Re-KYC (re-verification) process for an already active PowerAuth instance, using a default
+     * additional data payload (`{ "source": "re-verification" }`).
+     *
+     * @param processType The process type identification. If not specified, the default process type will be used.
+     * @param callback Callback with the verification status result.
+     */
+    fun startReVerification(processType: String? = null, callback: (VerificationStatusResult) -> Unit) {
+        startReVerification(DefaultReVerificationData(), processType, callback)
     }
 
     /**
