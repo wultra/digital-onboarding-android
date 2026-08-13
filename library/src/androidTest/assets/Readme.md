@@ -12,6 +12,7 @@ The file format is:
     {
       "name": "smoke",
       "processTypes": ["onboarding"],
+      "reKycProcessType": "re-kyc",
       "esUrl": "https://example.com/enrollment-server/",
       "esoUrl": "https://example.com/enrollment-server-onboarding/",
       "mobileConfig": "...",
@@ -32,6 +33,7 @@ The file format is:
 - `mobileConfig`: PowerAuth mobile configuration string for the given environment.
 - `otpMock`: OTP detail endpoint strategy.
 - `servicesMock`: Whether the environment supports mocked downstream services required by the full integration flow.
+- `reKycProcessType`: Re-KYC onboarding process type.
 
 ## `otpMock` values
 

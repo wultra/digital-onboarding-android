@@ -300,12 +300,17 @@ class IntegrationTests {
     @Test
     fun startReVerificationAfterOnboardingActivation() {
         runForAllEnvironments { env, helper ->
+            val reKycProcessType = env.reKycProcessType
+            if (reKycProcessType == null) {
+                Log.i("IntegrationTests", "${processLabel(helper)} Skipping - reKycProcessType is not configured for '${env.name}'")
+                return@runForAllEnvironments
+            }
+
             // Activates through normal onboarding first - Re-KYC's precondition is simply "an active
             // PowerAuth instance", not "already fully verified", so we don't need to finish document
             // scan/presence check/OTP here.
             val (_, consentRequired) = helper.startAndActivate()
 
-            val reKycProcessType = env.reKycProcessType ?: "re-kyc"
             val reKycResult = helper.verification.awaitStartReVerification(reKycProcessType)
             assertTrue(
                 "Expected INTRO state after startReVerification, got: ${reKycResult.state.state}",
@@ -327,6 +332,12 @@ class IntegrationTests {
     @Test
     fun startReVerificationDoesNotFlipNeedVerificationBeforeIdentityInit() {
         runForAllEnvironments { env, helper ->
+            val reKycProcessType = env.reKycProcessType
+            if (reKycProcessType == null) {
+                Log.i("IntegrationTests", "${processLabel(helper)} Skipping - reKycProcessType is not configured for '${env.name}'")
+                return@runForAllEnvironments
+            }
+
             helper.startAndActivate()
 
             // startReVerification alone must not flip needVerification() yet - only `/api/identity/init`
@@ -338,7 +349,6 @@ class IntegrationTests {
             // primarily documentation of the timing gotcha, not a strict precondition check.
             val statusBefore = helper.powerAuth.awaitActivationStatus(appContext)
 
-            val reKycProcessType = env.reKycProcessType ?: "re-kyc"
             helper.verification.awaitStartReVerification(reKycProcessType)
 
             val statusAfterStart = helper.powerAuth.awaitActivationStatus(appContext)

@@ -59,12 +59,12 @@ internal data class SampleCredentials(
 internal data class ServerEnvironment(
     val name: String,
     val processTypes: List<String>,
+    val reKycProcessType: String?,
     val esUrl: String,
     val esoUrl: String,
     val mobileConfig: String,
     val otpMock: String,
-    val servicesMock: Boolean,
-    val reKycProcessType: String,
+    val servicesMock: Boolean
 )
 
 internal data class ServerEnvironmentData(
