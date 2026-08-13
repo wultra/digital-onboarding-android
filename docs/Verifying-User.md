@@ -38,6 +38,38 @@ powerAuth.fetchActivationStatusWithCallback(
 )
 ```
 
+## Starting a re-verification (Re-KYC)
+
+In some cases, you might require the user to repeat identity verification even though the `PowerAuthSDK` instance is already fully activated and does not need any verification (`needVerification()` is `false`). Deciding *when* a Re-KYC should be triggered is entirely up to the app/backend logic (a business rule, a server-driven prompt, or a dedicated backend call outside of this SDK).
+
+To start such a re-verification (Re-KYC), call `VerificationService.startReVerification`. Unlike `ActivationService.start`, this call does not create a new PowerAuth activation - it reuses the current one and is authenticated with a PowerAuth POSSESSION (1FA) signature instead of user-provided credentials. `additionalData` is optional and analogous to `credentials` passed to `start`.
+
+`startReVerification` automatically fetches the verification status right after a successful start (same as calling `status()` would), so the returned result can be used directly to display the next state (usually `INTRO`), followed by `getConsent()`/`start(consentApprovedByUser)` as usual.
+
+<!-- begin box warning -->
+Once `startReVerification` succeeds, progress is tracked the same way as with a regular verification: `ActivationStatus.needVerification()` becomes `true` and stays `true` until the process finishes - by default via the same `VERIFICATION_IN_PROGRESS` flag as a regular verification, unless the backend's process configuration uses a custom flag name (which is arbitrary, not necessarily `RE_KYC_IN_PROGRESS`). Use `needVerification()` as the reliable general check to resume the flow. `reKycInProgress()` (or inspecting `activationFlags()` directly for a custom name) only helps if you know your backend uses that specific convention.
+<!-- end -->
+
+Example:
+
+```kotlin
+val verificationService: VerificationService // configured verification service
+
+verificationService.startReVerification { result ->
+    result.onSuccess { statusResult ->
+        // use statusResult.state to display the next state (usually INTRO)
+    }.onFailure { fail ->
+        // handle error
+    }
+}
+
+// ...later, e.g. after an app restart, resume with the regular verification flow
+// (without calling startReVerification again) once needVerification() is true:
+if (powerAuthStatus.needVerification()) {
+    // navigate to the verification flow and call `VerificationService.status`
+}
+```
+
 ## Example app flow
 
 <p align="center"><img src="images/verification-mockup.png" alt="Example verification flow" width="100%" /></p>
