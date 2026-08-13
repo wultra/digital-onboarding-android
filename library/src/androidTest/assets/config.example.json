@@ -9,7 +9,8 @@
       "esoUrl": "https://your-domain.example.com/enrollment-onboarding-server",
       "mobileConfig": "PA_FULL_CONFIGURATION_STRING",
       "otpMock": "AUTO",
-      "servicesMock": true
+      "servicesMock": true,
+      "reKycProcessType": "re-kyc"
     }
   ]
 }

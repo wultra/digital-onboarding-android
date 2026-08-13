@@ -64,6 +64,7 @@ internal data class ServerEnvironment(
     val mobileConfig: String,
     val otpMock: String,
     val servicesMock: Boolean,
+    val reKycProcessType: String,
 )
 
 internal data class ServerEnvironmentData(
@@ -342,6 +343,17 @@ internal fun VerificationService.awaitStart(consent: ConsentResponse): Verificat
     }
     return result.requireSuccess { failure ->
         SimpleError("Verification start failed: ${failure.reason.e}")
+    }
+}
+
+// Starts a Re-KYC (re-verification) process for an already active PowerAuth instance and returns the
+// resulting verification status (same shape as awaitStatus()/status()).
+internal fun VerificationService.awaitStartReVerification(processType: String? = null): VerificationService.StatusResult {
+    val result = awaitWdoResult { callback ->
+        startReVerification(processType, callback)
+    }
+    return result.requireSuccess { failure ->
+        SimpleError("startReVerification failed: ${failure.reason.e}")
     }
 }
 

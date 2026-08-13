@@ -297,6 +297,59 @@ class IntegrationTests {
         }
     }
 
+    @Test
+    fun startReVerificationAfterOnboardingActivation() {
+        runForAllEnvironments { env, helper ->
+            // Activates through normal onboarding first - Re-KYC's precondition is simply "an active
+            // PowerAuth instance", not "already fully verified", so we don't need to finish document
+            // scan/presence check/OTP here.
+            val (_, consentRequired) = helper.startAndActivate()
+
+            val reKycProcessType = env.reKycProcessType ?: "re-kyc"
+            val reKycResult = helper.verification.awaitStartReVerification(reKycProcessType)
+            assertTrue(
+                "Expected INTRO state after startReVerification, got: ${reKycResult.state.state}",
+                reKycResult.state is VerificationStateIntroData,
+            )
+
+            val introState = reKycResult.state as VerificationStateIntroData
+            helper.verification.awaitStart(
+                if (introState.consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
+            )
+            helper.assertVerificationState(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
+
+            // The reliable check regardless of which flag name the backend uses.
+            val status = helper.powerAuth.awaitActivationStatus(appContext)
+            assertTrue("Expected needVerification() after Re-KYC start()", status.needVerification())
+        }
+    }
+
+    @Test
+    fun startReVerificationDoesNotFlipNeedVerificationBeforeIdentityInit() {
+        runForAllEnvironments { env, helper ->
+            helper.startAndActivate()
+
+            // startReVerification alone must not flip needVerification() yet - only `/api/identity/init`
+            // (triggered by the subsequent `VerificationService.start(...)` call) does that.
+            //
+            // NOTE: startAndActivate() already leaves the activation with VERIFICATION_PENDING set
+            // (that's the whole point of onboarding-based activation), so this only demonstrates that
+            // startReVerification itself does not add a *new* in-progress flag on top of that - it is
+            // primarily documentation of the timing gotcha, not a strict precondition check.
+            val statusBefore = helper.powerAuth.awaitActivationStatus(appContext)
+
+            val reKycProcessType = env.reKycProcessType ?: "re-kyc"
+            helper.verification.awaitStartReVerification(reKycProcessType)
+
+            val statusAfterStart = helper.powerAuth.awaitActivationStatus(appContext)
+            assertEquals(
+                "startReVerification alone must not change activation flags before identity/init",
+                statusBefore.activationFlags().toSet(),
+                statusAfterStart.activationFlags().toSet(),
+            )
+        }
+    }
+
     private fun runForAllEnvironments(block: (ServerEnvironment, TestHelper) -> Unit) {
         assumeTrue(
             "No androidTest/assets/config.json present or it does not contain environments. " +
