@@ -117,10 +117,10 @@ internal class CustomerOnboardingApi(
     }
 
     /**
-     * Resends the OTP for users convenience (for example when SMS was not received by the user).
+     * Resends the OTP for users' convenience (for example, when the user did not receive SMS).
      *
-     * Note that there will be some frequency limit implemented by the server. Default is 30 seconds
-     * but we advise to consult this with the backend developers.
+     * Note that there will be some frequency limits implemented by the server. Default is 30 seconds,
+     * but we advise consulting this with the backend developers.
      *
      * Encrypted with the ECIES application scope.
      *

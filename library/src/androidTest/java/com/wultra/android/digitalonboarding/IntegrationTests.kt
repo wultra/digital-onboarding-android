@@ -20,8 +20,8 @@ import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wultra.android.digitalonboarding.log.WDOLogger
-import io.getlime.security.powerauth.core.ActivationStatus
 import io.getlime.security.powerauth.core.Password
+import io.getlime.security.powerauth.sdk.PowerAuthActivationState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -247,10 +247,10 @@ class IntegrationTests {
                 state = finishResult.state
 
                 val originalStatus = helper.powerAuth.awaitActivationStatus(appContext)
-                assertEquals(ActivationStatus.State_Removed, originalStatus.state)
+                assertEquals(PowerAuthActivationState.REMOVED, originalStatus.state)
 
                 val newStatus = newPowerAuth.awaitActivationStatus(appContext)
-                assertEquals(ActivationStatus.State_Active, newStatus.state)
+                assertEquals(PowerAuthActivationState.ACTIVE, newStatus.state)
                 assertFalse(newStatus.needVerification())
             }
 
@@ -293,7 +293,7 @@ class IntegrationTests {
 
             // After cancellation, PowerAuth should be removed.
             val paStatus = helper.powerAuth.awaitActivationStatus(appContext)
-            assertEquals(ActivationStatus.State_Removed, paStatus.state)
+            assertEquals(PowerAuthActivationState.REMOVED, paStatus.state)
         }
     }
 

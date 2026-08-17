@@ -40,14 +40,16 @@ import com.wultra.android.powerauth.networking.IApiCallResponseListener
 import com.wultra.android.powerauth.networking.data.StatusResponse
 import com.wultra.android.powerauth.networking.error.ApiError
 import com.wultra.android.powerauth.networking.error.ApiErrorCode
-import io.getlime.security.powerauth.core.ActivationStatus
+import io.getlime.security.powerauth.sdk.PowerAuthActivationStatus
 import io.getlime.security.powerauth.core.Password
-import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
+import io.getlime.security.powerauth.networking.response.IBeginPasswordChangeListener
 import io.getlime.security.powerauth.networking.response.ICreateActivationListener
-import io.getlime.security.powerauth.networking.response.IValidatePasswordListener
+import io.getlime.security.powerauth.networking.response.IPersistActivationListener
 import io.getlime.security.powerauth.sdk.PowerAuthActivation
+import io.getlime.security.powerauth.sdk.PowerAuthActivationState
+import io.getlime.security.powerauth.sdk.PowerAuthPasswordChangeData
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
 
@@ -70,7 +72,7 @@ enum class ConsentResponse {
  * Digital Onboarding Verification Service
  *
  * @property appContext Application context
- * @property powerAuthSDK Configured PowerAuthSDK instance. This instance needs to be with valid activation otherwise you'll get errors.
+ * @property powerAuthSDK Configured PowerAuthSDK instance. This instance needs to be with valid activation, otherwise you'll get errors.
  * @constructor Creates the instance
  *
  * @param identityServerUrl Base URL for service requests. Usually ending with `enrollment-onboarding-server`.
@@ -87,8 +89,8 @@ class VerificationService(
      * The default value is "en".
      *
      * Standard RFC "Accept-Language" https://tools.ietf.org/html/rfc7231#section-5.3.5
-     * Response texts are based on this setting. For example, when "de" is set, server
-     * will return error texts and other in German (if available).
+     * Response texts are based on this setting. For example, when "de" is set,
+     * the server will return error texts and other in German (if available).
      */
     var acceptLanguage: String
         set(value) { api.acceptLanguage = value }
@@ -112,7 +114,7 @@ class VerificationService(
             val key = storageCacheKey ?: return null
             val cacheData = storage.getValue(key) ?: return null
             return runCatching { VerificationScanProcess(cacheData) }
-                .onFailure { WDOLogger.e("Failed to decode scan process cache: ${it}") }
+                .onFailure { WDOLogger.e("Failed to decode scan process cache: $it") }
                 .getOrNull()
         }
         set(value) {
@@ -140,7 +142,10 @@ class VerificationService(
                 lastStatus = result
 
                 when (result.responseObject.status) {
-                    IdentityVerificationStatus.FAILED, IdentityVerificationStatus.REJECTED, IdentityVerificationStatus.NOT_INITIALIZED, IdentityVerificationStatus.ACCEPTED -> {
+                    IdentityVerificationStatus.FAILED,
+                    IdentityVerificationStatus.REJECTED,
+                    IdentityVerificationStatus.NOT_INITIALIZED,
+                    IdentityVerificationStatus.ACCEPTED -> {
                         WDOLogger.d("We reached endstate, clearing cache")
                         cachedProcess = null
                     }
@@ -297,7 +302,7 @@ class VerificationService(
     }
 
     /**
-     * Starts the verification process with the user consent.
+     * Starts the verification process with the user's consent.
      *
      * @param consentApprovedByUser User response for the consent.
      * @param callback Callback with the result.
@@ -409,7 +414,8 @@ class VerificationService(
                         .firstOrNull { it.type == file.type }
                         ?.originalDocumentIdFor(file.side)
 
-                    // In this case, the originalDocumentId is not available in the file object, but we can find it in the cached process by matching the document type and side.
+                    // In this case, the originalDocumentId is not available in the file object, but we can find it in the cached process
+                    // by matching the document type and side.
                     // This allows us to reuse the scanned document without forcing the user to scan it again.
                     if (serverId != null) {
                         WDOLogger.d("Document ${file.type} is missing originalDocumentId, using cached ID $serverId.")
@@ -509,7 +515,7 @@ class VerificationService(
     }
 
     /**
-     * Restarts verification. When successfully called, intro screen should be presented.
+     * Restarts verification. When successfully called, an intro screen should be presented.
      *
      * @param callback Callback with the result.
      */
@@ -539,7 +545,8 @@ class VerificationService(
     }
 
     /**
-     * Cancels the whole activation/verification. After this it's no longer call any API endpoint and PowerAuth activation should be removed.
+     * Cancels the whole activation/verification. After this it no longer calls any API endpoint
+     * and PowerAuth activation should be removed.
      *
      * @param callback Callback with the result.
      */
@@ -565,7 +572,7 @@ class VerificationService(
     }
 
     /**
-     * Verify OTP that user entered as a last step of the verification.
+     * Verify OTP that the user entered as a last step of the verification.
      *
      * @param otp User entered OTP.
      * @param callback Callback with the result.
@@ -650,7 +657,7 @@ class VerificationService(
      *
      * @param newPowerAuthInstance PowerAuth instance where to create new activation. This instance must not have an existing activation.
      * @param newActivationName Name of the new activation to be created on `newPowerAuthInstance`.
-     * @param newPassword Password to protect the new activation. In case `validatePassword` is `true`, this password must match the password of the original activation.
+     * @param newPassword Password to protect the new activation.
      * @param validatePassword If set to `true`, the method verifies that the provided `newPassword` matches the password of the original activation.
      * @param userIdentification Optional user identification object to be sent to the server during the finish activation process.
      */
@@ -711,16 +718,31 @@ class VerificationService(
 
                                 override fun onActivationCreateSucceed(result: CreateActivationResult) {
                                     // New activation created, now persist it with the provided password
-                                    val persistResult = newPowerAuthInstance.persistActivationWithPassword(appContext, newPassword)
-                                    if (persistResult == PowerAuthErrorCodes.SUCCEED) {
-                                        // New activation persisted
-                                        markCompleted(VerificationStateSuccessData, callback)
-                                    } else {
-                                        // Failed to persist new activation, clean up
-                                        clearPaInstanceIfNeeded()
-                                        WDOLogger.e("Failed to persist PowerAuth activation. Code: $persistResult")
-                                        markCompleted(Fail(ApiError(Exception("Failed to persist PowerAuth activation. Code: $persistResult"))), callback)
-                                    }
+                                    newPowerAuthInstance.persistActivationWithPassword(
+                                        appContext,
+                                        newPassword,
+                                        object : IPersistActivationListener {
+                                            override fun onPersistActivationSucceeded() {
+                                                // New activation persisted
+                                                markCompleted(VerificationStateSuccessData, callback)
+                                            }
+
+                                            override fun onPersistActivationFailed(t: Throwable) {
+                                                // Failed to persist new activation, clean up
+                                                clearPaInstanceIfNeeded()
+                                                WDOLogger.e("Failed to persist PowerAuth activation. $t")
+                                                markCompleted(Fail(ApiError(t)), callback)
+                                            }
+
+                                            override fun onPersistActivationCancelled(userCancel: Boolean) {
+                                                // Failed to persist new activation, clean up
+                                                clearPaInstanceIfNeeded()
+                                                val error = Exception("Failed to persist PowerAuth activation: cancelled by user: $userCancel")
+                                                WDOLogger.e(error.message ?: "Failed to persist PowerAuth activation")
+                                                markCompleted(Fail(ApiError(error)), callback)
+                                            }
+                                        }
+                                    )
                                 }
 
                                 override fun onActivationCreateFailed(t: Throwable) {
@@ -748,7 +770,7 @@ class VerificationService(
      *
      * @param required Whether the password validation is required.
      * @param password Password to validate.
-     * @param callback Callback with the error if any.
+     * @param callback Callback with the error, if any.
      */
     private fun validatePasswordIfRequired(
         required: Boolean,
@@ -756,18 +778,19 @@ class VerificationService(
         callback: (Throwable?) -> Unit,
     ) {
         if (!required) {
-            // Password validation not required
+            // Password validation isn't required
             callback(null)
         } else {
-            powerAuthSDK.validatePassword(
+            // TODO: Since PowerAuth SDK 2.0 the `validatePassword` method is removed, we are using `beginPasswordChange` instead.
+            // This is a workaround to validate the password without changing it. Backend should implement new endpoint for password validation.
+            powerAuthSDK.beginPasswordChange(
                 appContext,
                 password,
-                object : IValidatePasswordListener {
-                    override fun onPasswordValid() {
+                object : IBeginPasswordChangeListener {
+                    override fun onBeginPasswordChangeSucceed(passwordChangeData: PowerAuthPasswordChangeData) {
                         callback(null)
                     }
-
-                    override fun onPasswordValidationFailed(t: Throwable) {
+                    override fun onBeginPasswordChangeFailed(t: Throwable) {
                         WDOLogger.i("Password validation failed.")
                         callback(t)
                     }
@@ -824,7 +847,7 @@ class VerificationService(
     object ActivationNotActiveException: Exception("PowerAuth instance is not in the active state.")
     /** Verification status needs to be fetched first */
     object ActivationMissingStatusException: Exception("Verification status needs to be fetched first.")
-    /** OTP failed to verify. Refresh status to retrieve current status */
+    /** OTP failed to verify. Refresh status to retrieve the current status */
     object OTPFailedException: Exception("OTP failed to verify.")
 
     // Private helper methods
@@ -864,8 +887,8 @@ class VerificationService(
             powerAuthSDK.fetchActivationStatusWithCallback(
                 appContext,
                 object : IActivationStatusListener {
-                    override fun onActivationStatusSucceed(status: ActivationStatus?) {
-                        if (status?.state != ActivationStatus.State_Active) {
+                    override fun onActivationStatusSucceed(status: PowerAuthActivationStatus) {
+                        if (status.state != PowerAuthActivationState.ACTIVE) {
                             WDOLogger.e("PowerAuth status not active.")
                             listener?.powerAuthActivationStatusChanged(this@VerificationService, status)
                             markCompleted(Fail(ApiError(ActivationNotActiveException)), callback)
@@ -910,23 +933,23 @@ class VerificationService(
 }
 
 /**
- * Listener of the Onboarding Verification Service that can listen on Verification Status and PowerAuth Status changes.
- *
+ * Listener of the Onboarding Verification Service that can listen to Verification Status and PowerAuth Status changes.
  */
 interface VerificationServiceListener {
 
     /**
      * Called when PowerAuth activation status changed.
      *
-     * Note that this happens only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change.
+     * Note that this happens only when an error is returned in some of the Verification endpoints,
+     * and this error indicates PowerAuth status change.
      *
      * @param service Origin service
      * @param status Status
      */
-    fun powerAuthActivationStatusChanged(service: VerificationService, status: ActivationStatus?)
+    fun powerAuthActivationStatusChanged(service: VerificationService, status: PowerAuthActivationStatus?)
 
     /**
-     * Called when state of the verification has changed.
+     * Called when the state of the verification has changed.
      *
      * @param service Origin service
      * @param status Status
