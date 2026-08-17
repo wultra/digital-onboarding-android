@@ -23,13 +23,13 @@ import com.google.gson.Gson
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationResponseData
 import com.wultra.android.powerauth.networking.error.ApiError
-import io.getlime.security.powerauth.core.ActivationStatus
 import io.getlime.security.powerauth.core.Password
-import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
-import io.getlime.security.powerauth.exception.PowerAuthErrorException
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
+import io.getlime.security.powerauth.networking.response.IPersistActivationListener
+import io.getlime.security.powerauth.sdk.PowerAuthActivationState
+import io.getlime.security.powerauth.sdk.PowerAuthActivationStatus
 import io.getlime.security.powerauth.sdk.PowerAuthConfiguration
 import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
@@ -145,17 +145,14 @@ internal class TestHelper(
         activation.awaitActivate(otp)
 
         // Persist with random password.
-        val persistCode = powerAuth.persistActivationWithPassword(appContext, UUID.randomUUID().toString())
-        if (persistCode != PowerAuthErrorCodes.SUCCEED) {
-            throw SimpleError("persistActivationWithPassword failed with code: ${persistCode}")
-        }
+        powerAuth.awaitPersistActivation(appContext, UUID.randomUUID().toString())
 
         // Verify PowerAuth status after activation.
         val paStatus = powerAuth.awaitActivationStatus(appContext)
         if (!paStatus.needVerification()) {
             throw SimpleError("Expected activation status to require verification")
         }
-        if (paStatus.state != ActivationStatus.State_Active) {
+        if (paStatus.state != PowerAuthActivationState.ACTIVE) {
             throw SimpleError("Expected activation state ACTIVE, got: ${paStatus.state}")
         }
     }
@@ -346,7 +343,7 @@ internal fun ConfigurationDocument.uploadFiles(): List<DocumentFile> {
 
 // Detects whether API error maps to known PowerAuth transport/runtime error families.
 internal fun ApiError.isPowerAuthError(): Boolean {
-    return e is FailedApiException || e is PowerAuthErrorException
+    return e is FailedApiException
 }
 
 // Resolves OTP retrieval strategy from environment configuration.
@@ -550,16 +547,16 @@ internal fun VerificationService.awaitFinishActivation(
 }
 
 // Loads current PowerAuth activation status using callback API and timeout protection.
-internal fun PowerAuthSDK.awaitActivationStatus(appContext: Context): ActivationStatus {
+internal fun PowerAuthSDK.awaitActivationStatus(appContext: Context): PowerAuthActivationStatus {
     val latch = CountDownLatch(1)
-    val statusRef = AtomicReference<ActivationStatus?>(null)
+    val statusRef = AtomicReference<PowerAuthActivationStatus?>(null)
     val errorRef = AtomicReference<Throwable?>(null)
 
     fetchActivationStatusWithCallback(
         appContext,
         object : IActivationStatusListener {
             // Stores successful activation status from callback.
-            override fun onActivationStatusSucceed(status: ActivationStatus?) {
+            override fun onActivationStatusSucceed(status: PowerAuthActivationStatus) {
                 statusRef.set(status)
                 latch.countDown()
             }
@@ -581,6 +578,40 @@ internal fun PowerAuthSDK.awaitActivationStatus(appContext: Context): Activation
     }
 
     return statusRef.get() ?: throw SimpleError("PowerAuth activation status returned null")
+}
+
+// Persists PowerAuth activation with given password using async callback API.
+internal fun PowerAuthSDK.awaitPersistActivation(appContext: Context, password: String) {
+    val latch = CountDownLatch(1)
+    val errorRef = AtomicReference<Throwable?>(null)
+
+    persistActivationWithPassword(
+        appContext,
+        password,
+        object : IPersistActivationListener {
+            override fun onPersistActivationSucceeded() {
+                latch.countDown()
+            }
+
+            override fun onPersistActivationFailed(t: Throwable) {
+                errorRef.set(t)
+                latch.countDown()
+            }
+
+            override fun onPersistActivationCancelled(userCancel: Boolean) {
+                errorRef.set(SimpleError("persistActivationWithPassword cancelled by user"))
+                latch.countDown()
+            }
+        },
+    )
+
+    if (!latch.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+        throw SimpleError("Timed out waiting for persistActivationWithPassword")
+    }
+
+    errorRef.get()?.let {
+        throw SimpleError("persistActivationWithPassword failed: ${it.message}")
+    }
 }
 
 // Calls DemoEndpoints OTP endpoint for activation flow.

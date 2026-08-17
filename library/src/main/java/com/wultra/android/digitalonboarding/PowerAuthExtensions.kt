@@ -13,7 +13,7 @@
 
 package com.wultra.android.digitalonboarding
 
-import io.getlime.security.powerauth.core.ActivationStatus
+import io.getlime.security.powerauth.sdk.PowerAuthActivationStatus
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 
 fun FailedApiException.onboardingOtpRemainingAttempts(): Int? = responseJson?.get("remainingAttempts")?.asInt
@@ -25,9 +25,9 @@ fun FailedApiException.allowOnboardingOtpRetry() = onboardingOtpRemainingAttempt
  * Exposed publicly so apps can inspect custom flag names (for example a custom Re-KYC flag configured
  * on the backend's process configuration) that aren't covered by the convenience checks below.
  */
-fun ActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
-fun ActivationStatus.verificationPending() = activationFlags().contains("VERIFICATION_PENDING")
-fun ActivationStatus.verificationInProgress() = activationFlags().contains("VERIFICATION_IN_PROGRESS")
+private fun PowerAuthActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
+fun PowerAuthActivationStatus.verificationPending() = activationFlags().contains("VERIFICATION_PENDING")
+fun PowerAuthActivationStatus.verificationInProgress() = activationFlags().contains("VERIFICATION_IN_PROGRESS")
 
 /**
  * Checks whether a re-verification (Re-KYC) identity verification process was already initialized.
@@ -37,7 +37,7 @@ fun ActivationStatus.verificationInProgress() = activationFlags().contains("VERI
  * `VERIFICATION_IN_PROGRESS`. If your backend is configured with a different custom flag, this method
  * won't detect it; check [activationFlags] for that flag name directly instead.
  */
-fun ActivationStatus.reKycInProgress() = activationFlags().contains("RE_KYC_IN_PROGRESS")
+fun PowerAuthActivationStatus.reKycInProgress() = activationFlags().contains("RE_KYC_IN_PROGRESS")
 
 /**
  * When true, activation needs to be verified via `VerificationService`. This is also `true` when a
@@ -45,4 +45,4 @@ fun ActivationStatus.reKycInProgress() = activationFlags().contains("RE_KYC_IN_P
  * progress - by default the server signals this with the same flags as a regular verification, unless
  * it's configured to use a dedicated flag instead (see [reKycInProgress]).
  */
-fun ActivationStatus.needVerification() = verificationPending() || verificationInProgress() || reKycInProgress()
+fun PowerAuthActivationStatus.needVerification() = verificationPending() || verificationInProgress() || reKycInProgress()

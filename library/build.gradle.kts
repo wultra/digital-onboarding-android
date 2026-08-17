@@ -1,4 +1,5 @@
 @file:Suppress("UnstableApiUsage")
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 /*
  * Copyright 2023 Wultra s.r.o.
@@ -50,10 +51,12 @@ android {
     compileOptions {
         sourceCompatibility = Constants.Java.sourceCompatibility
         targetCompatibility = Constants.Java.targetCompatibility
-        //noinspection WrongGradleMethod
-        kotlinOptions {
-            jvmTarget = Constants.Java.kotlinJvmTarget
-            suppressWarnings = false
+    }
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.fromTarget(Constants.Java.kotlinJvmTarget))
+            suppressWarnings.set(false)
         }
     }
 
@@ -71,21 +74,21 @@ android {
 
 dependencies {
     // Bundled
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${Constants.BuildScript.kotlinVersion}")
-    implementation("androidx.annotation:annotation:1.8.2")
-    implementation("com.google.code.gson:gson:2.11.0")
-    implementation("com.wultra.android.powerauth:powerauth-networking:1.5.0")
-    implementation("androidx.security:security-crypto-ktx:1.1.0-alpha06")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Constants.BuildScript.kotlinVersion}")
+    implementation("androidx.annotation:annotation:1.10.0")
+    implementation("com.google.code.gson:gson:2.14.0")
+    implementation("com.wultra.android.powerauth:powerauth-networking:2.0.0")
+    implementation("androidx.security:security-crypto-ktx:1.1.0")
 
     // Dependencies
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:1.9.6")
+    compileOnly("com.wultra.android.powerauth:powerauth-sdk:2.0.0")
 
     // Unit tests
     testImplementation("junit:junit:4.13.2")
 
     // Instrumentation tests
-    androidTestImplementation("androidx.test:runner:1.6.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test:core-ktx:1.6.1")
-    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:1.9.6")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:core-ktx:1.7.0")
+    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:2.0.0")
 }

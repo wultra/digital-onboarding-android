@@ -70,20 +70,20 @@ internal class CustomerVerificationApi(
 : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
-        private val statusEndpoint = EndpointSignedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
-        private val startEndpoint = EndpointSigned<StartRequest, StatusResponse>("api/identity/init", "/api/identity/init")
+        private val statusEndpoint = EndpointAuthenticatedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
+        private val startEndpoint = EndpointAuthenticated<StartRequest, StatusResponse>("api/identity/init", "/api/identity/init")
+        private val cancelEndpoint = EndpointAuthenticated<CancelRequest, StatusResponse>("api/identity/cleanup", "/api/identity/cleanup")
+        private val consentTextEndpoint = EndpointAuthenticatedWithToken<ConsentRequest, ConsentTextResponse>("/api/identity/consent/text", "possession_universal")
+        private val consentApproveEndpoint = EndpointAuthenticated<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
+        private val docsStatusEndpoint = EndpointAuthenticatedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
+        private val documentSdkInitEndpoint = EndpointAuthenticated<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val submitDocsEndpointV2 = EndpointAuthenticatedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/v2/identity/document/submit", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val presenceCheckEndpoint = EndpointAuthenticated<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val presenceCheckSubmitEndpoint = EndpointAuthenticated<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
+        private val resendOtpEndpoint = EndpointAuthenticated<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
         private fun <T> startReVerificationEndpoint() = EndpointSigned<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", "/api/onboarding/start", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val cancelEndpoint = EndpointSigned<CancelRequest, StatusResponse>("api/identity/cleanup", "/api/identity/cleanup")
-        private val consentTextEndpoint = EndpointSignedWithToken<ConsentRequest, ConsentTextResponse>("/api/identity/consent/text", "possession_universal")
-        private val consentApproveEndpoint = EndpointSigned<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
-        private val docsStatusEndpoint = EndpointSignedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
-        private val documentSdkInitEndpoint = EndpointSigned<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val submitDocsEndpointV2 = EndpointSignedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/v2/identity/document/submit", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val presenceCheckEndpoint = EndpointSigned<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val presenceCheckSubmitEndpoint = EndpointSigned<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
-        private val resendOtpEndpoint = EndpointSigned<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
         private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val finishVerificationEndpoint = EndpointSignedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
+        private val finishVerificationEndpoint = EndpointAuthenticatedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
     }
 
     /**
@@ -208,7 +208,7 @@ internal class CustomerVerificationApi(
     }
 
     /**
-     * Submits documents necessary for identity verification (like photos of ID or passport).
+     * Submits the documents necessary for identity verification (like photos of ID or passport).
      *
      * Encrypted with the ECIES activation scope.
      *
@@ -221,7 +221,7 @@ internal class CustomerVerificationApi(
             DocumentSubmitRequest(data),
             submitDocsEndpointV2,
             null,
-            object: OkHttpBuilderInterceptor {
+            object : OkHttpBuilderInterceptor {
                 override fun intercept(builder: OkHttpClient.Builder) {
                     // document upload can take some time
                     builder.callTimeout(120, TimeUnit.SECONDS)
@@ -235,7 +235,7 @@ internal class CustomerVerificationApi(
     }
 
     /**
-     * Asks for status of already uploaded documents.
+     * Asks for the status of already uploaded documents.
      *
      * @param processId ID of the process.
      * @param listener Result listener.
@@ -287,7 +287,7 @@ internal class CustomerVerificationApi(
     }
 
     /**
-     * OTP resend  in case that the user didn't received it.
+     * OTP resend in case that the user didn't receive it.
      *
      * @param processId ID of the process.
      * @param listener Result listener.

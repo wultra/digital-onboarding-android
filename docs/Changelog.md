@@ -1,7 +1,8 @@
 # Changelog
 
-## 3.0.0 (TBA)
+## 3.0.0-SNAPSHOT (Aug, 2026)
 
+- This release requires `PowerAuth SDK` version `2.0.0` or higher and `Networking` dependency version `2.0.0` or higher.
 - **⚠️ BREAKING**: `VerificationStateOtpData` now carries only `remainingAttempts`.
 - `ConfigurationResponseData` now includes optional `otpResendPeriodSeconds` (`null` on older backends that do not provide the field yet).
 - Fixed R8 minification ([#76](https://github.com/wultra/digital-onboarding-android/issues/76)).
