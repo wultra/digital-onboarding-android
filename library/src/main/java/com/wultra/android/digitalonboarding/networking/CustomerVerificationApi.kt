@@ -81,7 +81,7 @@ internal class CustomerVerificationApi(
         private val presenceCheckEndpoint = EndpointAuthenticated<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
         private val presenceCheckSubmitEndpoint = EndpointAuthenticated<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointAuthenticated<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
-        private fun <T> startReVerificationEndpoint() = EndpointSigned<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", "/api/onboarding/start", E2EEConfiguration.ACTIVATION_SCOPE)
+        private fun <T> startReVerificationEndpoint() = EndpointAuthenticated<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", "/api/onboarding/start", E2EEConfiguration.ACTIVATION_SCOPE)
         private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
         private val finishVerificationEndpoint = EndpointAuthenticatedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
     }
