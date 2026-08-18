@@ -42,9 +42,9 @@ powerAuth.fetchActivationStatusWithCallback(
 
 In some cases, you might require the user to repeat identity verification even though the `PowerAuthSDK` instance is already fully activated and does not need any verification (`needVerification()` is `false`). Deciding *when* a Re-KYC should be triggered is entirely up to the app/backend logic (a business rule, a server-driven prompt, or a dedicated backend call outside of this SDK).
 
-To start such a re-verification (Re-KYC), call `VerificationService.startReVerification`. Unlike `ActivationService.start`, this call does not create a new PowerAuth activation - it reuses the current one and is authenticated with a PowerAuth POSSESSION (1FA) signature instead of user-provided credentials. `additionalData` is optional and analogous to `credentials` passed to `start`.
+To start such a re-verification (Re-KYC), call `VerificationService.startReVerification`. Unlike `ActivationService.start`, this call does not create a new PowerAuth activation - it reuses the current one. `additionalData` is optional and analogous to `credentials` passed to `start`.
 
-`startReVerification` automatically fetches the verification status right after a successful start (same as calling `status()` would), so the returned result can be used directly to display the next state (usually `INTRO`), followed by `getConsent()`/`start(consentApprovedByUser)` as usual.
+`startReVerification` automatically fetches the verification status right after a successful start (same as calling `status()` would).
 
 <!-- begin box warning -->
 Once the Re-KYC process is started, the verification flow proceeds the same way as a regular verification. Note that `ActivationStatus.needVerification()` may not flip to `true` until the subsequent `VerificationService.start(...)` call initializes the identity verification on the backend. Once it becomes `true`, it stays `true` until the process finishes. By default the server signals this via the standard `VERIFICATION_IN_PROGRESS` flag, unless the backend is configured to use an additional/dedicated custom flag instead - `reKycInProgress()` covers the common `RE_KYC_IN_PROGRESS` convention, otherwise inspect `activationFlags()` directly for your backend's specific flag name. Use `needVerification()` as the reliable general check to resume the flow.

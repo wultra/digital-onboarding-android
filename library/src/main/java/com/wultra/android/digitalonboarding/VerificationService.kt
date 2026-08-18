@@ -281,9 +281,7 @@ class VerificationService(
     }
 
     /**
-     * Starts a Re-KYC (re-verification) process for an already active PowerAuth instance, signed with a
-     * PowerAuth POSSESSION (1FA) signature instead of user-provided credentials. Unlike `ActivationService.start`,
-     * this does not create a new PowerAuth activation - it reuses the current one.
+     * Starts a Re-KYC (re-verification) process for an already active PowerAuth instance.
      *
      * This automatically fetches the verification status after a successful start, same as `status()` would,
      * so the returned result can be used directly to display the next state (usually `INTRO`).
