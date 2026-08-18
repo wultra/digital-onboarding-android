@@ -341,6 +341,33 @@ class IntegrationTests {
         }
     }
 
+    @Test
+    fun startReVerificationCalledTwiceInARow() {
+        runForAllEnvironments { env, helper ->
+            val label = processLabel(helper)
+            val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
+
+            val reKycHelper = TestHelper(
+                appContext = appContext,
+                environment = env,
+                processType = helper.processType,
+                customPaInstance = pa,
+            )
+
+            val first = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "${label} Expected INTRO state after first startReVerification, got: ${first.state.state}",
+                first.state is VerificationStateIntroData,
+            )
+
+            val second = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "${label} Expected INTRO state after second startReVerification, got: ${second.state.state}",
+                second.state is VerificationStateIntroData,
+            )
+        }
+    }
+
     private fun runForAllEnvironments(block: (ServerEnvironment, TestHelper) -> Unit) {
         assumeTrue(
             "No androidTest/assets/config.json present or it does not contain environments. " +

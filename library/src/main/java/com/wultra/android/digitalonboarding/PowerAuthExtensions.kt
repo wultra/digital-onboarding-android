@@ -21,11 +21,8 @@ fun FailedApiException.allowOnboardingOtpRetry() = onboardingOtpRemainingAttempt
 
 /**
  * Raw activation flags reported by the server for this activation status.
- *
- * Exposed publicly so apps can inspect custom flag names (for example a custom Re-KYC flag configured
- * on the backend's process configuration) that aren't covered by the convenience checks below.
  */
-private fun PowerAuthActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
+fun PowerAuthActivationStatus.activationFlags() = (customObject?.let { it["activationFlags"] as? List<*> })?.filterIsInstance<String>() ?: emptyList()
 fun PowerAuthActivationStatus.verificationPending() = activationFlags().contains("VERIFICATION_PENDING")
 fun PowerAuthActivationStatus.verificationInProgress() = activationFlags().contains("VERIFICATION_IN_PROGRESS")
 

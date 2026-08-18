@@ -371,10 +371,15 @@ internal fun newPowerAuth(appContext: Context, environment: ServerEnvironment): 
 
 // Starts activation and blocks until callback returns success or failure.
 internal fun ActivationService.awaitStart(credentials: SampleCredentials, processType: String?) {
-    val result = awaitWdoResult { callback ->
+    val result = awaitStartResult(credentials, processType)
+    result.requireSuccess { failure -> SimpleError("Activation start failed: ${failure.cause.e}") }
+}
+
+// Same as awaitStart, but returns the raw callback result envelope instead of throwing on failure.
+internal fun ActivationService.awaitStartResult(credentials: SampleCredentials, processType: String?): ActivationResult<Unit> {
+    return awaitWdoResult { callback ->
         start(credentials, processType, callback)
     }
-    result.requireSuccess { failure -> SimpleError("Activation start failed: ${failure.cause.e}") }
 }
 
 // Fetches activation status with callback result envelope.
@@ -414,11 +419,15 @@ internal fun ConfigurationService.awaitConfiguration(processType: String): Confi
 
 // Returns current verification status.
 internal fun VerificationService.awaitStatus(): VerificationService.StatusResult {
-    val result = awaitWdoResult { callback ->
-        status(callback)
-    }
-    return result.requireSuccess { failure ->
+    return awaitStatusResult().requireSuccess { failure ->
         SimpleError("Verification status failed: ${failure.reason.e}")
+    }
+}
+
+// Same as awaitStatus, but returns the raw callback result envelope instead of throwing on failure.
+internal fun VerificationService.awaitStatusResult(): VerificationStatusResult {
+    return awaitWdoResult { callback ->
+        status(callback)
     }
 }
 
@@ -434,22 +443,32 @@ internal fun VerificationService.awaitConsent(): String {
 
 // Starts verification workflow with selected consent response.
 internal fun VerificationService.awaitStart(consent: ConsentResponse): VerificationService.Success {
-    val result = awaitWdoResult { callback ->
-        start(consent, callback)
-    }
-    return result.requireSuccess { failure ->
+    return awaitStartResult(consent).requireSuccess { failure ->
         SimpleError("Verification start failed: ${failure.reason.e}")
+    }
+}
+
+// Same as awaitStart, but returns the raw callback result envelope instead of throwing on failure.
+internal fun VerificationService.awaitStartResult(consent: ConsentResponse): VerificationResult {
+    return awaitWdoResult { callback ->
+        start(consent, callback)
     }
 }
 
 // Starts a Re-KYC (re-verification) process for an already active PowerAuth instance and returns the
 // resulting verification status (same shape as awaitStatus()/status()).
 internal fun VerificationService.awaitStartReVerification(processType: String? = null): VerificationService.StatusResult {
-    val result = awaitWdoResult { callback ->
-        startReVerification(processType, callback)
-    }
+    val result = awaitStartReVerificationResult(processType)
     return result.requireSuccess { failure ->
         SimpleError("startReVerification failed: ${failure.reason.e}")
+    }
+}
+
+// Same as awaitStartReVerification, but returns the raw callback result envelope instead of
+// throwing on failure - useful when the call is expected to (or might) fail.
+internal fun VerificationService.awaitStartReVerificationResult(processType: String? = null): VerificationStatusResult {
+    return awaitWdoResult { callback ->
+        startReVerification(processType, callback)
     }
 }
 
