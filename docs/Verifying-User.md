@@ -40,6 +40,10 @@ powerAuth.fetchActivationStatusWithCallback(
 
 ## Starting a re-verification (Re-KYC)
 
+<!-- begin box warning -->
+Requires **PA Enrollment Onboarding Server `2.2.3`** or newer. Calling `startReVerification` against an older PA Enrollment Onboarding Server will fail.
+<!-- end -->
+
 In some cases, you might require the user to repeat identity verification even though the `PowerAuthSDK` instance is already fully activated and does not need any verification (`needVerification()` is `false`). Deciding *when* a Re-KYC should be triggered is entirely up to the app/backend logic (a business rule, a server-driven prompt, or a dedicated backend call outside of this SDK).
 
 To start such a re-verification (Re-KYC), call `VerificationService.startReVerification`. Unlike `ActivationService.start`, this call does not create a new PowerAuth activation - it reuses the current one. `additionalData` is optional and analogous to `credentials` passed to `start`.
