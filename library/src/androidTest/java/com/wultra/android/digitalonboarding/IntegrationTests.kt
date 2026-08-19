@@ -286,6 +286,77 @@ class IntegrationTests {
         }
     }
 
+    @Test
+    fun startReVerificationAfterOnboardingActivation() {
+        runForAllEnvironments { env, helper ->
+            // Active and verified PowerAuth
+            val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
+
+            val preReKycStatus = pa.awaitActivationStatus(appContext)
+            assertFalse("Expected needVerification() == false before starting Re-KYC", preReKycStatus.needVerification())
+
+            // Re-KYC operates on the now-active PowerAuth instance, which may differ from
+            // helper.powerAuth if ACTIVATION_FINISH swapped to a new one.
+            val reKycHelper = TestHelper(
+                appContext = appContext,
+                environment = env,
+                processType = helper.processType,
+                customPaInstance = pa,
+            )
+
+            val reKycResult = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "Expected INTRO state after startReVerification, got: ${reKycResult.state.state}",
+                reKycResult.state is VerificationStateIntroData,
+            )
+
+            // startReVerification alone must not flip needVerification() yet - only `/api/identity/init`
+            // (triggered by the subsequent `VerificationService.start(...)` call) does that.
+            val statusAfterReVerification = pa.awaitActivationStatus(appContext)
+            assertFalse(
+                "startReVerification alone must not flip needVerification() before identity/init",
+                statusAfterReVerification.needVerification(),
+            )
+
+            val introState = reKycResult.state as VerificationStateIntroData
+            reKycHelper.verification.awaitStart(
+                if (introState.consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
+            )
+            reKycHelper.assertVerificationState(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
+
+            // The reliable check regardless of which flag name the backend uses.
+            val status = pa.awaitActivationStatus(appContext)
+            assertTrue("Expected needVerification() after Re-KYC start()", status.needVerification())
+        }
+    }
+
+    @Test
+    fun startReVerificationCalledTwiceInARow() {
+        runForAllEnvironments { env, helper ->
+            val label = processLabel(helper)
+            val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
+
+            val reKycHelper = TestHelper(
+                appContext = appContext,
+                environment = env,
+                processType = helper.processType,
+                customPaInstance = pa,
+            )
+
+            val first = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "${label} Expected INTRO state after first startReVerification, got: ${first.state.state}",
+                first.state is VerificationStateIntroData,
+            )
+
+            val second = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "${label} Expected INTRO state after second startReVerification, got: ${second.state.state}",
+                second.state is VerificationStateIntroData,
+            )
+        }
+    }
+
     private fun runForAllEnvironments(block: (ServerEnvironment, TestHelper) -> Unit) {
         assumeTrue(
             "No androidTest/assets/config.json present or it does not contain environments. " +
@@ -387,5 +458,9 @@ class IntegrationTests {
     companion object {
         private const val DUMMY_JPEG_BASE64 =
             "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABkAGQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//2Q=="
+    }
+
+    private fun processLabel(helper: TestHelper): String {
+        return "[${helper.processType}]"
     }
 }

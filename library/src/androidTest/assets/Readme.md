@@ -12,6 +12,7 @@ The file format is:
     {
       "name": "smoke",
       "processTypes": ["onboarding"],
+      "reKycProcessType": "re-kyc",
       "esUrl": "https://example.com/enrollment-server/",
       "esoUrl": "https://example.com/enrollment-server-onboarding/",
       "mobileConfig": "...",
@@ -34,6 +35,7 @@ The file format is:
 - `otpMock`: OTP detail endpoint strategy.
 - `servicesMock`: Whether the environment supports mocked downstream services required by the full integration flow.
 - `authorization`: Optional base64-encoded `user:password` value for Basic auth used by approval-related test requests.
+- `reKycProcessType`: Re-KYC onboarding process type.
 
 ## `otpMock` values
 

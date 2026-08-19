@@ -5,6 +5,7 @@
       "processTypes": [
         "onboarding"
       ],
+      "reKycProcessType": "re-kyc",
       "esUrl": "https://your-domain.example.com/powerauth-java-server",
       "esoUrl": "https://your-domain.example.com/enrollment-onboarding-server",
       "mobileConfig": "PA_FULL_CONFIGURATION_STRING",

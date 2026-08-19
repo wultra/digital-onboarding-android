@@ -68,8 +68,23 @@ internal class ProcessRequestData(@SerializedName("processId") val processId: St
 internal class ProcessResponseData(
     @SerializedName("processId") val processId: String,
     @SerializedName("onboardingStatus") val onboardingStatus: OnboardingStatus,
-    @SerializedName("activationCode") val activationCode: String?
+    @SerializedName("activationCode") val activationCode: String?,
+    /** Type of the activation used for this process. */
+    @SerializedName("activationType") val activationType: ActivationType?
 )
+
+/** Type of activation linkage used for a process. */
+internal enum class ActivationType {
+    /** Activation is initialized by the onboarding server; the activation code is returned when the process starts. */
+    @SerializedName("CODE") CODE,
+    /** Activation is initialized by the SDK. */
+    @SerializedName("IDENTITY") IDENTITY,
+    /** An already existing (and active) PowerAuth activation is reused for this process (Re-KYC). */
+    @SerializedName("ACTIVATION_ALREADY_EXISTS") ACTIVATION_ALREADY_EXISTS
+}
+
+/** Default additional data sent together with the Re-KYC start request when no custom value is provided. */
+internal class DefaultReVerificationData(@SerializedName("source") val source: String = "re-verification")
 internal class FinishActivationResponse(responseObject: FinishActivationResponseData, status: Status): ObjectResponse<FinishActivationResponseData>(responseObject, status)
 internal class FinishActivationResponseData(
     @SerializedName("activationCode") val activationCode: String
