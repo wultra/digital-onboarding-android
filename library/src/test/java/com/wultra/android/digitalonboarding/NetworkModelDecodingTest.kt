@@ -16,8 +16,10 @@
 
 package com.wultra.android.digitalonboarding
 
+import com.wultra.android.digitalonboarding.networking.model.ActivationType
 import com.wultra.android.digitalonboarding.networking.model.ConfigurationResponseData
 import com.wultra.android.digitalonboarding.networking.model.IdentityVerificationStatus
+import com.wultra.android.digitalonboarding.networking.model.ProcessResponseData
 import com.wultra.android.digitalonboarding.networking.model.VerificationPhase
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponseData
 import org.junit.Assert.assertEquals
@@ -134,5 +136,40 @@ class NetworkModelDecodingTest {
         assertEquals(VerificationPhase.DOCUMENT_UPLOAD, response.phase)
         assertEquals(false, response.consentRequired)
         assertNull(response.rejectReason)
+    }
+
+    @Test
+    fun processResponseDataDecodesActivationTypeWhenPresent() {
+        val response = gson.fromJson(
+            """
+            {
+              "processId": "abc-123",
+              "onboardingStatus": "VERIFICATION_IN_PROGRESS",
+              "activationCode": null,
+              "activationType": "ACTIVATION_ALREADY_EXISTS"
+            }
+            """.trimIndent(),
+            ProcessResponseData::class.java,
+        )
+
+        assertEquals("abc-123", response.processId)
+        assertEquals(ActivationType.ACTIVATION_ALREADY_EXISTS, response.activationType)
+    }
+
+    @Test
+    fun processResponseDataDecodesWithoutActivationTypeForOlderBackends() {
+        val response = gson.fromJson(
+            """
+            {
+              "processId": "abc-123",
+              "onboardingStatus": "VERIFICATION_IN_PROGRESS",
+              "activationCode": null
+            }
+            """.trimIndent(),
+            ProcessResponseData::class.java,
+        )
+
+        assertEquals("abc-123", response.processId)
+        assertNull(response.activationType)
     }
 }

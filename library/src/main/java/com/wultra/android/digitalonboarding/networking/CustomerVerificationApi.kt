@@ -37,6 +37,8 @@ import com.wultra.android.digitalonboarding.networking.model.PresenceCheckSubmit
 import com.wultra.android.digitalonboarding.networking.model.ResendOtpResponse
 import com.wultra.android.digitalonboarding.networking.model.SDKInitRequest
 import com.wultra.android.digitalonboarding.networking.model.SDKInitResponse
+import com.wultra.android.digitalonboarding.networking.model.StartOnboardingRequest
+import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
 import com.wultra.android.digitalonboarding.networking.model.StartRequest
 import com.wultra.android.digitalonboarding.networking.model.VerificationResendOtpRequest
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponse
@@ -79,6 +81,8 @@ internal class CustomerVerificationApi(
         private val presenceCheckEndpoint = EndpointAuthenticated<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
         private val presenceCheckSubmitEndpoint = EndpointAuthenticated<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
         private val resendOtpEndpoint = EndpointAuthenticated<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
+        // Same path as `onboarding/start`, but with ACTIVATION e2ee scope and a `uriId` so the request is signed with the POSSESSION factor
+        private fun <T> startReVerificationEndpoint() = EndpointAuthenticated<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", "/api/onboarding/start", E2EEConfiguration.ACTIVATION_SCOPE)
         private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
         private val finishVerificationEndpoint = EndpointAuthenticatedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
     }
@@ -108,6 +112,26 @@ internal class CustomerVerificationApi(
         post(
             StartRequest(processId),
             startEndpoint,
+            PowerAuthAuthentication.possession(),
+            null,
+            null,
+            listener
+        )
+    }
+
+    /**
+     * Starts a re-verification (Re-KYC) process for an already active PowerAuth instance, without creating a
+     * new activation. Signed with the POSSESSION factor and encrypted with the ECIES activation scope.
+     *
+     * @param T Type that represents the custom additional data payload.
+     * @param additionalData Custom additional data object passed to the server together with the Re-KYC start request.
+     * @param processType The process type identification. If not specified, the default process type will be used.
+     * @param listener Result listener
+     */
+    fun <T> startReVerification(additionalData: T, processType: String?, listener: IApiCallResponseListener<StartOnboardingResponse>) {
+        post(
+            StartOnboardingRequest(additionalData, processType),
+            startReVerificationEndpoint(),
             PowerAuthAuthentication.possession(),
             null,
             null,

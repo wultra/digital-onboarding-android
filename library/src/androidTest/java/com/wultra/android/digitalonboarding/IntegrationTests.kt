@@ -195,7 +195,7 @@ class IntegrationTests {
                     "${label} Skipping rest of onboarding flow — servicesMock is disabled for '${env.name}'",
                 )
                 for (document in documentsToScan) {
-                    val files = documentUploadFiles(document)
+                    val files = document.uploadFiles()
                     helper.verification.awaitDocumentsSubmit(files)
                     waitForNonProcessingStatus()
                     helper.verification.awaitDocumentsSubmit(files)
@@ -209,7 +209,7 @@ class IntegrationTests {
             // Handle document re-scan when documents are rejected.
             if (state.state == VerificationState.SCAN_DOCUMENT) {
                 for (document in documentsToScan) {
-                    helper.verification.awaitDocumentsSubmit(documentUploadFiles(document))
+                    helper.verification.awaitDocumentsSubmit(document.uploadFiles())
                     statusResult = waitForNonProcessingStatus()
                     state = statusResult.state
                 }
@@ -297,6 +297,77 @@ class IntegrationTests {
         }
     }
 
+    @Test
+    fun startReVerificationAfterOnboardingActivation() {
+        runForAllEnvironments { env, helper ->
+            // Active and verified PowerAuth
+            val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
+
+            val preReKycStatus = pa.awaitActivationStatus(appContext)
+            assertFalse("Expected needVerification() == false before starting Re-KYC", preReKycStatus.needVerification())
+
+            // Re-KYC operates on the now-active PowerAuth instance, which may differ from
+            // helper.powerAuth if ACTIVATION_FINISH swapped to a new one.
+            val reKycHelper = TestHelper(
+                appContext = appContext,
+                environment = env,
+                processType = helper.processType,
+                customPaInstance = pa,
+            )
+
+            val reKycResult = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "Expected INTRO state after startReVerification, got: ${reKycResult.state.state}",
+                reKycResult.state is VerificationStateIntroData,
+            )
+
+            // startReVerification alone must not flip needVerification() yet - only `/api/identity/init`
+            // (triggered by the subsequent `VerificationService.start(...)` call) does that.
+            val statusAfterReVerification = pa.awaitActivationStatus(appContext)
+            assertFalse(
+                "startReVerification alone must not flip needVerification() before identity/init",
+                statusAfterReVerification.needVerification(),
+            )
+
+            val introState = reKycResult.state as VerificationStateIntroData
+            reKycHelper.verification.awaitStart(
+                if (introState.consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
+            )
+            reKycHelper.assertVerificationState(VerificationState.DOCUMENTS_TO_SCAN_SELECT)
+
+            // The reliable check regardless of which flag name the backend uses.
+            val status = pa.awaitActivationStatus(appContext)
+            assertTrue("Expected needVerification() after Re-KYC start()", status.needVerification())
+        }
+    }
+
+    @Test
+    fun startReVerificationCalledTwiceInARow() {
+        runForAllEnvironments { env, helper ->
+            val label = processLabel(helper)
+            val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
+
+            val reKycHelper = TestHelper(
+                appContext = appContext,
+                environment = env,
+                processType = helper.processType,
+                customPaInstance = pa,
+            )
+
+            val first = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "${label} Expected INTRO state after first startReVerification, got: ${first.state.state}",
+                first.state is VerificationStateIntroData,
+            )
+
+            val second = reKycHelper.verification.awaitStartReVerification(env.reKycProcessType)
+            assertTrue(
+                "${label} Expected INTRO state after second startReVerification, got: ${second.state.state}",
+                second.state is VerificationStateIntroData,
+            )
+        }
+    }
+
     private fun runForAllEnvironments(block: (ServerEnvironment, TestHelper) -> Unit) {
         assumeTrue(
             "No androidTest/assets/config.json present or it does not contain environments. " +
@@ -314,16 +385,6 @@ class IntegrationTests {
                 block(environment, helper)
             }
         }
-    }
-
-    private fun documentUploadFiles(document: com.wultra.android.digitalonboarding.networking.model.ConfigurationDocument): List<DocumentFile> {
-        val files = mutableListOf(
-            document.getMockDocumentToUpload(DocumentSide.FRONT),
-        )
-        if (document.sideCount == 2) {
-            files += document.getMockDocumentToUpload(DocumentSide.BACK)
-        }
-        return files
     }
 
     private fun processLabel(helper: TestHelper): String {
