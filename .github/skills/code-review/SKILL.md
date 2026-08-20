@@ -5,20 +5,25 @@ description: Review pull requests in the Digital Onboarding SDK for Android. Use
 
 # Digital Onboarding Android SDK review
 
+This is a strictly read-only review. Review only PR and repository content
+already available. Do not run or suggest commands, scripts, builds, tests,
+linters, formatters, validation tasks, or Git operations.
+
 ## Review contract
 
-Before reviewing, confirm the PR target, head, and current branch. The normal
-base is `develop`; releases target `release/a.b.x`. Default to approval and
-report only a demonstrated defect from the PR with path/line, concrete impact,
-and a correction. Do not make formatting, style, CI/workflow, speculative, or
-generic test comments. Never post to GitHub without user approval; prefix any
-postable content with `🤖`. Only check grammar in public documentation/Javadoc,
-and only when the PR base is not a release branch.
+Use the already available PR metadata to identify the target and head. The
+normal base is `develop`; releases target `release/a.b.x`. Default to approval
+and report only a demonstrated defect from the PR with path/line, concrete
+impact, and a correction. Do not make formatting, style, CI/workflow,
+speculative, or generic test comments. Never post to GitHub without user
+approval; prefix any postable content with `🤖`. Only check grammar in public
+documentation/Javadoc, and only when the PR base is not a release branch.
 
 Public API/behavior changes require relevant public documentation and
 `docs/Changelog.md`. The publication version is `VERSION_NAME` in
 `library/gradle.properties`; all release-to-`develop` declarations must be
-`0.0.1-dev`. `scripts/prepare-release.sh` owns coordinated release preparation.
+`0.0.1-dev`. The tracked `scripts/prepare-release.sh` file defines coordinated
+release preparation changes.
 
 ## Module map and public flow
 
@@ -62,7 +67,8 @@ contract requires otherwise, or state loss due to asynchronous races. Do not
 convert an error to a nullable/success value. Changes in phase/status mapping
 must preserve all explicit combinations and update
 `VerificationStatusNextStepTest`, `DocumentActionTest`, or
-`VerificationScanProcessTest` when their existing coverage applies.
+`VerificationScanProcessTest` when their existing coverage applies; inspect
+these tests as available review evidence.
 
 `Storage` persists scan/process state across restarts. Reject changes that use
 an unstable process key, erase retry-required document metadata, or break
@@ -80,8 +86,5 @@ responses through `WDOLogger`/`WDOLogListener` or exceptions. Do not weaken
 encrypted storage/key management or treat protocol/transport failure as
 successful onboarding.
 
-For relevant behavior changes, focused validation is
-`./scripts/test.sh -type unit`, a selected `:library:testDebugUnitTest`, or
-`./scripts/test.sh -type android`; public/library changes can also use
-`./gradlew clean build`. `./scripts/lint.sh` is strict linting; `preBuild`
-ktlint is intentionally non-failing. Do not report CI configuration concerns.
+Tracked scripts, build configuration, tests, and workflows may be inspected as
+review evidence only. Do not report CI configuration concerns.
