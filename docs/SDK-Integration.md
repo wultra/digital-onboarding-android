@@ -21,7 +21,8 @@ repositories {
 Then add a dependency
 
 ```kotlin
-implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:3.0.0")
+// Replace VERSION_DEFINITION with the actual library version.
+implementation("com.wultra.android.digitalonboarding:wultra-digital-onboarding:VERSION_DEFINITION")
 ```
 
 ## Read next
