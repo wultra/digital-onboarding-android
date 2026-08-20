@@ -45,11 +45,11 @@ constants live in `buildSrc`. Public API is in
   `CustomerConfigurationApi` with `networking/model/` own wire models and
   signed/encrypted endpoint transport.
 
-Public docs are `docs/SDK-Integration.md`, `Device-Activation.md`,
-`Process-Configuration.md`, `Verifying-User.md`, `Language-Configuration.md`,
-`Logging.md`, migration guides, and `docs/Changelog.md`. JVM tests are under
-`library/src/test`; integration tests/config fixtures are under
-`library/src/androidTest`.
+Public docs are `docs/SDK-Integration.md`, `docs/Device-Activation.md`,
+`docs/Process-Configuration.md`, `docs/Verifying-User.md`,
+`docs/Language-Configuration.md`, `docs/Logging.md`, migration guides under
+`docs/`, and `docs/Changelog.md`. JVM tests are under `library/src/test`;
+integration tests/config fixtures are under `library/src/androidTest`.
 
 ## State, callbacks, and serialization
 
