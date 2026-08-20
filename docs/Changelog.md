@@ -2,6 +2,10 @@
 
 ## TBA
 
+- TBA
+
+## 3.1.0
+
 - Added `VerificationService.startReVerification` to support Re-KYC (repeated identity verification) for an already active PowerAuth instance, without creating a new activation. Requires PA Enrollment Onboarding Server `2.2.3` or newer.
 - `ProcessResponseData` now contains an optional `activationType` property indicating whether a new activation was created or an existing one was reused.
 
