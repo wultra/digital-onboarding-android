@@ -133,7 +133,6 @@ The version number has format `major.minor.patch`, for example `2.0.0`.
 
 - updated `library/gradle.properties`
 - updated `docs/Changelog.md`
-- updated `docs/SDK-Integration.md` when version examples or compatibility information change
 - updated migration guide or other public documentation if the release changes the public API
 
 You can use:
@@ -146,8 +145,10 @@ Verification modes:
 
 ```bash
 ./scripts/prepare-release.sh -v VERSION --verify
-./scripts/prepare-release.sh
+./scripts/prepare-release.sh --prepare-dev
 ```
+
+On non-release branches, keep `library/gradle.properties` (`VERSION_NAME`) at `0.0.1-dev`.
 
 To prepare publication artifacts:
 
