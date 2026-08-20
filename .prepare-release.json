@@ -6,12 +6,15 @@
     "type": "android-oss",
     "publishScript": "scripts/build-and-publish.sh central"
   },
+  "scriptVersion": 2,
+  "devVersion": "0.0.1-dev",
   "files": [
     {
       "description": "Gradle properties file.",
       "path": "library/gradle.properties",
       "type": "version_replace",
-      "match": "VERSION_NAME=%VERSION%"
+      "match": "VERSION_NAME=%VERSION%",
+      "devChange": true
     },
     {
       "description": "SDK integration tutorial.",
@@ -20,16 +23,17 @@
       "match": "wultra-digital-onboarding:%VERSION%"
     },
     {
-      "description": "SDK integration tutorial.",
-      "path": "docs/SDK-Integration.md",
-      "type": "versionstream_verify",
-      "match": "`%VERSION_STREAM%`"
+      "description": "Changelog for the Wultra documentation.",
+      "path": "docs/Changelog.md",
+      "type": "tba_replace",
+      "match": "## TBA",
+      "devChangelog": true
     },
     {
-      "description": "Changelog for the wultra documentation.",
+      "description": "Verify that the changelog does not contain a TBA placeholder.",
       "path": "docs/Changelog.md",
-      "type": "version_verify",
-      "match": "## %VERSION%"
+      "type": "verify_not_containing",
+      "match": "- TBA"
     }
   ],
   "scripts": [
