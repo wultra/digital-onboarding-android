@@ -403,6 +403,10 @@ class IntegrationTests {
                 )
                 return@runForAllEnvironments
             }
+            assertFalse(
+                "${label} Failure should not be a connectivity/offline error: ${failure.reason.e}",
+                failure.reason.isOffline(),
+            )
             Log.i("IntegrationTests", "${label} Expected failure for unknown re-KYC process type: ${failure.reason.e}")
         }
     }
