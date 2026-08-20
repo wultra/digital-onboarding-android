@@ -1,15 +1,18 @@
 # Changelog
 
-## 3.0.0 (Aug, 2026)
+## TBA
+
+- Added `VerificationService.startReVerification` to support Re-KYC (repeated identity verification) for an already active PowerAuth instance, without creating a new activation. Requires PA Enrollment Onboarding Server `2.2.3` or newer.
+- `ProcessResponseData` now contains an optional `activationType` property indicating whether a new activation was created or an existing one was reused.
+
+## 3.0.0
 
 - Release requires `PowerAuth SDK v2.0.0` or higher and `Networking SDK for Android v2.0.0` or higher.
 - **⚠️ BREAKING**: `VerificationStateOtpData` now carries only `remainingAttempts`.
 - `ConfigurationResponseData` now includes optional `otpResendPeriodSeconds` (`null` on older backends that do not provide the field yet).
 - Fixed R8 minification ([#76](https://github.com/wultra/digital-onboarding-android/issues/76)).
-- Added `VerificationService.startReVerification` to support Re-KYC (repeated identity verification) for an already active PowerAuth instance, without creating a new activation. Requires PA Enrollment Onboarding Server `2.2.3` or newer.
-- `ProcessResponseData` now contains an optional `activationType` property indicating whether a new activation was created or an existing one was reused.
 
-## 2.0.0 (Apr, 2026)
+## 2.0.0
 
 - This release requires `enrollment-onboarding-server` version `2.1.0` or higher.
 - Fixed: Document scan flow no longer proceeds to processing when additional documents are still selected locally.
@@ -37,39 +40,39 @@
 - `VerificationService.documentsSubmit` now automatically resolves missing `originalDocumentId` values from cached scan process data (temporary workaround until backend auto-resolution is available).
 - Demo `getOTP(...)` now accepts endpoint strategy via `GetOTPEndpointStrategy`.
 
-## 1.3.0 (Oct, 2024)
+## 1.3.0
 
 - Using PowerAuth SDK `1.9.x`
 - Minor fixes
 
-## 1.2.0 (May, 2024)
+## 1.2.0
 
 - Changed name of the log class to the `WDOLogger`
 - Added listener to the log class
 
-## 1.1.1 (Mar 6, 2024)
+## 1.1.1
 
 - Minor fixes
 - Improved error handling
 - Introduced `WDOResult` that provides strong concrete error types
 
-## 1.1.0 (Mar 4, 2024)
+## 1.1.0
 
 - Using PowerAuth SDK `1.8.x`
 
-## 1.0.3 (Mar 4, 2024)
+## 1.0.3
 
 - Documentation improvements
 - Logs improvements
 
-## 1.0.2 (Nov 10, 2023)
+## 1.0.2
 
 - Fixed error handling in verifying OTP endpoint
 
-## 1.0.1 (Oct 3, 2023)
+## 1.0.1
 
 - Fixed bug where in some cases callbacks were not called
 
-## 1.0.0 (Aug 8, 2023)
+## 1.0.0
 
 Initial release.
