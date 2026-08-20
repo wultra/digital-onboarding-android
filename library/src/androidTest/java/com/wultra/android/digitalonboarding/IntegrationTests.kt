@@ -300,6 +300,8 @@ class IntegrationTests {
     @Test
     fun startReVerificationAfterOnboardingActivation() {
         runForAllEnvironments { env, helper ->
+            val label = processLabel(helper)
+
             // Active and verified PowerAuth
             val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
 
@@ -311,7 +313,7 @@ class IntegrationTests {
             val reKycHelper = TestHelper(
                 appContext = appContext,
                 environment = env,
-                processType = helper.processType,
+                processType = env.reKycProcessType,
                 customPaInstance = pa,
             )
 
@@ -338,6 +340,16 @@ class IntegrationTests {
             // The reliable check regardless of which flag name the backend uses.
             val status = pa.awaitActivationStatus(appContext)
             assertTrue("Expected needVerification() after Re-KYC start()", status.needVerification())
+
+            // Drive the re-verification flow to completion, same as a regular onboarding verification.
+            val reKycConfig = reKycHelper.getConfig()
+            val reKycActivePowerAuth = reKycHelper.driveVerificationToSuccess(reKycConfig) ?: return@runForAllEnvironments
+
+            // Once re-verification succeeds, needVerification() should be cleared again.
+            val finalStatus = reKycActivePowerAuth.awaitActivationStatus(appContext)
+            assertFalse("${label} Expected needVerification() == false after Re-KYC success", finalStatus.needVerification())
+
+            Log.i("IntegrationTests", "${label} Re-KYC test successful")
         }
     }
 
@@ -350,7 +362,7 @@ class IntegrationTests {
             val reKycHelper = TestHelper(
                 appContext = appContext,
                 environment = env,
-                processType = helper.processType,
+                processType = env.reKycProcessType,
                 customPaInstance = pa,
             )
 
@@ -365,6 +377,37 @@ class IntegrationTests {
                 "${label} Expected INTRO state after second startReVerification, got: ${second.state.state}",
                 second.state is VerificationStateIntroData,
             )
+        }
+    }
+
+    @Test
+    fun startReVerificationWithUnknownProcessTypeFails() {
+        runForAllEnvironments { env, helper ->
+            val label = processLabel(helper)
+            val pa = helper.startAndActivateAndVerify() ?: return@runForAllEnvironments
+
+            val reKycHelper = TestHelper(
+                appContext = appContext,
+                environment = env,
+                processType = env.reKycProcessType,
+                customPaInstance = pa,
+            )
+            val unknownProcessType = "unknown-re-kyc-${java.util.UUID.randomUUID()}"
+
+            val result = reKycHelper.verification.awaitStartReVerificationResult(unknownProcessType)
+            val failure = result.failure
+            if (failure == null) {
+                fail(
+                    "${label} Expected startReVerification with unknown process type '$unknownProcessType' " +
+                        "to fail, got state: ${result.success?.state?.state}",
+                )
+                return@runForAllEnvironments
+            }
+            assertFalse(
+                "${label} Failure should not be a connectivity/offline error: ${failure.reason.e}",
+                failure.reason.isOffline(),
+            )
+            Log.i("IntegrationTests", "${label} Expected failure for unknown re-KYC process type: ${failure.reason.e}")
         }
     }
 
