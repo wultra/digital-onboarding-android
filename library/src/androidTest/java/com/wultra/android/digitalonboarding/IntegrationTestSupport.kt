@@ -188,6 +188,16 @@ internal class TestHelper(
             throw SimpleError("Expected DOCUMENTS_TO_SCAN_SELECT after start(), got: ${startedVerification.state.state}")
         }
 
+        return driveVerificationToSuccess(config)
+    }
+
+    // Drives an already-started verification process (expected to be in the DOCUMENTS_TO_SCAN_SELECT
+    // state) through document selection/scanning, presence check, OTP and (optional) activation finish,
+    // all the way to the SUCCESS state.
+    //
+    // Returns the PowerAuth instance that ends up active once the flow finishes, or null when the flow
+    // cannot be completed because servicesMock is disabled for the environment.
+    fun driveVerificationToSuccess(config: ConfigurationResponseData): PowerAuthSDK? {
         val documentsToScan = config.getDocumentsToScan()
         verification.awaitDocumentsSetSelectedTypes(documentsToScan.map { it.patchedType() })
 
