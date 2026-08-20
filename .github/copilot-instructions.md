@@ -53,5 +53,8 @@ Integration test configuration:
 - When changing verification mapping logic, update related tests together (`VerificationStatusNextStepTest`, `DocumentActionTest`, `VerificationScanProcessTest`).
 - `library/build.gradle.kts` runs a local `ktlint` task during `preBuild` with `--no-error`; do not treat `build` as a lint gate. Use `./scripts/lint.sh` for strict linting.
 - `.editorconfig` intentionally relaxes several ktlint rules (for example annotation formatting and trailing commas) to keep networking model objects compact; follow existing style in `networking/model/*`.
-- Release metadata convention: version is in `library/gradle.properties` (`VERSION_NAME`), and release notes are maintained in `docs/Changelog.md`.
-- Contribution flow convention from `.github/CONTRIBUTING.md`: PRs target `develop`, and branch names follow `issues/<issue-number>-<short-description>`.
+## Releases and branching
+
+- Branch from and open pull requests into `develop`; use `issues/<issue-number>-<short-description>` branch names.
+- On non-release branches, keep `library/gradle.properties` (`VERSION_NAME`) at `0.0.1-dev`.
+- Prepare the artifact and changelog for a release with `sh scripts/prepare-release.sh -v X.Y.Z`. Pass `--verify` to check a prepared release and `--prepare-dev` after a release to restore development metadata.
