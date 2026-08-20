@@ -1,3 +1,8 @@
+---
+name: code-review
+description: Review pull requests in the Digital Onboarding SDK for Android. Use when reviewing Kotlin APIs, onboarding state, identity verification, security, or documentation changes.
+---
+
 # Digital Onboarding Android SDK review
 
 ## Review contract
