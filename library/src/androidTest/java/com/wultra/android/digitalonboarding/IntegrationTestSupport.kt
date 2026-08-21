@@ -26,7 +26,6 @@ import com.wultra.android.powerauth.networking.error.ApiError
 import io.getlime.security.powerauth.core.ActivationStatus
 import io.getlime.security.powerauth.core.Password
 import io.getlime.security.powerauth.exception.PowerAuthErrorCodes
-import io.getlime.security.powerauth.exception.PowerAuthErrorException
 import io.getlime.security.powerauth.networking.exceptions.FailedApiException
 import io.getlime.security.powerauth.networking.response.CreateActivationResult
 import io.getlime.security.powerauth.networking.response.IActivationStatusListener
@@ -35,8 +34,6 @@ import io.getlime.security.powerauth.sdk.PowerAuthSDK
 import okhttp3.OkHttpClient
 import java.io.BufferedInputStream
 import java.io.BufferedReader
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
@@ -68,8 +65,7 @@ internal data class ServerEnvironment(
     val esoUrl: String,
     val mobileConfig: String,
     val otpMock: String,
-    val servicesMock: Boolean,
-    val authorization: String?,
+    val servicesMock: Boolean
 )
 
 internal data class ServerEnvironmentData(
@@ -113,10 +109,6 @@ internal class TestHelper(
     val activation = ActivationService(environment.esoUrl, appContext, OkHttpClient(), powerAuth)
     val verification = VerificationService(environment.esoUrl, OkHttpClient(), appContext, powerAuth)
     val configuration = ConfigurationService(environment.esoUrl, appContext, OkHttpClient(), powerAuth)
-
-    // Credentials used for activation (set after startAndActivate).
-    var lastCredentials: SampleCredentials? = null
-        private set
 
     // Creates a fresh PowerAuth instance bound to the current environment.
     fun createNewPowerAuth(): PowerAuthSDK = newPowerAuth(appContext, environment)
@@ -168,8 +160,7 @@ internal class TestHelper(
     }
 
     // Runs the start + activate bootstrap flow and returns config with consent requirement flag.
-    fun startAndActivate(credentials: SampleCredentials = SampleCredentials.demo()): Pair<ConfigurationResponseData, Boolean>? {
-        lastCredentials = credentials
+    fun startAndActivate(credentials: SampleCredentials = SampleCredentials.demo()): Pair<ConfigurationResponseData, Boolean> {
         val config = getConfig()
         start(credentials)
 
@@ -190,7 +181,7 @@ internal class TestHelper(
 
     // Runs startAndActivate() and then completes the whole verification flow
     fun startAndActivateAndVerify(credentials: SampleCredentials = SampleCredentials.demo()): PowerAuthSDK? {
-        val (config, consentRequired) = startAndActivate(credentials) ?: return null
+        val (config, consentRequired) = startAndActivate(credentials)
 
         val startedVerification = verification.awaitStart(
             if (consentRequired) ConsentResponse.APPROVED else ConsentResponse.NOT_REQUIRED,
@@ -372,7 +363,7 @@ internal fun ConfigurationDocument.uploadFiles(): List<DocumentFile> {
 
 // Detects whether API error maps to known PowerAuth transport/runtime error families.
 internal fun ApiError.isPowerAuthError(): Boolean {
-    return e is FailedApiException || e is PowerAuthErrorException
+    return e is FailedApiException
 }
 
 // Resolves OTP retrieval strategy from environment configuration.
@@ -392,34 +383,6 @@ internal fun newPowerAuth(appContext: Context, environment: ServerEnvironment): 
         environment.mobileConfig,
     ).build()
     return PowerAuthSDK.Builder(configuration).build(appContext)
-}
-
-// Executes a synchronous JSON HTTP request and returns response body on 2xx status.
-internal fun executeHttp(url: URL, method: String, authorization: String? = null, body: String? = null): String {
-    val connection = url.openConnection() as HttpURLConnection
-    connection.requestMethod = method
-    connection.connectTimeout = 60_000
-    connection.readTimeout = 60_000
-    connection.setRequestProperty("Content-Type", "application/json")
-    if (authorization != null) {
-        connection.setRequestProperty("Authorization", "Basic ${authorization}")
-    }
-
-    if (body != null) {
-        connection.doOutput = true
-        OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { it.write(body) }
-    }
-
-    val code = connection.responseCode
-    if (code !in 200..299) {
-        val error = connection.errorStream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
-        connection.disconnect()
-        throw SimpleError("HTTP ${method} ${url} failed with code ${code}: ${error}")
-    }
-
-    val response = connection.inputStream.bufferedReader().use(BufferedReader::readText)
-    connection.disconnect()
-    return response
 }
 
 // Await wrappers below convert async callback-based service APIs into blocking calls used by tests.
@@ -632,7 +595,7 @@ internal fun PowerAuthSDK.awaitActivationStatus(appContext: Context): Activation
         appContext,
         object : IActivationStatusListener {
             // Stores successful activation status from callback.
-            override fun onActivationStatusSucceed(status: ActivationStatus?) {
+            override fun onActivationStatusSucceed(status: ActivationStatus) {
                 statusRef.set(status)
                 latch.countDown()
             }
