@@ -17,12 +17,6 @@
       "devChange": true
     },
     {
-      "description": "SDK integration tutorial.",
-      "path": "docs/SDK-Integration.md",
-      "type": "version_replace",
-      "match": "wultra-digital-onboarding:%VERSION%"
-    },
-    {
       "description": "Changelog for the Wultra documentation.",
       "path": "docs/Changelog.md",
       "type": "tba_replace",
