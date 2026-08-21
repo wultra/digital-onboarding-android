@@ -10,8 +10,7 @@
       "esoUrl": "https://your-domain.example.com/enrollment-onboarding-server",
       "mobileConfig": "PA_FULL_CONFIGURATION_STRING",
       "otpMock": "AUTO",
-      "servicesMock": true,
-      "authorization": "BASE64_USER_COLON_PASSWORD"
+      "servicesMock": true
     }
   ]
 }

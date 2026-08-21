@@ -17,8 +17,7 @@ The file format is:
       "esoUrl": "https://example.com/enrollment-server-onboarding/",
       "mobileConfig": "...",
       "otpMock": "AUTO",
-      "servicesMock": true,
-      "authorization": "base64-user-colon-password"
+      "servicesMock": true
     }
   ]
 }
@@ -34,7 +33,6 @@ The file format is:
 - `mobileConfig`: PowerAuth mobile configuration string for the given environment.
 - `otpMock`: OTP detail endpoint strategy.
 - `servicesMock`: Whether the environment supports mocked downstream services required by the full integration flow.
-- `authorization`: Optional base64-encoded `user:password` value for Basic auth used by approval-related test requests.
 - `reKycProcessType`: Re-KYC onboarding process type.
 
 ## `otpMock` values
@@ -42,17 +40,6 @@ The file format is:
 - `ESO`: Use SDK demo OTP retrieval (`ActivationService` / `VerificationService` internal demo endpoint calls).
 - `AUTO`: Automatically derive mock OTP endpoint from `esoUrl` by replacing `-eso` with `-eso-mock` and appending `/otp/detail`.
 - Full URL: Use the provided URL as a custom OTP detail endpoint.
-
-## `authorization`
-
-This value is used only in integration tests that simulate manual onboarding approval.
-
-It is sent as a Basic auth header when tests call private test APIs on the enrollment onboarding server:
-
-- `GET /api/private/test/process/{processId}/identityVerifications`
-- `POST /api/private/client/approve`
-
-If the environment does not require or allow this approval flow, the property can stay unset.
 
 ## Notes
 

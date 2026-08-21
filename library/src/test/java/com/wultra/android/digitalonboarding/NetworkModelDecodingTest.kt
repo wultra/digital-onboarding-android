@@ -30,7 +30,7 @@ class NetworkModelDecodingTest {
     private val gson = Utils.defaultGsonBuilder().create()
 
     @Test
-    fun verificationStatusResponseDecodesWithoutDeprecatedConfig() {
+    fun verificationStatusResponseDecodesWhenConfigIsAbsent() {
         val response = gson.fromJson(
             """
             {
@@ -53,7 +53,7 @@ class NetworkModelDecodingTest {
     }
 
     @Test
-    fun verificationStatusResponseIgnoresDeprecatedConfigWhenPresent() {
+    fun verificationStatusResponseDecodesWhenConfigIsPresent() {
         val response = gson.fromJson(
             """
             {
