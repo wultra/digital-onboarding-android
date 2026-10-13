@@ -1,5 +1,9 @@
 # Changelog
 
+## TBA
+
+- Updated to `PowerAuth SDK v2.0.1` which restores activation state enum ordinal ([#94](https://github.com/wultra/digital-onboarding-android/issues/94))
+
 ## 3.1.0
 
 - Added `VerificationService.startReVerification` to support Re-KYC (repeated identity verification) for an already active PowerAuth instance, without creating a new activation. Requires PA Enrollment Onboarding Server `2.2.3` or newer.

@@ -81,7 +81,7 @@ dependencies {
     implementation("androidx.security:security-crypto-ktx:1.1.0")
 
     // Dependencies
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:2.0.0")
+    compileOnly("com.wultra.android.powerauth:powerauth-sdk:2.0.1")
 
     // Unit tests
     testImplementation("junit:junit:4.13.2")
@@ -90,5 +90,5 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:core-ktx:1.7.0")
-    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:2.0.0")
+    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:2.0.1")
 }
