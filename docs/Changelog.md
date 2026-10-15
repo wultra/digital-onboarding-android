@@ -1,6 +1,6 @@
 # Changelog
 
-## TBA
+## 3.1.1
 
 - Updated to `PowerAuth SDK v2.0.1` which restores activation state enum ordinal ([#94](https://github.com/wultra/digital-onboarding-android/issues/94))
 
