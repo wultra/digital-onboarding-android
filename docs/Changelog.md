@@ -2,7 +2,7 @@
 
 ## TBA
 
-- TBA
+- Updated to `PowerAuth SDK v2.1.x` (any `2.1` patch release is accepted).
 
 ## 3.1.1
 
