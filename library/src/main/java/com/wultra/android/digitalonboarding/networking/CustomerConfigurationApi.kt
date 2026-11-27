@@ -44,8 +44,10 @@ internal class CustomerConfigurationApi(
 ) : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
-        private val configurationEndpoint = EndpointBasic<ConfigurationRequest, ConfigurationResponse>(
+        private val configurationEndpoint = EndpointBasic(
             "api/configuration",
+            ConfigurationRequest::class.java,
+            ConfigurationResponse::class.java,
             E2EEConfiguration.APPLICATION_SCOPE
         )
     }

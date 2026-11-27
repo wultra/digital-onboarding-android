@@ -175,6 +175,8 @@ internal fun Api.getOtp(
         OTPDetailRequest(OTPDetailRequestData(processId, otpType)),
         EndpointBasic(
             "api/onboarding/otp/detail",
+            OTPDetailRequest::class.java,
+            OTPDetailResponse::class.java,
             E2EEConfiguration.APPLICATION_SCOPE,
         ),
         null,

@@ -39,6 +39,7 @@ import com.wultra.android.digitalonboarding.networking.model.SDKInitRequest
 import com.wultra.android.digitalonboarding.networking.model.SDKInitResponse
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
+import com.wultra.android.digitalonboarding.networking.model.startOnboardingRequestClass
 import com.wultra.android.digitalonboarding.networking.model.StartRequest
 import com.wultra.android.digitalonboarding.networking.model.VerificationResendOtpRequest
 import com.wultra.android.digitalonboarding.networking.model.VerificationStatusResponse
@@ -70,21 +71,21 @@ internal class CustomerVerificationApi(
 : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
-        private val statusEndpoint = EndpointAuthenticatedWithToken<EmptyRequest, VerificationStatusResponse>("api/identity/status", "possession_universal")
-        private val startEndpoint = EndpointAuthenticated<StartRequest, StatusResponse>("api/identity/init", "/api/identity/init")
-        private val cancelEndpoint = EndpointAuthenticated<CancelRequest, StatusResponse>("api/identity/cleanup", "/api/identity/cleanup")
-        private val consentTextEndpoint = EndpointAuthenticatedWithToken<ConsentRequest, ConsentTextResponse>("/api/identity/consent/text", "possession_universal")
-        private val consentApproveEndpoint = EndpointAuthenticated<ConsentApproveRequest, ConsentApproveResponse>("/api/identity/consent/approve", "/api/identity/consent/approve")
-        private val docsStatusEndpoint = EndpointAuthenticatedWithToken<DocumentsStatusRequest, DocumentsStatusResponse>("api/identity/document/status", "possession_universal")
-        private val documentSdkInitEndpoint = EndpointAuthenticated<SDKInitRequest, SDKInitResponse>("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val submitDocsEndpointV2 = EndpointAuthenticatedWithToken<DocumentSubmitRequest, DocumentSubmitResponse>("api/v2/identity/document/submit", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val presenceCheckEndpoint = EndpointAuthenticated<PresenceCheckRequest, PresenceCheckResponse>("api/identity/presence-check/init", "/api/identity/presence-check/init", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val presenceCheckSubmitEndpoint = EndpointAuthenticated<PresenceCheckSubmitRequest, StatusResponse>("api/identity/presence-check/submit", "/api/identity/presence-check/submit")
-        private val resendOtpEndpoint = EndpointAuthenticated<VerificationResendOtpRequest, ResendOtpResponse>("api/identity/otp/resend", "/api/identity/otp/resend")
+        private val statusEndpoint = EndpointAuthenticatedWithToken("api/identity/status", "possession_universal", EmptyRequest::class.java, VerificationStatusResponse::class.java)
+        private val startEndpoint = EndpointAuthenticated("api/identity/init", "/api/identity/init", StartRequest::class.java, StatusResponse::class.java)
+        private val cancelEndpoint = EndpointAuthenticated("api/identity/cleanup", "/api/identity/cleanup", CancelRequest::class.java, StatusResponse::class.java)
+        private val consentTextEndpoint = EndpointAuthenticatedWithToken("/api/identity/consent/text", "possession_universal", ConsentRequest::class.java, ConsentTextResponse::class.java)
+        private val consentApproveEndpoint = EndpointAuthenticated("/api/identity/consent/approve", "/api/identity/consent/approve", ConsentApproveRequest::class.java, ConsentApproveResponse::class.java)
+        private val docsStatusEndpoint = EndpointAuthenticatedWithToken("api/identity/document/status", "possession_universal", DocumentsStatusRequest::class.java, DocumentsStatusResponse::class.java)
+        private val documentSdkInitEndpoint = EndpointAuthenticated("/api/identity/document/init-sdk", "/api/identity/document/init-sdk", SDKInitRequest::class.java, SDKInitResponse::class.java, E2EEConfiguration.ACTIVATION_SCOPE)
+        private val submitDocsEndpointV2 = EndpointAuthenticatedWithToken("api/v2/identity/document/submit", "possession_universal", DocumentSubmitRequest::class.java, DocumentSubmitResponse::class.java, E2EEConfiguration.ACTIVATION_SCOPE)
+        private val presenceCheckEndpoint = EndpointAuthenticated("api/identity/presence-check/init", "/api/identity/presence-check/init", PresenceCheckRequest::class.java, PresenceCheckResponse::class.java, E2EEConfiguration.ACTIVATION_SCOPE)
+        private val presenceCheckSubmitEndpoint = EndpointAuthenticated("api/identity/presence-check/submit", "/api/identity/presence-check/submit", PresenceCheckSubmitRequest::class.java, StatusResponse::class.java)
+        private val resendOtpEndpoint = EndpointAuthenticated("api/identity/otp/resend", "/api/identity/otp/resend", VerificationResendOtpRequest::class.java, ResendOtpResponse::class.java)
         // Same path as `onboarding/start`, but with ACTIVATION e2ee scope and a `uriId` so the request is signed with the POSSESSION factor
-        private fun <T> startReVerificationEndpoint() = EndpointAuthenticated<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", "/api/onboarding/start", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val otpVerifyEndpoint = EndpointBasic<VerifyOtpRequest, VerifyOtpResponse>("api/identity/otp/verify", E2EEConfiguration.ACTIVATION_SCOPE)
-        private val finishVerificationEndpoint = EndpointAuthenticatedWithToken<FinishActivationRequest, FinishActivationResponse>("api/identity/activation", "possession_universal", E2EEConfiguration.ACTIVATION_SCOPE)
+        private fun <T> startReVerificationEndpoint() = EndpointAuthenticated("api/onboarding/start", "/api/onboarding/start", startOnboardingRequestClass<T>(), StartOnboardingResponse::class.java, E2EEConfiguration.ACTIVATION_SCOPE)
+        private val otpVerifyEndpoint = EndpointBasic("api/identity/otp/verify", VerifyOtpRequest::class.java, VerifyOtpResponse::class.java, E2EEConfiguration.ACTIVATION_SCOPE)
+        private val finishVerificationEndpoint = EndpointAuthenticatedWithToken("api/identity/activation", "possession_universal", FinishActivationRequest::class.java, FinishActivationResponse::class.java, E2EEConfiguration.ACTIVATION_SCOPE)
     }
 
     /**

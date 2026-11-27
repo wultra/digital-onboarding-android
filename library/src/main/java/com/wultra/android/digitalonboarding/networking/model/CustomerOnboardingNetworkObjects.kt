@@ -25,6 +25,15 @@ import com.wultra.android.powerauth.networking.data.ObjectResponse
 internal class StartOnboardingRequest<T>(identification: T, processType: String?): ObjectRequest<StartOnboardingRequestData<T>>(
     StartOnboardingRequestData(identification, processType)
 )
+/**
+ * Returns the [Class] of [StartOnboardingRequest] typed with [T].
+ *
+ * Generic type arguments are erased at runtime, so the raw class is cast to the parametrized type.
+ */
+@Suppress("UNCHECKED_CAST")
+internal fun <T> startOnboardingRequestClass(): Class<StartOnboardingRequest<T>> =
+    StartOnboardingRequest::class.java as Class<StartOnboardingRequest<T>>
+
 internal class StartOnboardingRequestData<T>(
     @SerializedName("identification") val identification: T,
     @SerializedName("processType") val processType: String?
