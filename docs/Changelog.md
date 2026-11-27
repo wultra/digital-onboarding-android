@@ -2,7 +2,7 @@
 
 ## TBA
 
-- TBA
+- Updated to `PowerAuth SDK v2.1.0` and `Networking SDK for Android v3.0.0` ([#100](https://github.com/wultra/digital-onboarding-android/issues/100))
 
 ## 3.1.1
 

@@ -24,6 +24,7 @@ import com.wultra.android.digitalonboarding.networking.model.GetStatusResponse
 import com.wultra.android.digitalonboarding.networking.model.ResendOtpRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingRequest
 import com.wultra.android.digitalonboarding.networking.model.StartOnboardingResponse
+import com.wultra.android.digitalonboarding.networking.model.startOnboardingRequestClass
 import com.wultra.android.powerauth.networking.Api
 import com.wultra.android.powerauth.networking.E2EEConfiguration
 import com.wultra.android.powerauth.networking.EndpointBasic
@@ -50,10 +51,10 @@ internal class CustomerOnboardingApi(
 ) : Api(identityServerUrl, okHttpClient, powerAuthSDK, Utils.defaultGsonBuilder(), appContext) {
 
     companion object {
-        private fun <T> startEndpoint() = EndpointBasic<StartOnboardingRequest<T>, StartOnboardingResponse>("api/onboarding/start", E2EEConfiguration.APPLICATION_SCOPE)
-        private val cancelEndpoint = EndpointBasic<CancelOnboardingRequest, StatusResponse>("api/onboarding/cleanup", E2EEConfiguration.APPLICATION_SCOPE)
-        private val statusEndpoint = EndpointBasic<GetStatusRequest, GetStatusResponse>("api/onboarding/status", E2EEConfiguration.APPLICATION_SCOPE)
-        private val resendOtpEndpoint = EndpointBasic<ResendOtpRequest, StatusResponse>("api/onboarding/otp/resend", E2EEConfiguration.APPLICATION_SCOPE)
+        private fun <T> startEndpoint() = EndpointBasic("api/onboarding/start", startOnboardingRequestClass<T>(), StartOnboardingResponse::class.java, E2EEConfiguration.APPLICATION_SCOPE)
+        private val cancelEndpoint = EndpointBasic("api/onboarding/cleanup", CancelOnboardingRequest::class.java, StatusResponse::class.java, E2EEConfiguration.APPLICATION_SCOPE)
+        private val statusEndpoint = EndpointBasic("api/onboarding/status", GetStatusRequest::class.java, GetStatusResponse::class.java, E2EEConfiguration.APPLICATION_SCOPE)
+        private val resendOtpEndpoint = EndpointBasic("api/onboarding/otp/resend", ResendOtpRequest::class.java, StatusResponse::class.java, E2EEConfiguration.APPLICATION_SCOPE)
     }
 
     /**
